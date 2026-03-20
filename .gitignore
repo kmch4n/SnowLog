@@ -46,6 +46,5 @@ app-example
 /android
 
 # AI
-.claude/
 .codex/
 .gemini/
