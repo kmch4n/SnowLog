@@ -16,10 +16,6 @@
       },
       "bundleIdentifier": "com.kmch4n.snowlog"
     },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
     "plugins": [
       "expo-router",
       [
