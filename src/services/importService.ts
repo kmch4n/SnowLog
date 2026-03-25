@@ -32,8 +32,8 @@ export async function importVideo(
     // サムネイルを生成・保存
     const thumbnailUri = await generateAndSaveThumbnail(assetInfo.localUri, videoId);
 
-    // 撮影日時: asset.creationTime はミリ秒なので秒に変換
-    const capturedAt = Math.floor(asset.creationTime / 1000);
+    // 撮影日時: assetInfo.creationTime を使う（asset.creationTime はフォールバック値が混入する場合があるため）
+    const capturedAt = Math.floor(assetInfo.creationTime / 1000);
     const now = Date.now();
 
     // DBに動画レコードを挿入

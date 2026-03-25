@@ -3,21 +3,18 @@
  * expo-video はブラウザ非対応のため、動画プレイヤーをグレーのプレースホルダーに置換する
  */
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useState } from "react";
 import {
     Alert,
     KeyboardAvoidingView,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
 
-import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagChip } from "@/components/TagChip";
-import { TagSelector } from "@/components/TagSelector";
 import { exportAllToJSON } from "@/services/exportService";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
 import { formatDate, formatDuration } from "@/utils/dateUtils";
@@ -25,12 +22,8 @@ import { formatDate, formatDuration } from "@/utils/dateUtils";
 export default function VideoDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const navigation = useNavigation();
-    const { video, isLoading, updateMemo, updateSkiResort, updateTags } = useVideoDetail(id);
+    const { video, isLoading, error } = useVideoDetail(id);
 
-    const [isEditingMemo, setIsEditingMemo] = useState(false);
-    const [memoInput, setMemoInput] = useState("");
-    const [isEditingTags, setIsEditingTags] = useState(false);
-    const [tagIdInput, setTagIdInput] = useState<number[]>([]);
     const [isExporting, setIsExporting] = useState(false);
 
     useLayoutEffect(() => {
@@ -49,30 +42,6 @@ export default function VideoDetailScreen() {
         });
     }, [navigation, isExporting]);
 
-    useEffect(() => {
-        if (video) {
-            setMemoInput(video.memo);
-            setTagIdInput(video.tags.map((t) => t.id));
-        }
-    }, [video]);
-
-    const handleSaveMemo = useCallback(async () => {
-        await updateMemo(memoInput);
-        setIsEditingMemo(false);
-    }, [memoInput, updateMemo]);
-
-    const handleSaveSkiResort = useCallback(
-        async (name: string | null) => {
-            await updateSkiResort(name);
-        },
-        [updateSkiResort]
-    );
-
-    const handleSaveTags = useCallback(async () => {
-        await updateTags(tagIdInput);
-        setIsEditingTags(false);
-    }, [tagIdInput, updateTags]);
-
     const handleExport = useCallback(async () => {
         setIsExporting(true);
         try {
@@ -84,10 +53,18 @@ export default function VideoDetailScreen() {
         }
     }, []);
 
-    if (isLoading || !video) {
+    if (isLoading) {
         return (
             <View style={styles.center}>
                 <Text style={styles.loadingText}>読み込み中...</Text>
+            </View>
+        );
+    }
+
+    if (error || !video) {
+        return (
+            <View style={styles.center}>
+                <Text style={styles.loadingText}>{error ?? "動画が見つかりません"}</Text>
             </View>
         );
     }
@@ -114,10 +91,9 @@ export default function VideoDetailScreen() {
 
                     <View style={styles.fieldSection}>
                         <Text style={styles.fieldLabel}>スキー場</Text>
-                        <SkiResortSearch
-                            value={video.skiResortName}
-                            onSelect={handleSaveSkiResort}
-                        />
+                        <Text style={styles.readonlyText}>
+                            {video.skiResortName ?? "未設定"}
+                        </Text>
                     </View>
                 </View>
 
@@ -125,64 +101,31 @@ export default function VideoDetailScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>タグ</Text>
-                        <TouchableOpacity onPress={() => setIsEditingTags(!isEditingTags)}>
-                            <Text style={styles.editLink}>{isEditingTags ? "完了" : "編集"}</Text>
-                        </TouchableOpacity>
                     </View>
-
-                    {isEditingTags ? (
-                        <>
-                            <TagSelector
-                                selectedTagIds={tagIdInput}
-                                onChange={setTagIdInput}
-                            />
-                            <TouchableOpacity style={styles.saveTagButton} onPress={handleSaveTags}>
-                                <Text style={styles.saveTagButtonText}>タグを保存</Text>
-                            </TouchableOpacity>
-                        </>
-                    ) : (
-                        <View style={styles.tagList}>
-                            {video.tags.length > 0 ? (
-                                video.tags.map((tag) => <TagChip key={tag.id} tag={tag} />)
-                            ) : (
-                                <Text style={styles.emptyTag}>タグなし</Text>
-                            )}
-                        </View>
-                    )}
+                    <View style={styles.tagList}>
+                        {video.tags.length > 0 ? (
+                            video.tags.map((tag) => <TagChip key={tag.id} tag={tag} />)
+                        ) : (
+                            <Text style={styles.emptyTag}>タグなし</Text>
+                        )}
+                    </View>
                 </View>
 
                 {/* メモ */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>メモ</Text>
-                        <TouchableOpacity
-                            onPress={() => {
-                                if (isEditingMemo) {
-                                    handleSaveMemo();
-                                } else {
-                                    setIsEditingMemo(true);
-                                }
-                            }}
-                        >
-                            <Text style={styles.editLink}>{isEditingMemo ? "保存" : "編集"}</Text>
-                        </TouchableOpacity>
                     </View>
+                    <Text style={styles.memoText}>
+                        {video.memo || "メモなし"}
+                    </Text>
+                </View>
 
-                    {isEditingMemo ? (
-                        <TextInput
-                            style={styles.memoInput}
-                            value={memoInput}
-                            onChangeText={setMemoInput}
-                            multiline
-                            numberOfLines={6}
-                            textAlignVertical="top"
-                            autoFocus
-                        />
-                    ) : (
-                        <Text style={styles.memoText}>
-                            {video.memo || "メモなし"}
-                        </Text>
-                    )}
+                {/* iOS限定機能の案内 */}
+                <View style={styles.iosNotice}>
+                    <Text style={styles.iosNoticeText}>
+                        ✏️ メモ・タグ・スキー場の編集は iOS アプリでのみ利用できます
+                    </Text>
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -264,11 +207,6 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: "#222222",
     },
-    editLink: {
-        fontSize: 14,
-        color: "#1A3A5C",
-        fontWeight: "600",
-    },
     tagList: {
         flexDirection: "row",
         flexWrap: "wrap",
@@ -278,31 +216,24 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#AAAAAA",
     },
-    saveTagButton: {
-        marginTop: 12,
-        backgroundColor: "#1A3A5C",
-        borderRadius: 8,
-        paddingVertical: 10,
-        alignItems: "center",
-    },
-    saveTagButtonText: {
-        color: "#FFFFFF",
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    memoInput: {
-        borderWidth: 1,
-        borderColor: "#E0E0E0",
-        borderRadius: 8,
-        padding: 10,
-        fontSize: 15,
-        minHeight: 120,
-        lineHeight: 22,
-        backgroundColor: "#FAFAFA",
-    },
     memoText: {
         fontSize: 15,
         color: "#333333",
         lineHeight: 22,
+    },
+    readonlyText: {
+        fontSize: 15,
+        color: "#333333",
+    },
+    iosNotice: {
+        margin: 16,
+        padding: 12,
+        backgroundColor: "#EAF2FB",
+        borderRadius: 8,
+    },
+    iosNoticeText: {
+        fontSize: 13,
+        color: "#1A3A5C",
+        textAlign: "center",
     },
 });

@@ -3,6 +3,7 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 
 import { getAssetInfo } from "@/services/mediaService";
+import { updateFileAvailability } from "@/database/repositories/videoRepository";
 import {
     Alert,
     KeyboardAvoidingView,
@@ -29,7 +30,7 @@ import { formatDate, formatDuration } from "@/utils/dateUtils";
 export default function VideoDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const navigation = useNavigation();
-    const { video, isLoading, updateMemo, updateSkiResort, updateTags } = useVideoDetail(id);
+    const { video, isLoading, error, refresh, updateMemo, updateSkiResort, updateTags } = useVideoDetail(id);
 
     const [isEditingMemo, setIsEditingMemo] = useState(false);
     const [memoInput, setMemoInput] = useState("");
@@ -67,8 +68,14 @@ export default function VideoDetailScreen() {
 
             // 元ファイルが存在する場合のみ localUri を取得する
             if (video.isFileAvailable === 1) {
-                getAssetInfo(video.assetId).then((info) => {
-                    setVideoUri(info?.localUri ?? null);
+                getAssetInfo(video.assetId).then(async (info) => {
+                    if (info?.localUri) {
+                        setVideoUri(info.localUri);
+                    } else {
+                        // ファイルが消えていた場合は DB を更新して画面を再描画
+                        await updateFileAvailability(video.id, false);
+                        refresh();
+                    }
                 });
             }
         }
@@ -102,10 +109,18 @@ export default function VideoDetailScreen() {
         }
     }, []);
 
-    if (isLoading || !video) {
+    if (isLoading) {
         return (
             <View style={styles.center}>
                 <Text style={styles.loadingText}>読み込み中...</Text>
+            </View>
+        );
+    }
+
+    if (error || !video) {
+        return (
+            <View style={styles.center}>
+                <Text style={styles.loadingText}>{error ?? "動画が見つかりません"}</Text>
             </View>
         );
     }

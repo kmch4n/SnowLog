@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import { db, tags, videoTags } from "../index";
 import type { Tag, TagType } from "../../types";
@@ -66,7 +66,7 @@ export async function addTagToVideo(videoId: string, tagId: number): Promise<voi
 export async function removeTagFromVideo(videoId: string, tagId: number): Promise<void> {
     await db
         .delete(videoTags)
-        .where(eq(videoTags.videoId, videoId) && eq(videoTags.tagId, tagId));
+        .where(and(eq(videoTags.videoId, videoId), eq(videoTags.tagId, tagId)));
 }
 
 /** 動画に紐付いているタグをすべて入れ替える */

@@ -57,7 +57,6 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
                     value={query}
                     onChangeText={(text) => {
                         setQuery(text);
-                        if (text !== value) onSelect(null);
                     }}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setTimeout(() => setIsFocused(false), 150)}
