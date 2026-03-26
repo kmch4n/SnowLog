@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 
 import { getTagsForVideo } from "../database/repositories/tagRepository";
 import { getVideosByFilter } from "../database/repositories/videoRepository";
@@ -36,9 +37,12 @@ export function useVideos(filter?: FilterOptions) {
         }
     }, [filter]);
 
-    useEffect(() => {
-        fetchVideos();
-    }, [fetchVideos]);
+    // 画面にフォーカスが戻るたびにリロード（削除・編集の反映）
+    useFocusEffect(
+        useCallback(() => {
+            fetchVideos();
+        }, [fetchVideos])
+    );
 
     return { videos, isLoading, error, refresh: fetchVideos };
 }

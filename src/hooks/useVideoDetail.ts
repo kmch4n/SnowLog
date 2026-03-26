@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { getTagsForVideo } from "../database/repositories/tagRepository";
 import {
+    deleteVideo as deleteVideoFromDb,
     getVideoById,
     updateVideoMeta,
 } from "../database/repositories/videoRepository";
@@ -72,6 +73,11 @@ export function useVideoDetail(videoId: string) {
         return checkAssetExists(video.assetId);
     }, [video]);
 
+    /** 動画レコードを削除する（動画ファイル自体は削除しない） */
+    const removeVideo = useCallback(async () => {
+        await deleteVideoFromDb(videoId);
+    }, [videoId]);
+
     return {
         video,
         isLoading,
@@ -81,5 +87,6 @@ export function useVideoDetail(videoId: string) {
         updateSkiResort,
         updateTags,
         checkFileExists,
+        removeVideo,
     };
 }

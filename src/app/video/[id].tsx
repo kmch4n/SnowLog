@@ -1,8 +1,8 @@
 import { useVideoPlayer, VideoView } from "expo-video";
-import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { getAssetInfo } from "@/services/mediaService";
+import { getAssetInfo, requestMediaPermissions } from "@/services/mediaService";
 import { updateFileAvailability } from "@/database/repositories/videoRepository";
 import {
     Alert,
@@ -30,19 +30,15 @@ import { formatDate, formatDuration } from "@/utils/dateUtils";
 export default function VideoDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const navigation = useNavigation();
-    const { video, isLoading, error, refresh, updateMemo, updateSkiResort, updateTags } = useVideoDetail(id);
+    const router = useRouter();
+    const { video, isLoading, error, refresh, updateMemo, updateSkiResort, updateTags, removeVideo } = useVideoDetail(id);
 
-    const [isEditingMemo, setIsEditingMemo] = useState(false);
     const [memoInput, setMemoInput] = useState("");
+    const [memoSaveStatus, setMemoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [isEditingTags, setIsEditingTags] = useState(false);
     const [tagIdInput, setTagIdInput] = useState<number[]>([]);
     const [isExporting, setIsExporting] = useState(false);
     const [videoUri, setVideoUri] = useState<string | null>(null);
-
-    // 元ファイルの localUri を取得してプレイヤーに渡す
-    const player = useVideoPlayer(videoUri, (p) => {
-        p.loop = false;
-    });
 
     // ヘッダーにエクスポートボタンを設置
     useLayoutEffect(() => {
@@ -61,30 +57,79 @@ export default function VideoDetailScreen() {
         });
     }, [navigation, isExporting]);
 
-    useEffect(() => {
-        if (video) {
-            setMemoInput(video.memo);
-            setTagIdInput(video.tags.map((t) => t.id));
+    // メモ自動保存用の debounce タイマー
+    const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isInitialMemoLoad = useRef(true);
 
-            // 元ファイルが存在する場合のみ localUri を取得する
-            if (video.isFileAvailable === 1) {
-                getAssetInfo(video.assetId).then(async (info) => {
-                    if (info?.localUri) {
-                        setVideoUri(info.localUri);
-                    } else {
-                        // ファイルが消えていた場合は DB を更新して画面を再描画
-                        await updateFileAvailability(video.id, false);
-                        refresh();
-                    }
-                });
+    // メモが変更されたら1秒後に自動保存
+    useEffect(() => {
+        // 初回ロード時（video.memo → memoInput への同期）は保存しない
+        if (isInitialMemoLoad.current) {
+            isInitialMemoLoad.current = false;
+            return;
+        }
+
+        if (memoTimerRef.current) {
+            clearTimeout(memoTimerRef.current);
+        }
+
+        setMemoSaveStatus("idle");
+        memoTimerRef.current = setTimeout(async () => {
+            setMemoSaveStatus("saving");
+            await updateMemo(memoInput);
+            setMemoSaveStatus("saved");
+            // 2秒後にステータスをリセット
+            setTimeout(() => setMemoSaveStatus("idle"), 2000);
+        }, 1000);
+
+        return () => {
+            if (memoTimerRef.current) {
+                clearTimeout(memoTimerRef.current);
             }
+        };
+    }, [memoInput]);
+
+    useEffect(() => {
+        if (!video) return;
+        isInitialMemoLoad.current = true;
+        setMemoInput(video.memo);
+        setTagIdInput(video.tags.map((t) => t.id));
+
+        // 元ファイルが存在する場合のみ再生用 URI を取得する
+        if (video.isFileAvailable === 1) {
+            (async () => {
+                await requestMediaPermissions();
+                const info = await getAssetInfo(video.assetId);
+                if (info?.uri) {
+                    // localUri（file:///var/mobile/Media/DCIM/...）は iOS のセキュリティで
+                    // AVFoundation から直接読めないため、Photos フレームワークの uri を使用する
+                    setVideoUri(info.uri);
+                } else {
+                    await updateFileAvailability(video.id, false);
+                    refresh();
+                }
+            })();
         }
     }, [video]);
 
-    const handleSaveMemo = useCallback(async () => {
-        await updateMemo(memoInput);
-        setIsEditingMemo(false);
-    }, [memoInput, updateMemo]);
+    /** 動画レコードを削除する（確認ダイアログ付き） */
+    const handleDelete = useCallback(() => {
+        Alert.alert(
+            "動画を削除",
+            "この動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",
+            [
+                { text: "キャンセル", style: "cancel" },
+                {
+                    text: "削除",
+                    style: "destructive",
+                    onPress: async () => {
+                        await removeVideo();
+                        router.back();
+                    },
+                },
+            ]
+        );
+    }, [removeVideo, router]);
 
     const handleSaveSkiResort = useCallback(
         async (name: string | null) => {
@@ -131,19 +176,17 @@ export default function VideoDetailScreen() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <ScrollView contentContainerStyle={styles.scroll}>
-                {/* 動画プレイヤーエリア（元ファイルが存在する場合のみ） */}
-                {video.isFileAvailable === 1 ? (
-                    <VideoView
-                        player={player}
-                        style={styles.videoPlayer}
-                        nativeControls
-                    />
-                ) : (
+                {/* 動画プレイヤーエリア */}
+                {video.isFileAvailable === 1 && videoUri ? (
+                    <VideoPlayerView uri={videoUri} style={styles.videoPlayer} />
+                ) : video.isFileAvailable !== 1 ? (
                     <View style={styles.unavailableBanner}>
                         <Text style={styles.unavailableText}>
                             元の動画ファイルが見つかりません
                         </Text>
                     </View>
+                ) : (
+                    <View style={styles.videoPlayer} />
                 )}
 
                 {/* メタデータ */}
@@ -195,42 +238,45 @@ export default function VideoDetailScreen() {
                     )}
                 </View>
 
-                {/* メモ */}
+                {/* メモ（自動保存） */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>メモ</Text>
-                        <TouchableOpacity
-                            onPress={() => {
-                                if (isEditingMemo) {
-                                    handleSaveMemo();
-                                } else {
-                                    setIsEditingMemo(true);
-                                }
-                            }}
-                        >
-                            <Text style={styles.editLink}>{isEditingMemo ? "保存" : "編集"}</Text>
-                        </TouchableOpacity>
+                        <Text style={styles.saveStatus}>
+                            {memoSaveStatus === "saving"
+                                ? "保存中..."
+                                : memoSaveStatus === "saved"
+                                  ? "保存済み"
+                                  : ""}
+                        </Text>
                     </View>
 
-                    {isEditingMemo ? (
-                        <TextInput
-                            style={styles.memoInput}
-                            value={memoInput}
-                            onChangeText={setMemoInput}
-                            multiline
-                            numberOfLines={6}
-                            textAlignVertical="top"
-                            autoFocus
-                        />
-                    ) : (
-                        <Text style={styles.memoText}>
-                            {video.memo || "メモなし"}
-                        </Text>
-                    )}
+                    <TextInput
+                        style={styles.memoInput}
+                        value={memoInput}
+                        onChangeText={setMemoInput}
+                        placeholder="振り返りメモを入力..."
+                        multiline
+                        numberOfLines={6}
+                        textAlignVertical="top"
+                    />
                 </View>
+
+                {/* 削除ボタン */}
+                <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                    <Text style={styles.deleteButtonText}>この動画の記録を削除</Text>
+                </TouchableOpacity>
             </ScrollView>
         </KeyboardAvoidingView>
     );
+}
+
+/** videoUri が確定してから useVideoPlayer を呼ぶためのラッパーコンポーネント */
+function VideoPlayerView({ uri, style }: { uri: string; style: object }) {
+    const player = useVideoPlayer(uri, (p) => {
+        p.loop = false;
+    });
+    return <VideoView player={player} style={style} nativeControls />;
 }
 
 const styles = StyleSheet.create({
@@ -342,9 +388,22 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         backgroundColor: "#FAFAFA",
     },
-    memoText: {
-        fontSize: 15,
-        color: "#333333",
-        lineHeight: 22,
+    saveStatus: {
+        fontSize: 12,
+        color: "#888888",
+    },
+    deleteButton: {
+        marginHorizontal: 16,
+        marginTop: 8,
+        paddingVertical: 14,
+        alignItems: "center",
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "#E0E0E0",
+    },
+    deleteButtonText: {
+        fontSize: 14,
+        color: "#CC3333",
+        fontWeight: "600",
     },
 });

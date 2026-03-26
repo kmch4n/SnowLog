@@ -19,6 +19,7 @@ import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
 import { getVideoByAssetId } from "@/database/repositories/videoRepository";
 import { importVideo } from "@/services/importService";
+import { requestMediaPermissions } from "@/services/mediaService";
 import { formatDate, formatDuration } from "@/utils/dateUtils";
 
 /**
@@ -49,6 +50,9 @@ export default function VideoImportScreen() {
             );
             return;
         }
+
+        // MediaLibrary の権限も要求（getAssetInfo で localUri を取得するために必要）
+        await requestMediaPermissions();
 
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ["videos"],
@@ -97,7 +101,7 @@ export default function VideoImportScreen() {
                 creationTime: selectedAsset.exif?.DateTimeOriginal
                     ? new Date(selectedAsset.exif.DateTimeOriginal).getTime()
                     : Date.now(),
-                duration: selectedAsset.duration ?? 0,
+                duration: (selectedAsset.duration ?? 0) / 1000,
                 uri: selectedAsset.uri,
                 width: selectedAsset.width,
                 height: selectedAsset.height,
@@ -105,11 +109,11 @@ export default function VideoImportScreen() {
                 albumId: undefined,
             };
 
-            await importVideo(mediaAsset as any, {
-                skiResortName,
-                memo,
-                tagIds,
-            });
+            await importVideo(
+                mediaAsset as any,
+                { skiResortName, memo, tagIds },
+                { pickerUri: selectedAsset.uri }
+            );
 
             router.back();
         } catch (e) {
@@ -153,7 +157,7 @@ export default function VideoImportScreen() {
                                 )}
                                 {selectedAsset.duration != null && (
                                     <Text style={styles.previewDuration}>
-                                        {formatDuration(Math.round(selectedAsset.duration))}
+                                        {formatDuration(Math.round(selectedAsset.duration / 1000))}
                                     </Text>
                                 )}
                             </View>

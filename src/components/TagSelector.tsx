@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -77,7 +76,7 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
     const customTags = allTags.filter((t) => t.type === "custom");
 
     return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.container}>
             {/* 滑走種別 */}
             <Text style={styles.sectionLabel}>{SECTION_LABELS.technique}</Text>
             <View style={styles.chips}>
@@ -147,7 +146,7 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
                     ))}
                 </View>
             )}
-        </ScrollView>
+        </View>
     );
 }
 

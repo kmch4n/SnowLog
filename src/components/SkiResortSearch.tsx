@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-    FlatList,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -72,12 +72,14 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
 
             {/* サジェストリスト */}
             {isFocused && suggestions.length > 0 && (
-                <View style={styles.suggestionList}>
-                    <FlatList
-                        data={suggestions}
-                        keyExtractor={(item) => String(item.id)}
-                        keyboardShouldPersistTaps="handled"
-                        renderItem={({ item }) => (
+                <ScrollView
+                    style={styles.suggestionList}
+                    keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled
+                >
+                    {suggestions.map((item, index) => (
+                        <View key={String(item.id)}>
+                            {index > 0 && <View style={styles.separator} />}
                             <TouchableOpacity
                                 style={styles.suggestionItem}
                                 onPress={() => handleSelect(item)}
@@ -85,10 +87,9 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
                                 <Text style={styles.suggestionName}>{item.name}</Text>
                                 <Text style={styles.suggestionPrefecture}>{item.prefecture}</Text>
                             </TouchableOpacity>
-                        )}
-                        ItemSeparatorComponent={() => <View style={styles.separator} />}
-                    />
-                </View>
+                        </View>
+                    ))}
+                </ScrollView>
             )}
         </View>
     );
