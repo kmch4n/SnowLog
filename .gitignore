@@ -50,6 +50,11 @@ app-example
 /ios
 /android
 
+# EAS Build artifacts
+*.ipa
+*.apk
+*.aab
+
 # AI
 .codex/
 .gemini/
