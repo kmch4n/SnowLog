@@ -1,232 +1,1472 @@
 [
-    { "id": 1, "name": "白馬八方尾根スキー場", "prefecture": "長野県" },
-    { "id": 2, "name": "白馬五竜スキー場", "prefecture": "長野県" },
-    { "id": 3, "name": "志賀高原スキー場", "prefecture": "長野県" },
-    { "id": 4, "name": "野沢温泉スキー場", "prefecture": "長野県" },
-    { "id": 5, "name": "菅平高原スノーリゾート", "prefecture": "長野県" },
-    { "id": 6, "name": "竜王スキーパーク", "prefecture": "長野県" },
-    { "id": 7, "name": "黒姫高原スキーパーク", "prefecture": "長野県" },
-    { "id": 8, "name": "斑尾高原スキー場", "prefecture": "長野県" },
-    { "id": 9, "name": "妙高スノーリゾート", "prefecture": "長野県" },
-    { "id": 10, "name": "白馬乗鞍温泉スキー場", "prefecture": "長野県" },
-    { "id": 11, "name": "白馬岩岳スキー場", "prefecture": "長野県" },
-    { "id": 12, "name": "白馬さのさかスキー場", "prefecture": "長野県" },
-    { "id": 13, "name": "栂池高原スキー場", "prefecture": "長野県" },
-    { "id": 14, "name": "白馬コルチナスキー場", "prefecture": "長野県" },
-    { "id": 15, "name": "白馬ジャイアントスキー場", "prefecture": "長野県" },
-    { "id": 16, "name": "佐久スキーガーデン パラダ", "prefecture": "長野県" },
-    { "id": 17, "name": "軽井沢プリンススキーリゾート", "prefecture": "長野県" },
-    { "id": 18, "name": "北志賀竜王スキーパーク", "prefecture": "長野県" },
-    { "id": 19, "name": "赤倉温泉スキー場", "prefecture": "新潟県" },
-    { "id": 20, "name": "妙高杉ノ原スキー場", "prefecture": "新潟県" },
-    { "id": 21, "name": "上越国際スキー場", "prefecture": "新潟県" },
-    { "id": 22, "name": "岩原スキー場", "prefecture": "新潟県" },
-    { "id": 23, "name": "石打丸山スキー場", "prefecture": "新潟県" },
-    { "id": 24, "name": "GALA湯沢スキー場", "prefecture": "新潟県" },
-    { "id": 25, "name": "湯沢中里スノーリゾート", "prefecture": "新潟県" },
-    { "id": 26, "name": "かぐらスキー場", "prefecture": "新潟県" },
-    { "id": 27, "name": "Mt.Naeba", "prefecture": "新潟県" },
-    { "id": 28, "name": "舞子スノーリゾート", "prefecture": "新潟県" },
-    { "id": 29, "name": "池の平温泉アルペンブリック", "prefecture": "新潟県" },
-    { "id": 30, "name": "六日町八海山スキー場", "prefecture": "新潟県" },
-    { "id": 31, "name": "奥只見丸山スキー場", "prefecture": "新潟県" },
-    { "id": 32, "name": "上越スタジアム", "prefecture": "新潟県" },
-    { "id": 33, "name": "ニセコアンヌプリスキー場", "prefecture": "北海道" },
-    { "id": 34, "name": "ニセコビレッジスキーリゾート", "prefecture": "北海道" },
-    { "id": 35, "name": "ニセコグランヒラフ", "prefecture": "北海道" },
-    { "id": 36, "name": "ルスツリゾート", "prefecture": "北海道" },
-    { "id": 37, "name": "キロロスノーワールド", "prefecture": "北海道" },
-    { "id": 38, "name": "朝里川温泉スキー場", "prefecture": "北海道" },
-    { "id": 39, "name": "札幌国際スキー場", "prefecture": "北海道" },
-    { "id": 40, "name": "星野リゾート トマムスキー場", "prefecture": "北海道" },
-    { "id": 41, "name": "サホロスキー場", "prefecture": "北海道" },
-    { "id": 42, "name": "富良野スキー場", "prefecture": "北海道" },
-    { "id": 43, "name": "マウントレースイ", "prefecture": "北海道" },
-    { "id": 44, "name": "小樽市民スキー場", "prefecture": "北海道" },
-    { "id": 45, "name": "テイネスキー場", "prefecture": "北海道" },
-    { "id": 46, "name": "サッポロテイネ", "prefecture": "北海道" },
-    { "id": 47, "name": "ニセコユナイテッド", "prefecture": "北海道" },
-    { "id": 48, "name": "タンバラスキーパーク", "prefecture": "群馬県" },
-    { "id": 49, "name": "川場スキー場", "prefecture": "群馬県" },
-    { "id": 50, "name": "丸沼高原スキー場", "prefecture": "群馬県" },
-    { "id": 51, "name": "ノルン水上スキー場", "prefecture": "群馬県" },
-    { "id": 52, "name": "ホワイトワールド尾瀬岩鞍", "prefecture": "群馬県" },
-    { "id": 53, "name": "奥利根スノーパーク", "prefecture": "群馬県" },
-    { "id": 54, "name": "オグナほたかスキー場", "prefecture": "群馬県" },
-    { "id": 55, "name": "たんばらスキーパーク", "prefecture": "群馬県" },
-    { "id": 56, "name": "天神平スキー場", "prefecture": "群馬県" },
-    { "id": 57, "name": "ハンターマウンテン塩原", "prefecture": "栃木県" },
-    { "id": 58, "name": "エーデルワイススキーリゾート", "prefecture": "栃木県" },
-    { "id": 59, "name": "マウントジーンズ那須", "prefecture": "栃木県" },
-    { "id": 60, "name": "日光湯元スキー場", "prefecture": "栃木県" },
-    { "id": 61, "name": "那須温泉スキー場", "prefecture": "栃木県" },
-    { "id": 62, "name": "ダイナランド", "prefecture": "岐阜県" },
-    { "id": 63, "name": "高鷲スノーパーク", "prefecture": "岐阜県" },
-    { "id": 64, "name": "ホワイトピアたかす", "prefecture": "岐阜県" },
-    { "id": 65, "name": "めいほうスキー場", "prefecture": "岐阜県" },
-    { "id": 66, "name": "ウイングヒルズ白鳥リゾート", "prefecture": "岐阜県" },
-    { "id": 67, "name": "ひるがの高原スキー場", "prefecture": "岐阜県" },
-    { "id": 68, "name": "鷲ヶ岳スキー場", "prefecture": "岐阜県" },
-    { "id": 69, "name": "ほおのき平スキー場", "prefecture": "岐阜県" },
-    { "id": 70, "name": "スキージャム勝山", "prefecture": "福井県" },
-    { "id": 71, "name": "九頭竜スキー場", "prefecture": "福井県" },
-    { "id": 72, "name": "今庄365スキー場", "prefecture": "福井県" },
-    { "id": 73, "name": "福井和泉スキー場", "prefecture": "福井県" },
-    { "id": 74, "name": "ふじてんスノーリゾート", "prefecture": "山梨県" },
-    { "id": 75, "name": "カムイみさかスキー場", "prefecture": "山梨県" },
-    { "id": 76, "name": "サンメドウズ清里スキー場", "prefecture": "山梨県" },
-    { "id": 77, "name": "蔵王温泉スキー場", "prefecture": "山形県" },
-    { "id": 78, "name": "蔵王ライザワールドスキー場", "prefecture": "山形県" },
-    { "id": 79, "name": "天元台高原", "prefecture": "山形県" },
-    { "id": 80, "name": "朝日自然観スノーパーク", "prefecture": "山形県" },
-    { "id": 81, "name": "みやぎ蔵王えぼしリゾート", "prefecture": "宮城県" },
-    { "id": 82, "name": "みやぎ蔵王白石スキー場", "prefecture": "宮城県" },
-    { "id": 83, "name": "秋田八幡平スキー場", "prefecture": "秋田県" },
-    { "id": 84, "name": "花輪スキー場", "prefecture": "秋田県" },
-    { "id": 85, "name": "森吉山阿仁スキー場", "prefecture": "秋田県" },
-    { "id": 86, "name": "たざわ湖スキー場", "prefecture": "秋田県" },
-    { "id": 87, "name": "田沢湖スキー場", "prefecture": "秋田県" },
-    { "id": 88, "name": "青森スプリングスキーリゾート", "prefecture": "青森県" },
-    { "id": 89, "name": "八甲田スキー場", "prefecture": "青森県" },
-    { "id": 90, "name": "大鰐温泉スキー場", "prefecture": "青森県" },
-    { "id": 91, "name": "モヤヒルズ", "prefecture": "青森県" },
-    { "id": 92, "name": "安比高原スキー場", "prefecture": "岩手県" },
-    { "id": 93, "name": "網張温泉スキー場", "prefecture": "岩手県" },
-    { "id": 94, "name": "岩手高原スノーパーク", "prefecture": "岩手県" },
-    { "id": 95, "name": "夏油高原スキー場", "prefecture": "岩手県" },
-    { "id": 96, "name": "雫石スキー場", "prefecture": "岩手県" },
-    { "id": 97, "name": "白山一里野温泉スキー場", "prefecture": "石川県" },
-    { "id": 98, "name": "白山セイモアスキー場", "prefecture": "石川県" },
-    { "id": 99, "name": "びわ湖バレイ", "prefecture": "滋賀県" },
-    { "id": 100, "name": "箱館山スキー場", "prefecture": "滋賀県" },
-    { "id": 101, "name": "グランスノー奥伊吹", "prefecture": "滋賀県" },
-    { "id": 102, "name": "ヨゴコーゲンリゾート・ヤップ", "prefecture": "滋賀県" },
-    { "id": 103, "name": "国境高原スノーパーク", "prefecture": "滋賀県" },
-    { "id": 104, "name": "マキノ高原スキー場", "prefecture": "滋賀県" },
-    { "id": 105, "name": "ハチ北高原スキー場", "prefecture": "兵庫県" },
-    { "id": 106, "name": "ちくさ高原スキー場", "prefecture": "兵庫県" },
-    { "id": 107, "name": "峰山高原スキー場", "prefecture": "兵庫県" },
-    { "id": 108, "name": "おじろスキー場", "prefecture": "兵庫県" },
-    { "id": 109, "name": "アップかんなべ", "prefecture": "兵庫県" },
-    { "id": 110, "name": "氷ノ山スキー場", "prefecture": "兵庫県" },
-    { "id": 111, "name": "恐羅漢スノーパーク", "prefecture": "広島県" },
-    { "id": 112, "name": "めがひらスキー場", "prefecture": "広島県" },
-    { "id": 113, "name": "ユートピアサイオト", "prefecture": "広島県" },
-    { "id": 114, "name": "わかさ氷ノ山スキー場", "prefecture": "鳥取県" },
-    { "id": 115, "name": "だいせんホワイトリゾート", "prefecture": "鳥取県" },
-    { "id": 116, "name": "立山山麓スキー場", "prefecture": "富山県" },
-    { "id": 117, "name": "IOX-AROSA", "prefecture": "富山県" },
-    { "id": 118, "name": "牛岳温泉スキー場", "prefecture": "富山県" },
-    { "id": 119, "name": "たいらスキー場", "prefecture": "富山県" },
-    { "id": 120, "name": "あわすのスキー場", "prefecture": "富山県" },
-    { "id": 121, "name": "宇奈月スノーパーク", "prefecture": "富山県" },
-    { "id": 122, "name": "猫山スキー場", "prefecture": "岡山県" },
-    { "id": 123, "name": "石鎚スキー場", "prefecture": "愛媛県" },
-    { "id": 124, "name": "久万スキーランド", "prefecture": "愛媛県" },
-    { "id": 125, "name": "御在所スキー場", "prefecture": "三重県" },
-    { "id": 126, "name": "京都広河原スキー場", "prefecture": "京都府" },
-    { "id": 127, "name": "グランスノー奥伊吹スキー場", "prefecture": "滋賀県" },
-    { "id": 128, "name": "スノーパーク尾瀬戸倉", "prefecture": "群馬県" },
-    { "id": 129, "name": "シャルマン火打スキー場", "prefecture": "新潟県" },
-    { "id": 130, "name": "赤倉観光リゾートスキー場", "prefecture": "新潟県" },
-    { "id": 131, "name": "妙高高原スキー場", "prefecture": "新潟県" },
-    { "id": 132, "name": "ロッテアライリゾート", "prefecture": "新潟県" },
-    { "id": 133, "name": "シャルマン火打", "prefecture": "新潟県" },
-    { "id": 134, "name": "苗場スキー場", "prefecture": "新潟県" },
-    { "id": 135, "name": "神立スノーリゾート", "prefecture": "新潟県" },
-    { "id": 136, "name": "布場スキー場", "prefecture": "新潟県" },
-    { "id": 137, "name": "上越観光リゾート", "prefecture": "新潟県" },
-    { "id": 138, "name": "二居スキー場", "prefecture": "新潟県" },
-    { "id": 139, "name": "戸倉スキー場", "prefecture": "新潟県" },
-    { "id": 140, "name": "赤倉スキー場", "prefecture": "新潟県" },
-    { "id": 141, "name": "ハンターマウンテンたんばらスキーパーク", "prefecture": "群馬県" },
-    { "id": 142, "name": "水上スキー場", "prefecture": "群馬県" },
-    { "id": 143, "name": "上越スキーガーデン", "prefecture": "群馬県" },
-    { "id": 144, "name": "万座温泉スキー場", "prefecture": "群馬県" },
-    { "id": 145, "name": "草津温泉スキー場", "prefecture": "群馬県" },
-    { "id": 146, "name": "パルコール嬬恋スキーリゾート", "prefecture": "群馬県" },
-    { "id": 147, "name": "嬬恋高原スキー場", "prefecture": "群馬県" },
-    { "id": 148, "name": "バラギ高原スキー場", "prefecture": "群馬県" },
-    { "id": 149, "name": "鹿沢スノーエリア", "prefecture": "群馬県" },
-    { "id": 150, "name": "パインリッジリゾート奥利根", "prefecture": "群馬県" },
-    { "id": 151, "name": "水沢高原スキー場", "prefecture": "群馬県" },
-    { "id": 152, "name": "倉渕スキー場", "prefecture": "群馬県" },
-    { "id": 153, "name": "草津スキー場", "prefecture": "群馬県" },
-    { "id": 154, "name": "熊の湯スキー場", "prefecture": "長野県" },
-    { "id": 155, "name": "横手山スキー場", "prefecture": "長野県" },
-    { "id": 156, "name": "笠ヶ岳スキー場", "prefecture": "長野県" },
-    { "id": 157, "name": "高天ヶ原マンモスリゾート", "prefecture": "長野県" },
-    { "id": 158, "name": "寺子屋スキー場", "prefecture": "長野県" },
-    { "id": 159, "name": "ジャイアントスキー場", "prefecture": "長野県" },
-    { "id": 160, "name": "焼額山スキー場", "prefecture": "長野県" },
-    { "id": 161, "name": "奥志賀高原スキー場", "prefecture": "長野県" },
-    { "id": 162, "name": "サンバレースキー場", "prefecture": "長野県" },
-    { "id": 163, "name": "一ノ瀬ダイヤモンドスキー場", "prefecture": "長野県" },
-    { "id": 164, "name": "一ノ瀬ファミリースキー場", "prefecture": "長野県" },
-    { "id": 165, "name": "丸池スキー場", "prefecture": "長野県" },
-    { "id": 166, "name": "東館山スキー場", "prefecture": "長野県" },
-    { "id": 167, "name": "西館山スキー場", "prefecture": "長野県" },
-    { "id": 168, "name": "サンバレー スキー場", "prefecture": "長野県" },
-    { "id": 169, "name": "ブナ平スキー場", "prefecture": "長野県" },
-    { "id": 170, "name": "発哺温泉スキー場", "prefecture": "長野県" },
-    { "id": 171, "name": "イボ平スキー場", "prefecture": "長野県" },
-    { "id": 172, "name": "帝王スキー場", "prefecture": "長野県" },
-    { "id": 173, "name": "ハンの木スキー場", "prefecture": "長野県" },
-    { "id": 174, "name": "タンネの森スキー場", "prefecture": "長野県" },
-    { "id": 175, "name": "シュナイダースキー場", "prefecture": "長野県" },
-    { "id": 176, "name": "ジャンダルムスキー場", "prefecture": "長野県" },
-    { "id": 177, "name": "Mt.石打丸山スキー場", "prefecture": "新潟県" },
-    { "id": 178, "name": "妙高山麓スキー場", "prefecture": "新潟県" },
-    { "id": 179, "name": "関温泉スキー場", "prefecture": "新潟県" },
-    { "id": 180, "name": "燕温泉スキー場", "prefecture": "新潟県" },
-    { "id": 181, "name": "スノーパーク南雪山", "prefecture": "新潟県" },
-    { "id": 182, "name": "小千谷スキー場", "prefecture": "新潟県" },
-    { "id": 183, "name": "越後中里スキー場", "prefecture": "新潟県" },
-    { "id": 184, "name": "ムイカスノーリゾート", "prefecture": "新潟県" },
-    { "id": 185, "name": "奥只見スキー場", "prefecture": "新潟県" },
-    { "id": 186, "name": "スノーパーク苗場", "prefecture": "新潟県" },
-    { "id": 187, "name": "ハッピースノーパーク", "prefecture": "新潟県" },
-    { "id": 188, "name": "十日町市スキー場", "prefecture": "新潟県" },
-    { "id": 189, "name": "湯殿山スキー場", "prefecture": "山形県" },
-    { "id": 190, "name": "西川スキー場", "prefecture": "山形県" },
-    { "id": 191, "name": "月山スキー場", "prefecture": "山形県" },
-    { "id": 192, "name": "サンロクスキー場", "prefecture": "山形県" },
-    { "id": 193, "name": "白布温泉スキー場", "prefecture": "山形県" },
-    { "id": 194, "name": "米沢スキー場", "prefecture": "山形県" },
-    { "id": 195, "name": "風倉山スキー場", "prefecture": "山形県" },
-    { "id": 196, "name": "赤倉温泉スキー場（山形）", "prefecture": "山形県" },
-    { "id": 197, "name": "グランデコスノーリゾート", "prefecture": "福島県" },
-    { "id": 198, "name": "猫魔スキー場", "prefecture": "福島県" },
-    { "id": 199, "name": "アルツ磐梯スキー場", "prefecture": "福島県" },
-    { "id": 200, "name": "磐梯山温泉スキー場", "prefecture": "福島県" },
-    { "id": 201, "name": "ネコマスキー場", "prefecture": "福島県" },
-    { "id": 202, "name": "星野リゾート磐梯山温泉ホテル", "prefecture": "福島県" },
-    { "id": 203, "name": "会津高原南郷スキー場", "prefecture": "福島県" },
-    { "id": 204, "name": "羽鳥湖スキー場", "prefecture": "福島県" },
-    { "id": 205, "name": "オグナほたかスキーパーク", "prefecture": "群馬県" },
-    { "id": 206, "name": "福島スカイパーク", "prefecture": "福島県" },
-    { "id": 207, "name": "あだたら高原スキー場", "prefecture": "福島県" },
-    { "id": 208, "name": "箕輪スキー場", "prefecture": "福島県" },
-    { "id": 209, "name": "エビス大黒スキー場", "prefecture": "福島県" },
-    { "id": 210, "name": "天元台スキー場", "prefecture": "山形県" },
-    { "id": 211, "name": "吾妻連峰スキー場", "prefecture": "山形県" },
-    { "id": 212, "name": "山形市民スキー場", "prefecture": "山形県" },
-    { "id": 213, "name": "朝日連峰スキー場", "prefecture": "山形県" },
-    { "id": 214, "name": "上山市スキー場", "prefecture": "山形県" },
-    { "id": 215, "name": "南陽市スキー場", "prefecture": "山形県" },
-    { "id": 216, "name": "飯山市スキー場", "prefecture": "長野県" },
-    { "id": 217, "name": "サンライズスキー場", "prefecture": "長野県" },
-    { "id": 218, "name": "戸狩温泉スキー場", "prefecture": "長野県" },
-    { "id": 219, "name": "タングラムスキーサーカス", "prefecture": "長野県" },
-    { "id": 220, "name": "飯縄高原スキー場", "prefecture": "長野県" },
-    { "id": 221, "name": "大峰高原スキー場", "prefecture": "長野県" },
-    { "id": 222, "name": "中社スキー場", "prefecture": "長野県" },
-    { "id": 223, "name": "車山高原SKYPARKスキー場", "prefecture": "長野県" },
-    { "id": 224, "name": "シャトレーゼスキーリゾート八ヶ岳", "prefecture": "長野県" },
-    { "id": 225, "name": "富士見パノラマリゾート", "prefecture": "長野県" },
-    { "id": 226, "name": "ブランシュたかやまスキーリゾート", "prefecture": "長野県" },
-    { "id": 227, "name": "ヴィレッジ高梨スキー場", "prefecture": "長野県" },
-    { "id": 228, "name": "MADARAO KOGEN RESORT", "prefecture": "長野県" },
-    { "id": 229, "name": "エコーバレースキー場", "prefecture": "長野県" },
-    { "id": 230, "name": "白馬村営スキー場", "prefecture": "長野県" }
+    {
+        "id": 1,
+        "name": "白馬八方尾根スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7018728,
+        "longitude": 137.8371784
+    },
+    {
+        "id": 2,
+        "name": "白馬五竜スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.680942222222,
+        "longitude": 137.845779722222
+    },
+    {
+        "id": 3,
+        "name": "志賀高原スキー場",
+        "prefecture": "長野県",
+        "latitude": 41.9365662,
+        "longitude": 140.6288993
+    },
+    {
+        "id": 4,
+        "name": "野沢温泉スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.9172242,
+        "longitude": 138.4640226
+    },
+    {
+        "id": 5,
+        "name": "菅平高原スノーリゾート",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 6,
+        "name": "竜王スキーパーク",
+        "prefecture": "長野県",
+        "latitude": 36.7793424,
+        "longitude": 138.4741092
+    },
+    {
+        "id": 7,
+        "name": "黒姫高原スキーパーク",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 8,
+        "name": "斑尾高原スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.8483253,
+        "longitude": 138.2799193
+    },
+    {
+        "id": 9,
+        "name": "妙高スノーリゾート",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 10,
+        "name": "白馬乗鞍温泉スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.763862,
+        "longitude": 137.8765343
+    },
+    {
+        "id": 11,
+        "name": "白馬岩岳スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.71771993,
+        "longitude": 137.86146125
+    },
+    {
+        "id": 12,
+        "name": "白馬さのさかスキー場",
+        "prefecture": "長野県",
+        "latitude": 36.6194479,
+        "longitude": 137.8346984
+    },
+    {
+        "id": 13,
+        "name": "栂池高原スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.749488,
+        "longitude": 137.8709711
+    },
+    {
+        "id": 14,
+        "name": "白馬コルチナスキー場",
+        "prefecture": "長野県",
+        "latitude": 36.774091944444,
+        "longitude": 137.886646944444
+    },
+    {
+        "id": 15,
+        "name": "白馬ジャイアントスキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 16,
+        "name": "佐久スキーガーデン パラダ",
+        "prefecture": "長野県",
+        "latitude": 36.294154,
+        "longitude": 138.510326
+    },
+    {
+        "id": 17,
+        "name": "軽井沢プリンススキーリゾート",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 18,
+        "name": "北志賀竜王スキーパーク",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 19,
+        "name": "赤倉温泉スキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.8963586,
+        "longitude": 138.1674032
+    },
+    {
+        "id": 20,
+        "name": "妙高杉ノ原スキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.8633377,
+        "longitude": 138.1357468
+    },
+    {
+        "id": 21,
+        "name": "上越国際スキー場",
+        "prefecture": "新潟県",
+        "latitude": 37.0322113,
+        "longitude": 138.8218689
+    },
+    {
+        "id": 22,
+        "name": "岩原スキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.9457244,
+        "longitude": 138.8422289
+    },
+    {
+        "id": 23,
+        "name": "石打丸山スキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.9706353,
+        "longitude": 138.7921195
+    },
+    {
+        "id": 24,
+        "name": "GALA湯沢スキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.9505887,
+        "longitude": 138.7996273
+    },
+    {
+        "id": 25,
+        "name": "湯沢中里スノーリゾート",
+        "prefecture": "新潟県",
+        "latitude": 36.9097611,
+        "longitude": 138.8490126
+    },
+    {
+        "id": 26,
+        "name": "かぐらスキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.8462252,
+        "longitude": 138.77587
+    },
+    {
+        "id": 27,
+        "name": "Mt.Naeba",
+        "prefecture": "新潟県",
+        "latitude": 36.8459419,
+        "longitude": 138.690323
+    },
+    {
+        "id": 28,
+        "name": "舞子スノーリゾート",
+        "prefecture": "新潟県",
+        "latitude": 36.9742701,
+        "longitude": 138.8355539
+    },
+    {
+        "id": 29,
+        "name": "池の平温泉アルペンブリック",
+        "prefecture": "新潟県",
+        "latitude": 36.8725874,
+        "longitude": 138.1718651
+    },
+    {
+        "id": 30,
+        "name": "六日町八海山スキー場",
+        "prefecture": "新潟県",
+        "latitude": 37.1079472,
+        "longitude": 138.9777166
+    },
+    {
+        "id": 31,
+        "name": "奥只見丸山スキー場",
+        "prefecture": "新潟県",
+        "latitude": 37.1592955,
+        "longitude": 139.2314205
+    },
+    {
+        "id": 32,
+        "name": "上越スタジアム",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 33,
+        "name": "ニセコアンヌプリスキー場",
+        "prefecture": "北海道",
+        "latitude": 42.8500481,
+        "longitude": 140.6494475
+    },
+    {
+        "id": 34,
+        "name": "ニセコビレッジスキーリゾート",
+        "prefecture": "北海道",
+        "latitude": 42.8453746,
+        "longitude": 140.6735392
+    },
+    {
+        "id": 35,
+        "name": "ニセコグランヒラフ",
+        "prefecture": "北海道"
+    },
+    {
+        "id": 36,
+        "name": "ルスツリゾート",
+        "prefecture": "北海道",
+        "latitude": 42.7509878,
+        "longitude": 140.8955197
+    },
+    {
+        "id": 37,
+        "name": "キロロスノーワールド",
+        "prefecture": "北海道",
+        "latitude": 43.0679581,
+        "longitude": 140.9894897
+    },
+    {
+        "id": 38,
+        "name": "朝里川温泉スキー場",
+        "prefecture": "北海道",
+        "latitude": 43.1384508,
+        "longitude": 141.0292794
+    },
+    {
+        "id": 39,
+        "name": "札幌国際スキー場",
+        "prefecture": "北海道",
+        "latitude": 43.0730146,
+        "longitude": 141.0702386
+    },
+    {
+        "id": 40,
+        "name": "星野リゾート トマムスキー場",
+        "prefecture": "北海道",
+        "latitude": 43.0640675,
+        "longitude": 142.6235211
+    },
+    {
+        "id": 41,
+        "name": "サホロスキー場",
+        "prefecture": "北海道"
+    },
+    {
+        "id": 42,
+        "name": "富良野スキー場",
+        "prefecture": "北海道",
+        "latitude": 43.3326173,
+        "longitude": 142.3281461
+    },
+    {
+        "id": 43,
+        "name": "マウントレースイ",
+        "prefecture": "北海道",
+        "latitude": 43.045170833333,
+        "longitude": 141.965800277778
+    },
+    {
+        "id": 44,
+        "name": "小樽市民スキー場",
+        "prefecture": "北海道"
+    },
+    {
+        "id": 45,
+        "name": "テイネスキー場",
+        "prefecture": "北海道",
+        "latitude": 43.0961284,
+        "longitude": 141.2097808
+    },
+    {
+        "id": 46,
+        "name": "サッポロテイネ",
+        "prefecture": "北海道",
+        "latitude": 43.0866967,
+        "longitude": 141.2042057
+    },
+    {
+        "id": 47,
+        "name": "ニセコユナイテッド",
+        "prefecture": "北海道",
+        "latitude": 42.8656164,
+        "longitude": 140.6928032
+    },
+    {
+        "id": 48,
+        "name": "タンバラスキーパーク",
+        "prefecture": "群馬県",
+        "latitude": 36.7783055,
+        "longitude": 139.0729855
+    },
+    {
+        "id": 49,
+        "name": "川場スキー場",
+        "prefecture": "群馬県",
+        "latitude": 36.7780541,
+        "longitude": 139.1194661
+    },
+    {
+        "id": 50,
+        "name": "丸沼高原スキー場",
+        "prefecture": "群馬県",
+        "latitude": 36.8114837,
+        "longitude": 139.3464346
+    },
+    {
+        "id": 51,
+        "name": "ノルン水上スキー場",
+        "prefecture": "群馬県",
+        "latitude": 36.7437935,
+        "longitude": 138.9412866
+    },
+    {
+        "id": 52,
+        "name": "ホワイトワールド尾瀬岩鞍",
+        "prefecture": "群馬県",
+        "latitude": 36.8223059,
+        "longitude": 139.2066144
+    },
+    {
+        "id": 53,
+        "name": "奥利根スノーパーク",
+        "prefecture": "群馬県",
+        "latitude": 36.7969615,
+        "longitude": 139.0111491
+    },
+    {
+        "id": 54,
+        "name": "オグナほたかスキー場",
+        "prefecture": "群馬県",
+        "latitude": 36.781835,
+        "longitude": 139.1667393
+    },
+    {
+        "id": 55,
+        "name": "たんばらスキーパーク",
+        "prefecture": "群馬県",
+        "latitude": 36.7783055,
+        "longitude": 139.0729855
+    },
+    {
+        "id": 56,
+        "name": "天神平スキー場",
+        "prefecture": "群馬県",
+        "latitude": 36.8250101,
+        "longitude": 138.9550114
+    },
+    {
+        "id": 57,
+        "name": "ハンターマウンテン塩原",
+        "prefecture": "栃木県",
+        "latitude": 36.9392005,
+        "longitude": 139.7514848
+    },
+    {
+        "id": 58,
+        "name": "エーデルワイススキーリゾート",
+        "prefecture": "栃木県",
+        "latitude": 36.9190867,
+        "longitude": 139.7518912
+    },
+    {
+        "id": 59,
+        "name": "マウントジーンズ那須",
+        "prefecture": "栃木県",
+        "latitude": 37.1298784,
+        "longitude": 140.0068965
+    },
+    {
+        "id": 60,
+        "name": "日光湯元スキー場",
+        "prefecture": "栃木県",
+        "latitude": 36.8023225,
+        "longitude": 139.420116111111
+    },
+    {
+        "id": 61,
+        "name": "那須温泉スキー場",
+        "prefecture": "栃木県"
+    },
+    {
+        "id": 62,
+        "name": "ダイナランド",
+        "prefecture": "岐阜県",
+        "latitude": 35.9846033,
+        "longitude": 136.881913
+    },
+    {
+        "id": 63,
+        "name": "高鷲スノーパーク",
+        "prefecture": "岐阜県",
+        "latitude": 35.9956523,
+        "longitude": 136.8582547
+    },
+    {
+        "id": 64,
+        "name": "ホワイトピアたかす",
+        "prefecture": "岐阜県",
+        "latitude": 35.9515072,
+        "longitude": 136.9404909
+    },
+    {
+        "id": 65,
+        "name": "めいほうスキー場",
+        "prefecture": "岐阜県",
+        "latitude": 35.9510938,
+        "longitude": 137.029047
+    },
+    {
+        "id": 66,
+        "name": "ウイングヒルズ白鳥リゾート",
+        "prefecture": "岐阜県",
+        "latitude": 35.973199,
+        "longitude": 136.8091972
+    },
+    {
+        "id": 67,
+        "name": "ひるがの高原スキー場",
+        "prefecture": "岐阜県",
+        "latitude": 36.0057828,
+        "longitude": 136.912929
+    },
+    {
+        "id": 68,
+        "name": "鷲ヶ岳スキー場",
+        "prefecture": "岐阜県",
+        "latitude": 35.9437262,
+        "longitude": 136.9269346
+    },
+    {
+        "id": 69,
+        "name": "ほおのき平スキー場",
+        "prefecture": "岐阜県",
+        "latitude": 36.175756666667,
+        "longitude": 137.491947777778
+    },
+    {
+        "id": 70,
+        "name": "スキージャム勝山",
+        "prefecture": "福井県",
+        "latitude": 36.0701883,
+        "longitude": 136.5559197
+    },
+    {
+        "id": 71,
+        "name": "九頭竜スキー場",
+        "prefecture": "福井県",
+        "latitude": 35.8951452,
+        "longitude": 136.6582708
+    },
+    {
+        "id": 72,
+        "name": "今庄365スキー場",
+        "prefecture": "福井県",
+        "latitude": 35.7216305,
+        "longitude": 136.1421534
+    },
+    {
+        "id": 73,
+        "name": "福井和泉スキー場",
+        "prefecture": "福井県",
+        "latitude": 35.9371016,
+        "longitude": 136.6889741
+    },
+    {
+        "id": 74,
+        "name": "ふじてんスノーリゾート",
+        "prefecture": "山梨県",
+        "latitude": 35.4367718,
+        "longitude": 138.6879018
+    },
+    {
+        "id": 75,
+        "name": "カムイみさかスキー場",
+        "prefecture": "山梨県",
+        "latitude": 35.5795409,
+        "longitude": 138.7543253
+    },
+    {
+        "id": 76,
+        "name": "サンメドウズ清里スキー場",
+        "prefecture": "山梨県",
+        "latitude": 35.9494669,
+        "longitude": 138.4089695
+    },
+    {
+        "id": 77,
+        "name": "蔵王温泉スキー場",
+        "prefecture": "山形県",
+        "latitude": 38.1613172,
+        "longitude": 140.4077354
+    },
+    {
+        "id": 78,
+        "name": "蔵王ライザワールドスキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 79,
+        "name": "天元台高原",
+        "prefecture": "山形県",
+        "latitude": 37.7663144,
+        "longitude": 140.1393688
+    },
+    {
+        "id": 80,
+        "name": "朝日自然観スノーパーク",
+        "prefecture": "山形県",
+        "latitude": 38.3059229,
+        "longitude": 140.0471881
+    },
+    {
+        "id": 81,
+        "name": "みやぎ蔵王えぼしリゾート",
+        "prefecture": "宮城県",
+        "latitude": 38.1241656,
+        "longitude": 140.5072948
+    },
+    {
+        "id": 82,
+        "name": "みやぎ蔵王白石スキー場",
+        "prefecture": "宮城県",
+        "latitude": 38.0685719,
+        "longitude": 140.5098066
+    },
+    {
+        "id": 83,
+        "name": "秋田八幡平スキー場",
+        "prefecture": "秋田県",
+        "latitude": 39.9770355,
+        "longitude": 140.8087261
+    },
+    {
+        "id": 84,
+        "name": "花輪スキー場",
+        "prefecture": "秋田県",
+        "latitude": 40.1878564,
+        "longitude": 140.8222803
+    },
+    {
+        "id": 85,
+        "name": "森吉山阿仁スキー場",
+        "prefecture": "秋田県",
+        "latitude": 39.9647674,
+        "longitude": 140.5086477
+    },
+    {
+        "id": 86,
+        "name": "たざわ湖スキー場",
+        "prefecture": "秋田県",
+        "latitude": 39.7623755,
+        "longitude": 140.7705657
+    },
+    {
+        "id": 87,
+        "name": "田沢湖スキー場",
+        "prefecture": "秋田県"
+    },
+    {
+        "id": 88,
+        "name": "青森スプリングスキーリゾート",
+        "prefecture": "青森県",
+        "latitude": 40.6953775,
+        "longitude": 140.2830103
+    },
+    {
+        "id": 89,
+        "name": "八甲田スキー場",
+        "prefecture": "青森県",
+        "latitude": 40.6774566,
+        "longitude": 140.8325486
+    },
+    {
+        "id": 90,
+        "name": "大鰐温泉スキー場",
+        "prefecture": "青森県",
+        "latitude": 40.5020803,
+        "longitude": 140.5722355
+    },
+    {
+        "id": 91,
+        "name": "モヤヒルズ",
+        "prefecture": "青森県",
+        "latitude": 40.7330295,
+        "longitude": 140.7965629
+    },
+    {
+        "id": 92,
+        "name": "安比高原スキー場",
+        "prefecture": "岩手県",
+        "latitude": 39.9872412,
+        "longitude": 140.9582652
+    },
+    {
+        "id": 93,
+        "name": "網張温泉スキー場",
+        "prefecture": "岩手県",
+        "latitude": 39.8277164,
+        "longitude": 140.9357129
+    },
+    {
+        "id": 94,
+        "name": "岩手高原スノーパーク",
+        "prefecture": "岩手県",
+        "latitude": 39.8225425,
+        "longitude": 140.9655638
+    },
+    {
+        "id": 95,
+        "name": "夏油高原スキー場",
+        "prefecture": "岩手県",
+        "latitude": 39.2364668,
+        "longitude": 140.9058882
+    },
+    {
+        "id": 96,
+        "name": "雫石スキー場",
+        "prefecture": "岩手県",
+        "latitude": 39.78443,
+        "longitude": 140.9203218
+    },
+    {
+        "id": 97,
+        "name": "白山一里野温泉スキー場",
+        "prefecture": "石川県",
+        "latitude": 36.2624443,
+        "longitude": 136.7130804
+    },
+    {
+        "id": 98,
+        "name": "白山セイモアスキー場",
+        "prefecture": "石川県",
+        "latitude": 36.3414507,
+        "longitude": 136.6888898
+    },
+    {
+        "id": 99,
+        "name": "びわ湖バレイ",
+        "prefecture": "滋賀県",
+        "latitude": 35.2135573,
+        "longitude": 135.8916337
+    },
+    {
+        "id": 100,
+        "name": "箱館山スキー場",
+        "prefecture": "滋賀県",
+        "latitude": 35.4385374,
+        "longitude": 135.9865081
+    },
+    {
+        "id": 101,
+        "name": "グランスノー奥伊吹",
+        "prefecture": "滋賀県",
+        "latitude": 35.5217394,
+        "longitude": 136.3885555
+    },
+    {
+        "id": 102,
+        "name": "ヨゴコーゲンリゾート・ヤップ",
+        "prefecture": "滋賀県",
+        "latitude": 35.6982359,
+        "longitude": 136.1580502
+    },
+    {
+        "id": 103,
+        "name": "国境高原スノーパーク",
+        "prefecture": "滋賀県"
+    },
+    {
+        "id": 104,
+        "name": "マキノ高原スキー場",
+        "prefecture": "滋賀県"
+    },
+    {
+        "id": 105,
+        "name": "ハチ北高原スキー場",
+        "prefecture": "兵庫県",
+        "latitude": 35.4015689,
+        "longitude": 134.5412843
+    },
+    {
+        "id": 106,
+        "name": "ちくさ高原スキー場",
+        "prefecture": "兵庫県",
+        "latitude": 35.2184556,
+        "longitude": 134.3865942
+    },
+    {
+        "id": 107,
+        "name": "峰山高原スキー場",
+        "prefecture": "兵庫県",
+        "latitude": 35.2173028,
+        "longitude": 137.6550853
+    },
+    {
+        "id": 108,
+        "name": "おじろスキー場",
+        "prefecture": "兵庫県",
+        "latitude": 35.4576099,
+        "longitude": 134.5244949
+    },
+    {
+        "id": 109,
+        "name": "アップかんなべ",
+        "prefecture": "兵庫県",
+        "latitude": 35.5039392,
+        "longitude": 134.6782415
+    },
+    {
+        "id": 110,
+        "name": "氷ノ山スキー場",
+        "prefecture": "兵庫県",
+        "latitude": 35.347259,
+        "longitude": 134.4897479
+    },
+    {
+        "id": 111,
+        "name": "恐羅漢スノーパーク",
+        "prefecture": "広島県",
+        "latitude": 34.5973066,
+        "longitude": 132.1429131
+    },
+    {
+        "id": 112,
+        "name": "めがひらスキー場",
+        "prefecture": "広島県",
+        "latitude": 34.4984676,
+        "longitude": 132.1438511
+    },
+    {
+        "id": 113,
+        "name": "ユートピアサイオト",
+        "prefecture": "広島県",
+        "latitude": 34.7815113,
+        "longitude": 132.3237463
+    },
+    {
+        "id": 114,
+        "name": "わかさ氷ノ山スキー場",
+        "prefecture": "鳥取県",
+        "latitude": 35.347259,
+        "longitude": 134.4897479
+    },
+    {
+        "id": 115,
+        "name": "だいせんホワイトリゾート",
+        "prefecture": "鳥取県",
+        "latitude": 35.3975029,
+        "longitude": 133.5362661
+    },
+    {
+        "id": 116,
+        "name": "立山山麓スキー場",
+        "prefecture": "富山県",
+        "latitude": 36.5681434,
+        "longitude": 137.430321
+    },
+    {
+        "id": 117,
+        "name": "IOX-AROSA",
+        "prefecture": "富山県",
+        "latitude": 36.5146706,
+        "longitude": 136.8068743
+    },
+    {
+        "id": 118,
+        "name": "牛岳温泉スキー場",
+        "prefecture": "富山県",
+        "latitude": 36.577577777778,
+        "longitude": 137.075156666667
+    },
+    {
+        "id": 119,
+        "name": "たいらスキー場",
+        "prefecture": "富山県",
+        "latitude": 36.442529,
+        "longitude": 136.9265509
+    },
+    {
+        "id": 120,
+        "name": "あわすのスキー場",
+        "prefecture": "富山県",
+        "latitude": 36.5733734,
+        "longitude": 137.4438461
+    },
+    {
+        "id": 121,
+        "name": "宇奈月スノーパーク",
+        "prefecture": "富山県"
+    },
+    {
+        "id": 122,
+        "name": "猫山スキー場",
+        "prefecture": "岡山県",
+        "latitude": 35.0374949,
+        "longitude": 133.1995823
+    },
+    {
+        "id": 123,
+        "name": "石鎚スキー場",
+        "prefecture": "愛媛県",
+        "latitude": 33.7944421,
+        "longitude": 133.1311281
+    },
+    {
+        "id": 124,
+        "name": "久万スキーランド",
+        "prefecture": "愛媛県",
+        "latitude": 33.720028,
+        "longitude": 132.8779831
+    },
+    {
+        "id": 125,
+        "name": "御在所スキー場",
+        "prefecture": "三重県",
+        "latitude": 35.0203758,
+        "longitude": 136.422572
+    },
+    {
+        "id": 126,
+        "name": "京都広河原スキー場",
+        "prefecture": "京都府"
+    },
+    {
+        "id": 127,
+        "name": "グランスノー奥伊吹スキー場",
+        "prefecture": "滋賀県"
+    },
+    {
+        "id": 128,
+        "name": "スノーパーク尾瀬戸倉",
+        "prefecture": "群馬県",
+        "latitude": 36.8518014,
+        "longitude": 139.2444987
+    },
+    {
+        "id": 129,
+        "name": "シャルマン火打スキー場",
+        "prefecture": "新潟県",
+        "latitude": 37.0032832,
+        "longitude": 138.0703758
+    },
+    {
+        "id": 130,
+        "name": "赤倉観光リゾートスキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.8903352,
+        "longitude": 138.1604114
+    },
+    {
+        "id": 131,
+        "name": "妙高高原スキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.8483253,
+        "longitude": 138.2799193
+    },
+    {
+        "id": 132,
+        "name": "ロッテアライリゾート",
+        "prefecture": "新潟県",
+        "latitude": 36.990896443225,
+        "longitude": 138.18143344628
+    },
+    {
+        "id": 133,
+        "name": "シャルマン火打",
+        "prefecture": "新潟県",
+        "latitude": 36.9983842,
+        "longitude": 138.0701906
+    },
+    {
+        "id": 134,
+        "name": "苗場スキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.7950244,
+        "longitude": 138.7787563
+    },
+    {
+        "id": 135,
+        "name": "神立スノーリゾート",
+        "prefecture": "新潟県",
+        "latitude": 36.911335,
+        "longitude": 138.8129961
+    },
+    {
+        "id": 136,
+        "name": "布場スキー場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 137,
+        "name": "上越観光リゾート",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 138,
+        "name": "二居スキー場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 139,
+        "name": "戸倉スキー場",
+        "prefecture": "新潟県",
+        "latitude": 35.2851542,
+        "longitude": 134.5416727
+    },
+    {
+        "id": 140,
+        "name": "赤倉スキー場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 141,
+        "name": "ハンターマウンテンたんばらスキーパーク",
+        "prefecture": "群馬県"
+    },
+    {
+        "id": 142,
+        "name": "水上スキー場",
+        "prefecture": "群馬県",
+        "latitude": 36.7437935,
+        "longitude": 138.9412866
+    },
+    {
+        "id": 143,
+        "name": "上越スキーガーデン",
+        "prefecture": "群馬県"
+    },
+    {
+        "id": 144,
+        "name": "万座温泉スキー場",
+        "prefecture": "群馬県",
+        "latitude": 36.6400581,
+        "longitude": 138.4999501
+    },
+    {
+        "id": 145,
+        "name": "草津温泉スキー場",
+        "prefecture": "群馬県",
+        "latitude": 36.6309616,
+        "longitude": 138.5780638
+    },
+    {
+        "id": 146,
+        "name": "パルコール嬬恋スキーリゾート",
+        "prefecture": "群馬県",
+        "latitude": 36.5560044,
+        "longitude": 138.4642389
+    },
+    {
+        "id": 147,
+        "name": "嬬恋高原スキー場",
+        "prefecture": "群馬県"
+    },
+    {
+        "id": 148,
+        "name": "バラギ高原スキー場",
+        "prefecture": "群馬県"
+    },
+    {
+        "id": 149,
+        "name": "鹿沢スノーエリア",
+        "prefecture": "群馬県",
+        "latitude": 36.4656101,
+        "longitude": 138.4246239
+    },
+    {
+        "id": 150,
+        "name": "パインリッジリゾート奥利根",
+        "prefecture": "群馬県"
+    },
+    {
+        "id": 151,
+        "name": "水沢高原スキー場",
+        "prefecture": "群馬県"
+    },
+    {
+        "id": 152,
+        "name": "倉渕スキー場",
+        "prefecture": "群馬県",
+        "latitude": 36.2794449,
+        "longitude": 136.5381748
+    },
+    {
+        "id": 153,
+        "name": "草津スキー場",
+        "prefecture": "群馬県"
+    },
+    {
+        "id": 154,
+        "name": "熊の湯スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.6788621,
+        "longitude": 138.4956864
+    },
+    {
+        "id": 155,
+        "name": "横手山スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.6749965,
+        "longitude": 138.5149994
+    },
+    {
+        "id": 156,
+        "name": "笠ヶ岳スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 157,
+        "name": "高天ヶ原マンモスリゾート",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 158,
+        "name": "寺子屋スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 159,
+        "name": "ジャイアントスキー場",
+        "prefecture": "長野県",
+        "latitude": 36.716471,
+        "longitude": 138.4969652
+    },
+    {
+        "id": 160,
+        "name": "焼額山スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7507155,
+        "longitude": 138.5184042
+    },
+    {
+        "id": 161,
+        "name": "奥志賀高原スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7696544,
+        "longitude": 138.5146038
+    },
+    {
+        "id": 162,
+        "name": "サンバレースキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7151153,
+        "longitude": 138.485707
+    },
+    {
+        "id": 163,
+        "name": "一ノ瀬ダイヤモンドスキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7397801,
+        "longitude": 138.5100957
+    },
+    {
+        "id": 164,
+        "name": "一ノ瀬ファミリースキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7364477,
+        "longitude": 138.5204527
+    },
+    {
+        "id": 165,
+        "name": "丸池スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7148403,
+        "longitude": 138.4898692
+    },
+    {
+        "id": 166,
+        "name": "東館山スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7270679,
+        "longitude": 138.5190092
+    },
+    {
+        "id": 167,
+        "name": "西館山スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7278788,
+        "longitude": 138.5007338
+    },
+    {
+        "id": 168,
+        "name": "サンバレー スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7152269,
+        "longitude": 138.4852174
+    },
+    {
+        "id": 169,
+        "name": "ブナ平スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.7210267,
+        "longitude": 138.5087901
+    },
+    {
+        "id": 170,
+        "name": "発哺温泉スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 171,
+        "name": "イボ平スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 172,
+        "name": "帝王スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 173,
+        "name": "ハンの木スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 174,
+        "name": "タンネの森スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 175,
+        "name": "シュナイダースキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 176,
+        "name": "ジャンダルムスキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 177,
+        "name": "Mt.石打丸山スキー場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 178,
+        "name": "妙高山麓スキー場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 179,
+        "name": "関温泉スキー場",
+        "prefecture": "新潟県",
+        "latitude": 36.9049859,
+        "longitude": 138.1569427
+    },
+    {
+        "id": 180,
+        "name": "燕温泉スキー場",
+        "prefecture": "新潟県",
+        "latitude": 45.0761034,
+        "longitude": 141.8431071
+    },
+    {
+        "id": 181,
+        "name": "スノーパーク南雪山",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 182,
+        "name": "小千谷スキー場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 183,
+        "name": "越後中里スキー場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 184,
+        "name": "ムイカスノーリゾート",
+        "prefecture": "新潟県",
+        "latitude": 37.0740331,
+        "longitude": 138.836474
+    },
+    {
+        "id": 185,
+        "name": "奥只見スキー場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 186,
+        "name": "スノーパーク苗場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 187,
+        "name": "ハッピースノーパーク",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 188,
+        "name": "十日町市スキー場",
+        "prefecture": "新潟県"
+    },
+    {
+        "id": 189,
+        "name": "湯殿山スキー場",
+        "prefecture": "山形県",
+        "latitude": 38.5722011,
+        "longitude": 139.9419861
+    },
+    {
+        "id": 190,
+        "name": "西川スキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 191,
+        "name": "月山スキー場",
+        "prefecture": "山形県",
+        "latitude": 38.5276865,
+        "longitude": 140.0082498
+    },
+    {
+        "id": 192,
+        "name": "サンロクスキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 193,
+        "name": "白布温泉スキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 194,
+        "name": "米沢スキー場",
+        "prefecture": "山形県",
+        "latitude": 37.8659048,
+        "longitude": 140.2353485
+    },
+    {
+        "id": 195,
+        "name": "風倉山スキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 196,
+        "name": "赤倉温泉スキー場（山形）",
+        "prefecture": "山形県",
+        "latitude": 38.7052935,
+        "longitude": 140.5456422
+    },
+    {
+        "id": 197,
+        "name": "グランデコスノーリゾート",
+        "prefecture": "福島県",
+        "latitude": 37.7087799,
+        "longitude": 140.1255042
+    },
+    {
+        "id": 198,
+        "name": "猫魔スキー場",
+        "prefecture": "福島県",
+        "latitude": 37.6052304,
+        "longitude": 140.0429719
+    },
+    {
+        "id": 199,
+        "name": "アルツ磐梯スキー場",
+        "prefecture": "福島県",
+        "latitude": 37.56834616,
+        "longitude": 140.01367462
+    },
+    {
+        "id": 200,
+        "name": "磐梯山温泉スキー場",
+        "prefecture": "福島県"
+    },
+    {
+        "id": 201,
+        "name": "ネコマスキー場",
+        "prefecture": "福島県"
+    },
+    {
+        "id": 202,
+        "name": "星野リゾート磐梯山温泉ホテル",
+        "prefecture": "福島県"
+    },
+    {
+        "id": 203,
+        "name": "会津高原南郷スキー場",
+        "prefecture": "福島県",
+        "latitude": 37.266880833333,
+        "longitude": 139.545705555556
+    },
+    {
+        "id": 204,
+        "name": "羽鳥湖スキー場",
+        "prefecture": "福島県"
+    },
+    {
+        "id": 205,
+        "name": "オグナほたかスキーパーク",
+        "prefecture": "群馬県"
+    },
+    {
+        "id": 206,
+        "name": "福島スカイパーク",
+        "prefecture": "福島県",
+        "latitude": 37.8230609,
+        "longitude": 140.3889889
+    },
+    {
+        "id": 207,
+        "name": "あだたら高原スキー場",
+        "prefecture": "福島県",
+        "latitude": 37.6219454,
+        "longitude": 140.3189795
+    },
+    {
+        "id": 208,
+        "name": "箕輪スキー場",
+        "prefecture": "福島県",
+        "latitude": 37.6509966,
+        "longitude": 140.2594339
+    },
+    {
+        "id": 209,
+        "name": "エビス大黒スキー場",
+        "prefecture": "福島県"
+    },
+    {
+        "id": 210,
+        "name": "天元台スキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 211,
+        "name": "吾妻連峰スキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 212,
+        "name": "山形市民スキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 213,
+        "name": "朝日連峰スキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 214,
+        "name": "上山市スキー場",
+        "prefecture": "山形県"
+    },
+    {
+        "id": 215,
+        "name": "南陽市スキー場",
+        "prefecture": "山形県",
+        "latitude": 34.0736541,
+        "longitude": 136.1873808
+    },
+    {
+        "id": 216,
+        "name": "飯山市スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 217,
+        "name": "サンライズスキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 218,
+        "name": "戸狩温泉スキー場",
+        "prefecture": "長野県",
+        "latitude": 36.939999,
+        "longitude": 138.374755
+    },
+    {
+        "id": 219,
+        "name": "タングラムスキーサーカス",
+        "prefecture": "長野県",
+        "latitude": 36.8504408,
+        "longitude": 138.2641664
+    },
+    {
+        "id": 220,
+        "name": "飯縄高原スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 221,
+        "name": "大峰高原スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 222,
+        "name": "中社スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 223,
+        "name": "車山高原SKYPARKスキー場",
+        "prefecture": "長野県",
+        "latitude": 36.1039584,
+        "longitude": 138.2061643
+    },
+    {
+        "id": 224,
+        "name": "シャトレーゼスキーリゾート八ヶ岳",
+        "prefecture": "長野県",
+        "latitude": 35.93053640724831,
+        "longitude": 138.49462594709655
+    },
+    {
+        "id": 225,
+        "name": "富士見パノラマリゾート",
+        "prefecture": "長野県",
+        "latitude": 35.9091759,
+        "longitude": 138.1882506
+    },
+    {
+        "id": 226,
+        "name": "ブランシュたかやまスキーリゾート",
+        "prefecture": "長野県",
+        "latitude": 36.1481158,
+        "longitude": 138.2052159
+    },
+    {
+        "id": 227,
+        "name": "ヴィレッジ高梨スキー場",
+        "prefecture": "長野県"
+    },
+    {
+        "id": 228,
+        "name": "MADARAO KOGEN RESORT",
+        "prefecture": "長野県",
+        "latitude": 36.8483253,
+        "longitude": 138.2799193
+    },
+    {
+        "id": 229,
+        "name": "エコーバレースキー場",
+        "prefecture": "長野県",
+        "latitude": 36.120652,
+        "longitude": 138.2077552
+    },
+    {
+        "id": 230,
+        "name": "白馬村営スキー場",
+        "prefecture": "長野県"
+    }
 ]

@@ -45,13 +45,11 @@ export async function getVideoAssets(
  * - duration: 再生時間（秒）
  */
 export async function getAssetInfo(
-    assetId: string
+    assetId: string,
+    options?: { shouldDownloadFromNetwork?: boolean }
 ): Promise<MediaLibrary.AssetInfo | null> {
-    try {
-        return await MediaLibrary.getAssetInfoAsync(assetId);
-    } catch {
-        return null;
-    }
+    // .catch() を即チェーンして unhandled rejection を防ぐ
+    return MediaLibrary.getAssetInfoAsync(assetId, options).catch(() => null);
 }
 
 /**

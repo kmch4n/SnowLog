@@ -20,8 +20,9 @@ import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { getVideoByAssetId } from "@/database/repositories/videoRepository";
 import { importVideo } from "@/services/importService";
-import { requestMediaPermissions } from "@/services/mediaService";
+import { getAssetInfo } from "@/services/mediaService";
 import { formatDate, formatDuration } from "@/utils/dateUtils";
+import { findNearbySkiResorts } from "@/utils/geoUtils";
 
 /**
  * 動画インポート画面（モーダル）
@@ -42,6 +43,9 @@ export default function VideoImportScreen() {
     const [tagIds, setTagIds] = useState<number[]>([]);
     const [memo, setMemo] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const [gpsSuggestions, setGpsSuggestions] = useState<
+        { name: string; distanceKm: number }[]
+    >([]);
 
     /** カメラロールから動画を選択する */
     const handlePickVideo = useCallback(async () => {
@@ -54,13 +58,11 @@ export default function VideoImportScreen() {
             return;
         }
 
-        // MediaLibrary の権限も要求（getAssetInfo で localUri を取得するために必要）
-        await requestMediaPermissions();
-
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ["videos"],
             allowsEditing: false,
             quality: 1,
+            exif: true, // GPS フィールドを含む EXIF を取得
         });
 
         if (result.canceled || result.assets.length === 0) return;
@@ -88,6 +90,20 @@ export default function VideoImportScreen() {
         }
 
         setSelectedAsset(asset);
+        setGpsSuggestions([]);
+
+        // MediaLibrary のメタデータから GPS 座標を取得してスキー場をサジェスト
+        // shouldDownloadFromNetwork: false により iCloud コンテンツのダウンロードを抑制し
+        // PHPhotosErrorNetworkAccessRequired (3164) を防ぐ。
+        // GPS は Photo Library DB に保存されたメタデータのためネットワーク不要で取得できる。
+        if (asset.assetId) {
+            const info = await getAssetInfo(asset.assetId, { shouldDownloadFromNetwork: false });
+            if (info?.location) {
+                setGpsSuggestions(
+                    findNearbySkiResorts(info.location.latitude, info.location.longitude)
+                );
+            }
+        }
     }, []);
 
     /** 動画をインポートしてDBに保存する */
@@ -199,6 +215,32 @@ export default function VideoImportScreen() {
                 {/* スキー場名 */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>スキー場</Text>
+                    {/* GPS撮影地からのサジェスト（スキー場未設定かつ GPS検出成功時のみ表示） */}
+                    {gpsSuggestions.length > 0 && !skiResortName && (
+                        <View style={styles.gpsBanner}>
+                            <Text style={styles.gpsBannerLabel}>📍 撮影地の近くのスキー場</Text>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.gpsBannerChips}
+                                keyboardShouldPersistTaps="handled"
+                            >
+                                {gpsSuggestions.map((s) => (
+                                    <TouchableOpacity
+                                        key={s.name}
+                                        style={styles.gpsBannerChip}
+                                        onPress={() => {
+                                            setSkiResortName(s.name);
+                                            setGpsSuggestions([]);
+                                        }}
+                                    >
+                                        <Text style={styles.gpsBannerChipName}>{s.name}</Text>
+                                        <Text style={styles.gpsBannerChipDist}>{s.distanceKm.toFixed(1)} km</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
                     <SkiResortSearch value={skiResortName} onSelect={setSkiResortName} />
                 </View>
 
@@ -348,6 +390,41 @@ const styles = StyleSheet.create({
         fontSize: 15,
         minHeight: 100,
         lineHeight: 22,
+    },
+    gpsBanner: {
+        backgroundColor: "#E8F0F8",
+        borderRadius: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        marginBottom: 8,
+    },
+    gpsBannerLabel: {
+        fontSize: 12,
+        color: "#1A3A5C",
+        fontWeight: "600",
+        marginBottom: 6,
+    },
+    gpsBannerChips: {
+        gap: 6,
+    },
+    gpsBannerChip: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderWidth: 1,
+        borderColor: "#1A3A5C",
+        alignItems: "center",
+    },
+    gpsBannerChipName: {
+        fontSize: 13,
+        color: "#1A3A5C",
+        fontWeight: "600",
+    },
+    gpsBannerChipDist: {
+        fontSize: 11,
+        color: "#5580A0",
+        marginTop: 1,
     },
     saveButton: {
         backgroundColor: "#1A3A5C",

@@ -42,10 +42,8 @@ export interface SkiResort {
     id: number;
     name: string;
     prefecture: string;
-    // Phase2以降: GPS座標が追加される
-    // latitude?: number;
-    // longitude?: number;
-    // radius?: number; // km
+    latitude?: number;  // GPS緯度（geocode-resorts.mjs で追加）
+    longitude?: number; // GPS経度（geocode-resorts.mjs で追加）
 }
 
 // 動画一覧のフィルター条件

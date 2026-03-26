@@ -3,7 +3,6 @@ import { randomUUID } from "expo-crypto";
 
 import { insertVideo } from "../database/repositories/videoRepository";
 import { setTagsForVideo } from "../database/repositories/tagRepository";
-import { getAssetInfo, requestMediaPermissions } from "./mediaService";
 import { generateAndSaveThumbnail } from "./thumbnailService";
 import type { ImportMetadata } from "../types";
 
@@ -26,21 +25,11 @@ export async function importVideo(
     metadata: ImportMetadata,
     options: ImportOptions
 ): Promise<string> {
-    // MediaLibrary の権限を確認（getAssetInfo で localUri を取得するために必要）
-    const permResult = await requestMediaPermissions();
-
-    // アセットの詳細情報（localUri）を取得
-    let videoUri = options.pickerUri;
-    let assetCreationTime = asset.creationTime;
-
-    if (permResult) {
-        const assetInfo = await getAssetInfo(asset.id);
-        if (assetInfo?.localUri) {
-            // expo-media-library が返す localUri のフラグメント（#...）を除去
-            videoUri = assetInfo.localUri.split("#")[0];
-            assetCreationTime = assetInfo.creationTime;
-        }
-    }
+    // expo-image-picker の pickerUri を直接使用する。
+    // MediaLibrary.getAssetInfoAsync は iCloud 動画で PHPhotosErrorNetworkAccessRequired を
+    // 発生させるため、インポートフローでは呼び出さない。
+    const videoUri = options.pickerUri;
+    const assetCreationTime = asset.creationTime;
 
     // 一意IDを生成
     const videoId = randomUUID();
