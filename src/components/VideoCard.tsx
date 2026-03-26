@@ -40,20 +40,29 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
             {/* メタデータ */}
             <View style={styles.meta}>
                 <Text style={styles.date}>{formatDate(video.capturedAt)}</Text>
+                {/* タイトル（未設定時はfilenameにフォールバック） */}
+                <Text style={styles.title} numberOfLines={1}>
+                    {video.title ?? video.filename}
+                </Text>
                 {video.skiResortName ? (
                     <Text style={styles.resort}>{video.skiResortName}</Text>
                 ) : (
                     <Text style={styles.resortEmpty}>スキー場未設定</Text>
                 )}
 
-                {/* タグ一覧 */}
-                {video.tags.length > 0 && (
+                {/* タグ一覧（technique タグは TechniqueSelector で管理するため除外） */}
+                {video.tags.filter((t) => t.type !== "technique").length > 0 && (
                     <View style={styles.tags}>
-                        {video.tags.slice(0, 4).map((tag) => (
-                            <TagChip key={tag.id} tag={tag} />
-                        ))}
-                        {video.tags.length > 4 && (
-                            <Text style={styles.moreTag}>+{video.tags.length - 4}</Text>
+                        {video.tags
+                            .filter((t) => t.type !== "technique")
+                            .slice(0, 4)
+                            .map((tag) => (
+                                <TagChip key={tag.id} tag={tag} />
+                            ))}
+                        {video.tags.filter((t) => t.type !== "technique").length > 4 && (
+                            <Text style={styles.moreTag}>
+                                +{video.tags.filter((t) => t.type !== "technique").length - 4}
+                            </Text>
                         )}
                     </View>
                 )}
@@ -124,6 +133,12 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: "#888888",
         marginBottom: 2,
+    },
+    title: {
+        fontSize: 15,
+        fontWeight: "700",
+        color: "#222222",
+        marginBottom: 4,
     },
     resort: {
         fontSize: 16,

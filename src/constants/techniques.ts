@@ -1,7 +1,10 @@
 /**
- * 滑走種別のプリセット定数
+ * 滑走種別のデフォルトオプション
+ * スキー・アルペン・スノーボード向けの基本種別を収録
+ * アプリ初回起動時に technique_options テーブルへシードされる
  */
-export const TECHNIQUE_PRESETS = [
+export const DEFAULT_TECHNIQUE_OPTIONS = [
+    // スキー共通
     "大回り",
     "小回り",
     "コブ",
@@ -9,6 +12,9 @@ export const TECHNIQUE_PRESETS = [
     "パウダー",
     "カービング",
     "ウェーデルン",
-] as const;
-
-export type TechniquePreset = (typeof TECHNIQUE_PRESETS)[number];
+    // スノーボード
+    "フリーライド",
+    "グラトリ",
+    "パーク",
+    "ハーフパイプ",
+];

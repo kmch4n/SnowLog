@@ -70,6 +70,7 @@ export async function importVideo(
         capturedAt,
         skiResortName: metadata.skiResortName,
         memo: metadata.memo,
+        techniques: metadata.techniques.length > 0 ? JSON.stringify(metadata.techniques) : null,
         isFileAvailable: 1,
         createdAt: now,
         updatedAt: now,

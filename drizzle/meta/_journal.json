@@ -8,6 +8,20 @@
       "when": 1773303479833,
       "tag": "0000_absurd_archangel",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1774512585629,
+      "tag": "0001_ordinary_roland_deschain",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1774513903221,
+      "tag": "0002_volatile_puff_adder",
+      "breakpoints": true
     }
   ]
 }

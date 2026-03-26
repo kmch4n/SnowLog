@@ -28,7 +28,11 @@ export function useVideoDetail(videoId: string) {
                 return;
             }
             const tags = await getTagsForVideo(videoId);
-            setVideo({ ...raw, tags });
+            // DB上のtechniquesはJSON文字列なのでパースする
+            const techniques: string[] | null = raw.techniques
+                ? (JSON.parse(raw.techniques) as string[])
+                : null;
+            setVideo({ ...raw, tags, techniques });
         } catch (e) {
             setError(e instanceof Error ? e.message : "動画の取得に失敗しました。");
         } finally {
@@ -39,6 +43,25 @@ export function useVideoDetail(videoId: string) {
     useEffect(() => {
         fetchVideo();
     }, [fetchVideo]);
+
+    /** タイトルを更新する（debounceはUI側で実装） */
+    const updateTitle = useCallback(
+        async (title: string | null) => {
+            await updateVideoMeta(videoId, { title });
+            await fetchVideo();
+        },
+        [videoId, fetchVideo]
+    );
+
+    /** 滑走種別を更新する（即時保存） */
+    const updateTechniques = useCallback(
+        async (techniques: string[]) => {
+            const json = techniques.length > 0 ? JSON.stringify(techniques) : null;
+            await updateVideoMeta(videoId, { techniques: json });
+            await fetchVideo();
+        },
+        [videoId, fetchVideo]
+    );
 
     /** メモを更新する */
     const updateMemo = useCallback(
@@ -83,6 +106,8 @@ export function useVideoDetail(videoId: string) {
         isLoading,
         error,
         refresh: fetchVideo,
+        updateTitle,
+        updateTechniques,
         updateMemo,
         updateSkiResort,
         updateTags,

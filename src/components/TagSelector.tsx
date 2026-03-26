@@ -8,8 +8,7 @@ import {
 } from "react-native";
 
 import { getAllTags, getOrCreateTag } from "../database/repositories/tagRepository";
-import type { Tag, TagType } from "../types";
-import { TECHNIQUE_PRESETS } from "../constants/techniques";
+import type { Tag } from "../types";
 import { TagChip } from "./TagChip";
 
 interface TagSelectorProps {
@@ -17,17 +16,11 @@ interface TagSelectorProps {
     onChange: (tagIds: number[]) => void;
 }
 
-const SECTION_LABELS: Record<TagType, string> = {
-    technique: "滑走種別",
-    skier: "滑走者",
-    custom: "カスタムタグ",
-};
-
 /**
  * タグ選択UIコンポーネント
- * - 滑走種別プリセット
  * - 既存の滑走者タグ
  * - 自由入力カスタムタグ
+ * ※ 滑走種別は TechniqueSelector で独立管理
  */
 export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
     const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -54,12 +47,6 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
         }
     }
 
-    async function handlePresetSelect(name: string) {
-        const tag = await getOrCreateTag(name, "technique");
-        setAllTags((prev) => (prev.find((t) => t.id === tag.id) ? prev : [...prev, tag]));
-        toggleTag(tag);
-    }
-
     async function addCustomTag() {
         const name = customInput.trim();
         if (!name) return;
@@ -77,35 +64,10 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
 
     return (
         <View style={styles.container}>
-            {/* 滑走種別 */}
-            <Text style={styles.sectionLabel}>{SECTION_LABELS.technique}</Text>
-            <View style={styles.chips}>
-                {TECHNIQUE_PRESETS.map((name) => {
-                    const tag = allTags.find((t) => t.name === name && t.type === "technique");
-                    const selected = tag ? isSelected(tag.id) : false;
-                    return (
-                        <TouchableOpacity
-                            key={name}
-                            onPress={() => handlePresetSelect(name)}
-                            style={[styles.presetChip, selected && styles.presetChipSelected]}
-                        >
-                            <Text
-                                style={[
-                                    styles.presetChipText,
-                                    selected && styles.presetChipTextSelected,
-                                ]}
-                            >
-                                {name}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </View>
-
             {/* 滑走者 */}
             {skierTags.length > 0 && (
                 <>
-                    <Text style={styles.sectionLabel}>{SECTION_LABELS.skier}</Text>
+                    <Text style={styles.sectionLabel}>滑走者</Text>
                     <View style={styles.chips}>
                         {skierTags.map((tag) => (
                             <TouchableOpacity key={tag.id} onPress={() => toggleTag(tag)}>
@@ -120,7 +82,7 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
             )}
 
             {/* カスタムタグ */}
-            <Text style={styles.sectionLabel}>{SECTION_LABELS.custom}</Text>
+            <Text style={styles.sectionLabel}>カスタムタグ</Text>
             <View style={styles.customInputRow}>
                 <TextInput
                     style={styles.customInput}
@@ -165,26 +127,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         flexWrap: "wrap",
         gap: 6,
-    },
-    presetChip: {
-        borderRadius: 100,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        backgroundColor: "#F0F0F0",
-        borderWidth: 1,
-        borderColor: "#E0E0E0",
-    },
-    presetChipSelected: {
-        backgroundColor: "#1A3A5C",
-        borderColor: "#1A3A5C",
-    },
-    presetChipText: {
-        fontSize: 13,
-        color: "#333333",
-    },
-    presetChipTextSelected: {
-        color: "#FFFFFF",
-        fontWeight: "600",
     },
     customInputRow: {
         flexDirection: "row",

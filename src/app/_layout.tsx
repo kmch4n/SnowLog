@@ -1,10 +1,25 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { Stack } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, useColorScheme, View } from "react-native";
 
 import { db } from "@/database";
+import {
+    getAllTechniqueOptions,
+    insertTechniqueOption,
+} from "@/database/repositories/techniqueOptionRepository";
+import { DEFAULT_TECHNIQUE_OPTIONS } from "@/constants/techniques";
 import migrations from "../../drizzle/migrations";
+
+/** 初回起動時にデフォルトの滑走種別を登録する */
+async function seedTechniqueOptions() {
+    const existing = await getAllTechniqueOptions();
+    if (existing.length > 0) return;
+    for (const name of DEFAULT_TECHNIQUE_OPTIONS) {
+        await insertTechniqueOption(name);
+    }
+}
 
 /**
  * ルートレイアウト
@@ -13,6 +28,12 @@ import migrations from "../../drizzle/migrations";
 export default function RootLayout() {
     const colorScheme = useColorScheme();
     const { success, error } = useMigrations(db, migrations);
+
+    useEffect(() => {
+        if (success) {
+            seedTechniqueOptions();
+        }
+    }, [success]);
 
     if (error) {
         return (
@@ -49,6 +70,15 @@ export default function RootLayout() {
                     name="video/[id]"
                     options={{
                         title: "動画詳細",
+                        headerStyle: { backgroundColor: "#1A3A5C" },
+                        headerTintColor: "#FFFFFF",
+                        headerTitleStyle: { fontWeight: "700" },
+                    }}
+                />
+                <Stack.Screen
+                    name="settings/techniques"
+                    options={{
+                        title: "滑走種別の管理",
                         headerStyle: { backgroundColor: "#1A3A5C" },
                         headerTintColor: "#FFFFFF",
                         headerTitleStyle: { fontWeight: "700" },

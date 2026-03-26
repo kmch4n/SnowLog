@@ -61,10 +61,15 @@ export async function getVideosByFilter(options: FilterOptions = {}) {
         .orderBy(desc(videos.capturedAt));
 }
 
-/** メモとスキー場名を更新する */
+/** メタデータ（メモ・スキー場名・タイトル・滑走種別）を更新する */
 export async function updateVideoMeta(
     id: string,
-    data: { memo?: string; skiResortName?: string | null }
+    data: {
+        memo?: string;
+        skiResortName?: string | null;
+        title?: string | null;
+        techniques?: string | null; // JSON配列文字列をそのまま受け取る
+    }
 ): Promise<void> {
     await db
         .update(videos)

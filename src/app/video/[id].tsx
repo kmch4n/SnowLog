@@ -1,6 +1,6 @@
 import { useVideoPlayer, VideoView } from "expo-video";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { getAssetInfo, requestMediaPermissions } from "@/services/mediaService";
 import { updateFileAvailability } from "@/database/repositories/videoRepository";
@@ -19,47 +19,60 @@ import {
 import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagChip } from "@/components/TagChip";
 import { TagSelector } from "@/components/TagSelector";
-import { exportAllToJSON } from "@/services/exportService";
+import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
 import { formatDate, formatDuration } from "@/utils/dateUtils";
 
 /**
  * 動画詳細画面
- * 動画再生・メタデータ表示・メモ編集・タグ編集・エクスポートを提供する
+ * 動画再生・メタデータ表示・メモ編集・タグ編集を提供する
  */
 export default function VideoDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const navigation = useNavigation();
     const router = useRouter();
-    const { video, isLoading, error, refresh, updateMemo, updateSkiResort, updateTags, removeVideo } = useVideoDetail(id);
+    const { video, isLoading, error, refresh, updateTitle, updateTechniques, updateMemo, updateSkiResort, updateTags, removeVideo } = useVideoDetail(id);
 
+    const [titleInput, setTitleInput] = useState("");
+    const [titleSaveStatus, setTitleSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [memoInput, setMemoInput] = useState("");
     const [memoSaveStatus, setMemoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [isEditingTags, setIsEditingTags] = useState(false);
     const [tagIdInput, setTagIdInput] = useState<number[]>([]);
-    const [isExporting, setIsExporting] = useState(false);
     const [videoUri, setVideoUri] = useState<string | null>(null);
 
-    // ヘッダーにエクスポートボタンを設置
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            headerRight: () => (
-                <TouchableOpacity
-                    onPress={handleExport}
-                    style={{ marginRight: 16 }}
-                    disabled={isExporting}
-                >
-                    <Text style={{ color: "#FFFFFF", fontSize: 14 }}>
-                        {isExporting ? "..." : "書き出し"}
-                    </Text>
-                </TouchableOpacity>
-            ),
-        });
-    }, [navigation, isExporting]);
+    // タイトル自動保存用の debounce タイマー
+    const titleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isInitialTitleLoad = useRef(true);
 
     // メモ自動保存用の debounce タイマー
     const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isInitialMemoLoad = useRef(true);
+
+    // タイトルが変更されたら1秒後に自動保存
+    useEffect(() => {
+        if (isInitialTitleLoad.current) {
+            isInitialTitleLoad.current = false;
+            return;
+        }
+
+        if (titleTimerRef.current) {
+            clearTimeout(titleTimerRef.current);
+        }
+
+        setTitleSaveStatus("idle");
+        titleTimerRef.current = setTimeout(async () => {
+            setTitleSaveStatus("saving");
+            await updateTitle(titleInput.trim() || null);
+            setTitleSaveStatus("saved");
+            setTimeout(() => setTitleSaveStatus("idle"), 2000);
+        }, 1000);
+
+        return () => {
+            if (titleTimerRef.current) {
+                clearTimeout(titleTimerRef.current);
+            }
+        };
+    }, [titleInput]);
 
     // メモが変更されたら1秒後に自動保存
     useEffect(() => {
@@ -91,9 +104,12 @@ export default function VideoDetailScreen() {
 
     useEffect(() => {
         if (!video) return;
+        isInitialTitleLoad.current = true;
+        setTitleInput(video.title ?? "");
         isInitialMemoLoad.current = true;
         setMemoInput(video.memo);
-        setTagIdInput(video.tags.map((t) => t.id));
+        // technique タグは TechniqueSelector で管理するため除外する
+        setTagIdInput(video.tags.filter((t) => t.type !== "technique").map((t) => t.id));
 
         // 元ファイルが存在する場合のみ再生用 URI を取得する
         if (video.isFileAvailable === 1) {
@@ -143,17 +159,6 @@ export default function VideoDetailScreen() {
         setIsEditingTags(false);
     }, [tagIdInput, updateTags]);
 
-    const handleExport = useCallback(async () => {
-        setIsExporting(true);
-        try {
-            await exportAllToJSON();
-        } catch (e) {
-            Alert.alert("書き出し失敗", e instanceof Error ? e.message : "エラーが発生しました");
-        } finally {
-            setIsExporting(false);
-        }
-    }, []);
-
     if (isLoading) {
         return (
             <View style={styles.center}>
@@ -191,9 +196,25 @@ export default function VideoDetailScreen() {
 
                 {/* メタデータ */}
                 <View style={styles.metaSection}>
-                    <Text style={styles.filename} numberOfLines={1}>
-                        {video.filename}
-                    </Text>
+                    {/* タイトル（編集可能・未設定時はfilenameをplaceholderとして表示） */}
+                    <View style={styles.titleRow}>
+                        <TextInput
+                            style={styles.titleInput}
+                            value={titleInput}
+                            onChangeText={setTitleInput}
+                            placeholder={video.filename}
+                            placeholderTextColor="#AAAAAA"
+                            returnKeyType="done"
+                            numberOfLines={1}
+                        />
+                        <Text style={styles.saveStatus}>
+                            {titleSaveStatus === "saving"
+                                ? "保存中..."
+                                : titleSaveStatus === "saved"
+                                  ? "保存済み"
+                                  : ""}
+                        </Text>
+                    </View>
                     <Text style={styles.metaRow}>
                         📅 {formatDate(video.capturedAt)}　⏱ {formatDuration(video.duration)}
                     </Text>
@@ -206,6 +227,15 @@ export default function VideoDetailScreen() {
                             onSelect={handleSaveSkiResort}
                         />
                     </View>
+                </View>
+
+                {/* 滑走種別 */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>滑走種別</Text>
+                    <TechniqueSelector
+                        selected={video.techniques ?? []}
+                        onChange={updateTechniques}
+                    />
                 </View>
 
                 {/* タグ */}
@@ -229,8 +259,10 @@ export default function VideoDetailScreen() {
                         </>
                     ) : (
                         <View style={styles.tagList}>
-                            {video.tags.length > 0 ? (
-                                video.tags.map((tag) => <TagChip key={tag.id} tag={tag} />)
+                            {video.tags.filter((t) => t.type !== "technique").length > 0 ? (
+                                video.tags
+                                    .filter((t) => t.type !== "technique")
+                                    .map((tag) => <TagChip key={tag.id} tag={tag} />)
                             ) : (
                                 <Text style={styles.emptyTag}>タグなし</Text>
                             )}
@@ -316,11 +348,17 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 8,
     },
-    filename: {
+    titleRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 4,
+    },
+    titleInput: {
+        flex: 1,
         fontSize: 16,
         fontWeight: "700",
         color: "#222222",
-        marginBottom: 4,
+        padding: 0,
     },
     metaRow: {
         fontSize: 13,

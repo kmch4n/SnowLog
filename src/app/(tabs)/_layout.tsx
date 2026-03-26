@@ -32,6 +32,13 @@ export default function TabsLayout() {
                     tabBarLabel: "検索",
                 }}
             />
+            <Tabs.Screen
+                name="settings"
+                options={{
+                    title: "設定",
+                    tabBarLabel: "設定",
+                }}
+            />
         </Tabs>
     );
 }

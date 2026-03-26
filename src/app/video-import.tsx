@@ -17,6 +17,7 @@ import {
 
 import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
+import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { getVideoByAssetId } from "@/database/repositories/videoRepository";
 import { importVideo } from "@/services/importService";
 import { requestMediaPermissions } from "@/services/mediaService";
@@ -36,6 +37,7 @@ export default function VideoImportScreen() {
 
     const [selectedAsset, setSelectedAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
     const [skiResortName, setSkiResortName] = useState<string | null>(null);
+    const [techniques, setTechniques] = useState<string[]>([]);
     const [tagIds, setTagIds] = useState<number[]>([]);
     const [memo, setMemo] = useState("");
     const [isSaving, setIsSaving] = useState(false);
@@ -111,7 +113,7 @@ export default function VideoImportScreen() {
 
             await importVideo(
                 mediaAsset as any,
-                { skiResortName, memo, tagIds },
+                { skiResortName, memo, tagIds, techniques },
                 { pickerUri: selectedAsset.uri }
             );
 
@@ -177,6 +179,12 @@ export default function VideoImportScreen() {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>スキー場</Text>
                     <SkiResortSearch value={skiResortName} onSelect={setSkiResortName} />
+                </View>
+
+                {/* 滑走種別 */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>滑走種別</Text>
+                    <TechniqueSelector selected={techniques} onChange={setTechniques} />
                 </View>
 
                 {/* タグ */}

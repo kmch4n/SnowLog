@@ -22,6 +22,10 @@ export interface Video {
     capturedAt: number; // Unix timestamp
     skiResortName: string | null;
     memo: string;
+    // ユーザーが設定した任意のタイトル（null の場合は filename にフォールバック）
+    title: string | null;
+    // 滑走種別プリセットの選択状態（リポジトリ層でJSONパース済み）
+    techniques: string[] | null;
     // 元ファイルが存在するかどうか（1: 存在する、0: 削除済み）
     isFileAvailable: number;
     createdAt: number;
@@ -58,4 +62,5 @@ export interface ImportMetadata {
     skiResortName: string | null;
     memo: string;
     tagIds: number[];
+    techniques: string[];
 }

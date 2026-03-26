@@ -1,0 +1,87 @@
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+import { getAllTechniqueOptions } from "../database/repositories/techniqueOptionRepository";
+import type { TechniqueOptionSelect } from "../database/schema";
+
+interface TechniqueSelectorProps {
+    selected: string[];
+    onChange: (techniques: string[]) => void;
+}
+
+/**
+ * 滑走種別プリセット選択コンポーネント
+ * 完全制御コンポーネント。選択肢は technique_options テーブルから取得する
+ */
+export function TechniqueSelector({ selected, onChange }: TechniqueSelectorProps) {
+    const [options, setOptions] = useState<TechniqueOptionSelect[]>([]);
+
+    useEffect(() => {
+        getAllTechniqueOptions().then(setOptions);
+    }, []);
+
+    function toggle(name: string) {
+        if (selected.includes(name)) {
+            onChange(selected.filter((t) => t !== name));
+        } else {
+            onChange([...selected, name]);
+        }
+    }
+
+    if (options.length === 0) {
+        return (
+            <Text style={styles.empty}>設定から滑走種別を追加してください</Text>
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            {options.map((opt) => {
+                const isSelected = selected.includes(opt.name);
+                return (
+                    <TouchableOpacity
+                        key={opt.id}
+                        onPress={() => toggle(opt.name)}
+                        style={[styles.chip, isSelected && styles.chipSelected]}
+                    >
+                        <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                            {opt.name}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 6,
+    },
+    chip: {
+        borderRadius: 100,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        backgroundColor: "#F0F0F0",
+        borderWidth: 1,
+        borderColor: "#E0E0E0",
+    },
+    chipSelected: {
+        backgroundColor: "#1A3A5C",
+        borderColor: "#1A3A5C",
+    },
+    chipText: {
+        fontSize: 13,
+        color: "#333333",
+    },
+    chipTextSelected: {
+        color: "#FFFFFF",
+        fontWeight: "600",
+    },
+    empty: {
+        fontSize: 13,
+        color: "#AAAAAA",
+    },
+});
