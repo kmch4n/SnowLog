@@ -3,13 +3,13 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
 
 import { getAllTags } from "../database/repositories/tagRepository";
 import type { FilterOptions, Tag } from "../types";
+import { SkiResortSearch } from "./SkiResortSearch";
 import { TagChip } from "./TagChip";
 
 interface FilterBarProps {
@@ -23,7 +23,6 @@ interface FilterBarProps {
  */
 export function FilterBar({ filter, onChange }: FilterBarProps) {
     const [allTags, setAllTags] = useState<Tag[]>([]);
-    const [resortInput, setResortInput] = useState(filter.skiResortName ?? "");
 
     useEffect(() => {
         getAllTags().then(setAllTags);
@@ -37,15 +36,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
         onChange({ ...filter, tagIds: updated.length > 0 ? updated : undefined });
     }
 
-    function applyResortFilter() {
-        onChange({
-            ...filter,
-            skiResortName: resortInput.trim() || undefined,
-        });
-    }
-
     function clearAll() {
-        setResortInput("");
         onChange({});
     }
 
@@ -55,19 +46,14 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
 
     return (
         <View style={styles.container}>
-            {/* スキー場名フィルター */}
+            {/* スキー場フィルター */}
             <View style={styles.resortRow}>
-                <TextInput
-                    style={styles.resortInput}
-                    value={resortInput}
-                    onChangeText={setResortInput}
-                    placeholder="スキー場で絞り込み"
-                    onSubmitEditing={applyResortFilter}
-                    returnKeyType="search"
+                <SkiResortSearch
+                    value={filter.skiResortName ?? null}
+                    onSelect={(name) =>
+                        onChange({ ...filter, skiResortName: name ?? undefined })
+                    }
                 />
-                <TouchableOpacity style={styles.searchButton} onPress={applyResortFilter}>
-                    <Text style={styles.searchButtonText}>検索</Text>
-                </TouchableOpacity>
             </View>
 
             {/* タグフィルター */}
@@ -116,30 +102,7 @@ const styles = StyleSheet.create({
         borderBottomColor: "#F0F0F0",
     },
     resortRow: {
-        flexDirection: "row",
-        gap: 8,
         marginBottom: 8,
-    },
-    resortInput: {
-        flex: 1,
-        borderWidth: 1,
-        borderColor: "#E0E0E0",
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        fontSize: 14,
-    },
-    searchButton: {
-        backgroundColor: "#1A3A5C",
-        borderRadius: 8,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        justifyContent: "center",
-    },
-    searchButtonText: {
-        color: "#FFFFFF",
-        fontSize: 13,
-        fontWeight: "600",
     },
     tagScroll: {
         marginBottom: 4,

@@ -1,19 +1,25 @@
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
-    FlatList,
+    SectionList,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
 
-import { VideoCard } from "@/components/VideoCard";
+import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useVideos } from "@/hooks/useVideos";
+import type { VideoWithTags } from "@/types";
+
+interface VideoSection {
+    title: string;
+    data: VideoWithTags[];
+}
 
 /**
  * ホーム画面
- * インポート済み動画の一覧と、インポートボタンを表示する
+ * スキー場別にグループ化した動画一覧を表示する
  */
 export default function HomeScreen() {
     const router = useRouter();
@@ -30,14 +36,40 @@ export default function HomeScreen() {
         router.push("/video-import");
     }, [router]);
 
+    /** スキー場別にグループ化し、最新動画が新しい順にセクションを並べる */
+    const sections = useMemo((): VideoSection[] => {
+        const map = new Map<string, VideoWithTags[]>();
+        for (const video of videos) {
+            const key = video.skiResortName ?? "スキー場未設定";
+            if (!map.has(key)) map.set(key, []);
+            map.get(key)!.push(video);
+        }
+        return Array.from(map.entries())
+            .sort((a, b) => (b[1][0]?.capturedAt ?? 0) - (a[1][0]?.capturedAt ?? 0))
+            .map(([title, data]) => ({ title, data }));
+    }, [videos]);
+
     return (
         <View style={styles.container}>
-            <FlatList
-                data={videos}
+            <SectionList
+                sections={sections}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                    <VideoCard video={item} onPress={() => handleVideoPress(item.id)} />
+                    <VideoCardCompact
+                        video={item}
+                        onPress={() => handleVideoPress(item.id)}
+                    />
                 )}
+                renderSectionHeader={({ section }) => (
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>
+                            📍 {section.title}
+                        </Text>
+                        <Text style={styles.sectionCount}>{section.data.length}件</Text>
+                    </View>
+                )}
+                renderSectionFooter={() => <View style={styles.sectionFooter} />}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
                 onRefresh={refresh}
                 refreshing={isLoading && videos.length > 0}
                 contentContainerStyle={styles.listContent}
@@ -67,8 +99,34 @@ const styles = StyleSheet.create({
         backgroundColor: "#F5F5F5",
     },
     listContent: {
-        paddingTop: 8,
         paddingBottom: 100,
+    },
+    sectionHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F5F5F5",
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 6,
+    },
+    sectionTitle: {
+        flex: 1,
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#333333",
+    },
+    sectionCount: {
+        fontSize: 13,
+        color: "#888888",
+    },
+    sectionFooter: {
+        height: 8,
+        backgroundColor: "#F5F5F5",
+    },
+    separator: {
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: "#F0F0F0",
+        marginLeft: 16 + 72 + 12, // サムネイル分インデント
     },
     empty: {
         flex: 1,

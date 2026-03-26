@@ -27,6 +27,13 @@ export default function SearchScreen() {
         <View style={styles.container}>
             <FilterBar filter={filter} onChange={setFilter} />
 
+            {/* 検索結果件数 */}
+            {!isLoading && (
+                <View style={styles.resultCountRow}>
+                    <Text style={styles.resultCount}>{videos.length}件</Text>
+                </View>
+            )}
+
             <FlatList
                 data={videos}
                 keyExtractor={(item) => item.id}
@@ -54,6 +61,17 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F5F5F5",
+    },
+    resultCountRow: {
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        backgroundColor: "#FFFFFF",
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: "#F0F0F0",
+    },
+    resultCount: {
+        fontSize: 12,
+        color: "#888888",
     },
     listContent: {
         paddingTop: 8,

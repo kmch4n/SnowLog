@@ -21,12 +21,18 @@ export function useVideos(filter?: FilterOptions) {
         try {
             const rawVideos = await getVideosByFilter(filter);
 
-            // タグ情報を付加
+            // タグ情報を付加し、techniques を JSON 文字列からパース
             const videosWithTags = await Promise.all(
-                rawVideos.map(async (video) => ({
-                    ...video,
-                    tags: await getTagsForVideo(video.id),
-                }))
+                rawVideos.map(async (video) => {
+                    const rawTechniques = video.techniques as string | null;
+                    return {
+                        ...video,
+                        tags: await getTagsForVideo(video.id),
+                        techniques: rawTechniques
+                            ? (JSON.parse(rawTechniques) as string[])
+                            : null,
+                    };
+                })
             );
 
             setVideos(videosWithTags);

@@ -7,8 +7,12 @@ import * as MediaLibrary from "expo-media-library";
 
 /** フォトライブラリの権限を要求する */
 export async function requestMediaPermissions(): Promise<boolean> {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    return status === "granted";
+    try {
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        return status === "granted";
+    } catch {
+        return false;
+    }
 }
 
 /** 現在の権限状態を確認する */

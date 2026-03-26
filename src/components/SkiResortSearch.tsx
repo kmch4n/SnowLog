@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     ScrollView,
     StyleSheet,
@@ -25,6 +25,11 @@ const MAX_RESULTS = 20;
 export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
     const [query, setQuery] = useState(value ?? "");
     const [isFocused, setIsFocused] = useState(false);
+
+    // 親から value が変化したとき（clearAll など）に内部状態を同期する
+    useEffect(() => {
+        setQuery(value ?? "");
+    }, [value]);
 
     const suggestions = useMemo<SkiResort[]>(() => {
         if (!query.trim()) return [];

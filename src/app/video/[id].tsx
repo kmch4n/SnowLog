@@ -114,13 +114,19 @@ export default function VideoDetailScreen() {
         // 元ファイルが存在する場合のみ再生用 URI を取得する
         if (video.isFileAvailable === 1) {
             (async () => {
-                await requestMediaPermissions();
-                const info = await getAssetInfo(video.assetId);
-                if (info?.uri) {
-                    // localUri（file:///var/mobile/Media/DCIM/...）は iOS のセキュリティで
-                    // AVFoundation から直接読めないため、Photos フレームワークの uri を使用する
-                    setVideoUri(info.uri);
-                } else {
+                try {
+                    await requestMediaPermissions();
+                    const info = await getAssetInfo(video.assetId);
+                    if (info?.uri) {
+                        // localUri（file:///var/mobile/Media/DCIM/...）は iOS のセキュリティで
+                        // AVFoundation から直接読めないため、Photos フレームワークの uri を使用する
+                        setVideoUri(info.uri);
+                    } else {
+                        await updateFileAvailability(video.id, false);
+                        refresh();
+                    }
+                } catch {
+                    // Photos library へのアクセス失敗（PHPhotosErrorDomain 等）→ファイルなし扱い
                     await updateFileAvailability(video.id, false);
                     refresh();
                 }
