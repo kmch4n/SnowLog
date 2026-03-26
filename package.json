@@ -9,7 +9,9 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "db:generate": "drizzle-kit generate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "postinstall": "node scripts/patchImageUtilsCache.js",
+    "eas-build-post-install": "node scripts/patchImageUtilsCache.js"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.7.3",
