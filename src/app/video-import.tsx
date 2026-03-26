@@ -74,8 +74,14 @@ export default function VideoImportScreen() {
             if (existing) {
                 Alert.alert(
                     "インポート済み",
-                    "この動画は既にインポートされています。",
-                    [{ text: "OK" }]
+                    "この動画は既にインポートされています。編集画面を開きますか？",
+                    [
+                        { text: "キャンセル", style: "cancel" },
+                        {
+                            text: "編集する",
+                            onPress: () => router.replace(`/video/${existing.id}` as any),
+                        },
+                    ]
                 );
                 return;
             }

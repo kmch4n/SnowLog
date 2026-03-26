@@ -29,6 +29,31 @@ export function formatDateShort(unixTimestamp: number): string {
 }
 
 /**
+ * Unix timestamp（秒）を日本語形式の日時文字列に変換する
+ * 例: 1735689600 → "2025年1月1日 14:30"
+ */
+export function formatDateTime(unixTimestamp: number): string {
+    const date = new Date(unixTimestamp * 1000);
+    return date.toLocaleString("ja-JP", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+/**
+ * 小数秒を "1分12.5秒" 形式に変換する
+ * 例: 72.483 → "1分12.5秒"
+ */
+export function formatDurationDecimal(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = (seconds % 60).toFixed(1);
+    return m > 0 ? `${m}分${s}秒` : `${s}秒`;
+}
+
+/**
  * 秒数を "mm:ss" 形式に変換する
  * 例: 185 → "3:05"
  */

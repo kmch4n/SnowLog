@@ -7,6 +7,7 @@ import { updateFileAvailability } from "@/database/repositories/videoRepository"
 import {
     Alert,
     KeyboardAvoidingView,
+    Linking,
     Platform,
     ScrollView,
     StyleSheet,
@@ -21,7 +22,7 @@ import { TagChip } from "@/components/TagChip";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
-import { formatDate, formatDuration } from "@/utils/dateUtils";
+import { formatDateTime, formatDuration, formatDurationDecimal } from "@/utils/dateUtils";
 
 /**
  * 動画詳細画面
@@ -39,6 +40,11 @@ export default function VideoDetailScreen() {
     const [isEditingTags, setIsEditingTags] = useState(false);
     const [tagIdInput, setTagIdInput] = useState<number[]>([]);
     const [videoUri, setVideoUri] = useState<string | null>(null);
+    const [assetInfoMeta, setAssetInfoMeta] = useState<{
+        width: number;
+        height: number;
+        duration: number;
+    } | null>(null);
 
     // タイトル自動保存用の debounce タイマー
     const titleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -111,6 +117,8 @@ export default function VideoDetailScreen() {
         // technique タグは TechniqueSelector で管理するため除外する
         setTagIdInput(video.tags.filter((t) => t.type !== "technique").map((t) => t.id));
 
+        setAssetInfoMeta(null);
+
         // 元ファイルが存在する場合のみ再生用 URI を取得する
         if (video.isFileAvailable === 1) {
             (async () => {
@@ -121,6 +129,7 @@ export default function VideoDetailScreen() {
                         // localUri（file:///var/mobile/Media/DCIM/...）は iOS のセキュリティで
                         // AVFoundation から直接読めないため、Photos フレームワークの uri を使用する
                         setVideoUri(info.uri);
+                        setAssetInfoMeta({ width: info.width, height: info.height, duration: info.duration });
                     } else {
                         await updateFileAvailability(video.id, false);
                         refresh();
@@ -222,7 +231,16 @@ export default function VideoDetailScreen() {
                         </Text>
                     </View>
                     <Text style={styles.metaRow}>
-                        📅 {formatDate(video.capturedAt)}　⏱ {formatDuration(video.duration)}
+                        📅 {formatDateTime(video.capturedAt)}
+                    </Text>
+                    <Text style={styles.metaRow}>
+                        ⏱{" "}
+                        {assetInfoMeta
+                            ? formatDurationDecimal(assetInfoMeta.duration)
+                            : formatDuration(video.duration)}
+                        {assetInfoMeta
+                            ? `　📐 ${assetInfoMeta.width} × ${assetInfoMeta.height}`
+                            : ""}
                     </Text>
 
                     {/* スキー場名（編集可能） */}
@@ -299,6 +317,27 @@ export default function VideoDetailScreen() {
                         textAlignVertical="top"
                     />
                 </View>
+
+                {/* 写真アプリで開くボタン（ファイルが存在する場合のみ） */}
+                {video.isFileAvailable === 1 && (
+                    <TouchableOpacity
+                        style={styles.openInPhotosButton}
+                        onPress={async () => {
+                            const url = `ph://${video.assetId}`;
+                            const canOpen = await Linking.canOpenURL(url);
+                            if (canOpen) {
+                                await Linking.openURL(url);
+                            } else {
+                                Alert.alert(
+                                    "写真アプリを開けません",
+                                    "写真アプリへのアクセスが利用できません。"
+                                );
+                            }
+                        }}
+                    >
+                        <Text style={styles.openInPhotosButtonText}>写真アプリで開く</Text>
+                    </TouchableOpacity>
+                )}
 
                 {/* 削除ボタン */}
                 <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
@@ -435,6 +474,20 @@ const styles = StyleSheet.create({
     saveStatus: {
         fontSize: 12,
         color: "#888888",
+    },
+    openInPhotosButton: {
+        marginHorizontal: 16,
+        marginTop: 8,
+        paddingVertical: 14,
+        alignItems: "center",
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "#1A3A5C",
+    },
+    openInPhotosButtonText: {
+        fontSize: 14,
+        color: "#1A3A5C",
+        fontWeight: "600",
     },
     deleteButton: {
         marginHorizontal: 16,
