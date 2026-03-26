@@ -59,6 +59,7 @@ export interface FilterOptions {
 
 // 動画インポート時に必要なメタデータ
 export interface ImportMetadata {
+    title: string | null;
     skiResortName: string | null;
     memo: string;
     tagIds: number[];

@@ -8,6 +8,7 @@ import {
     View,
 } from "react-native";
 
+import { getFavoriteResorts } from "../database/repositories/favoriteResortRepository";
 import SKI_RESORTS from "../constants/skiResorts.json";
 import type { SkiResort } from "../types";
 
@@ -25,11 +26,17 @@ const MAX_RESULTS = 20;
 export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
     const [query, setQuery] = useState(value ?? "");
     const [isFocused, setIsFocused] = useState(false);
+    const [favorites, setFavorites] = useState<string[]>([]);
 
     // 親から value が変化したとき（clearAll など）に内部状態を同期する
     useEffect(() => {
         setQuery(value ?? "");
     }, [value]);
+
+    // お気に入りスキー場をロード
+    useEffect(() => {
+        getFavoriteResorts().then(setFavorites);
+    }, []);
 
     const suggestions = useMemo<SkiResort[]>(() => {
         if (!query.trim()) return [];
@@ -54,6 +61,11 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
         onSelect(null);
     }
 
+    function handleFavoriteSelect(name: string) {
+        setQuery(name);
+        onSelect(name);
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.inputRow}>
@@ -74,6 +86,27 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
                     </TouchableOpacity>
                 )}
             </View>
+
+            {/* お気に入りチップ（query が空のときのみ表示） */}
+            {!query && favorites.length > 0 && (
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.favoriteScroll}
+                    contentContainerStyle={styles.favoriteScrollContent}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {favorites.map((name) => (
+                        <TouchableOpacity
+                            key={name}
+                            style={styles.favoriteChip}
+                            onPress={() => handleFavoriteSelect(name)}
+                        >
+                            <Text style={styles.favoriteChipText}>⭐ {name}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            )}
 
             {/* サジェストリスト */}
             {isFocused && suggestions.length > 0 && (
@@ -126,6 +159,25 @@ const styles = StyleSheet.create({
     clearText: {
         fontSize: 18,
         color: "#AAAAAA",
+    },
+    favoriteScroll: {
+        marginTop: 8,
+    },
+    favoriteScrollContent: {
+        gap: 6,
+    },
+    favoriteChip: {
+        backgroundColor: "#EBF2FA",
+        borderRadius: 16,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderWidth: 1,
+        borderColor: "#C8DCEF",
+    },
+    favoriteChipText: {
+        fontSize: 13,
+        color: "#1A3A5C",
+        fontWeight: "600",
     },
     suggestionList: {
         position: "absolute",

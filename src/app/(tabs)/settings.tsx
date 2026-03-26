@@ -13,6 +13,16 @@ const SETTINGS_ITEMS: SettingsItem[] = [
         description: "種別の追加・削除",
         route: "/settings/techniques",
     },
+    {
+        label: "お気に入りスキー場",
+        description: "よく行くスキー場を登録",
+        route: "/settings/favorite-resorts",
+    },
+    {
+        label: "タグの管理",
+        description: "カスタムタグの追加・削除",
+        route: "/settings/tags",
+    },
 ];
 
 /**

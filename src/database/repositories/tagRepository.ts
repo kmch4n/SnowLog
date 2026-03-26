@@ -78,3 +78,12 @@ export async function setTagsForVideo(videoId: string, tagIds: number[]): Promis
     const rows: VideoTagInsert[] = tagIds.map((tagId) => ({ videoId, tagId }));
     await db.insert(videoTags).values(rows);
 }
+
+/**
+ * カスタムタグを削除する
+ * SQLite の外部キー制約が既定で無効のため、video_tags を手動で削除してから tags を削除する
+ */
+export async function deleteCustomTag(tagId: number): Promise<void> {
+    await db.delete(videoTags).where(eq(videoTags.tagId, tagId));
+    await db.delete(tags).where(and(eq(tags.id, tagId), eq(tags.type, "custom")));
+}

@@ -12,62 +12,62 @@ import {
 } from "react-native";
 
 import {
-    deleteTechniqueOption,
-    getAllTechniqueOptions,
-    insertTechniqueOption,
-} from "@/database/repositories/techniqueOptionRepository";
-import type { TechniqueOptionSelect } from "@/database/schema";
+    deleteCustomTag,
+    getAllTags,
+    getOrCreateTag,
+} from "@/database/repositories/tagRepository";
+import type { Tag } from "@/types";
 
 /**
- * 滑走種別管理画面
- * 種別の追加・削除を行う
+ * カスタムタグ管理画面
+ * タグの追加・削除を行う
  */
-export default function TechniquesSettingsScreen() {
-    const [options, setOptions] = useState<TechniqueOptionSelect[]>([]);
+export default function TagsSettingsScreen() {
+    const [customTags, setCustomTags] = useState<Tag[]>([]);
     const [input, setInput] = useState("");
 
-    const loadOptions = useCallback(async () => {
-        const data = await getAllTechniqueOptions();
-        setOptions(data);
+    const loadTags = useCallback(async () => {
+        const all = await getAllTags();
+        setCustomTags(all.filter((t) => t.type === "custom"));
     }, []);
 
     useEffect(() => {
-        loadOptions();
-    }, [loadOptions]);
+        loadTags();
+    }, [loadTags]);
 
     const handleAdd = useCallback(async () => {
         const name = input.trim();
         if (!name) return;
 
-        if (options.some((o) => o.name === name)) {
-            Alert.alert("追加できません", "同じ名前の種別がすでに存在します");
+        if (customTags.some((t) => t.name === name)) {
+            Alert.alert("追加できません", "同じ名前のタグがすでに存在します。");
             return;
         }
 
-        await insertTechniqueOption(name);
+        await getOrCreateTag(name, "custom");
         setInput("");
-        await loadOptions();
-    }, [input, options, loadOptions]);
+        await loadTags();
+    }, [input, customTags, loadTags]);
 
     const handleDelete = useCallback(
-        (option: TechniqueOptionSelect) => {
+        (tag: Tag) => {
             Alert.alert(
-                "削除の確認",
-                `「${option.name}」を削除しますか？\n（この種別が設定された動画には影響しません）`,
+                "タグを削除",
+                `「${tag.name}」を削除しますか？\nこの操作は取り消せません。このタグが付いた動画からも削除されます。`,
                 [
                     { text: "キャンセル", style: "cancel" },
                     {
                         text: "削除",
                         style: "destructive",
                         onPress: async () => {
-                            await deleteTechniqueOption(option.id);
-                            await loadOptions();
+                            await deleteCustomTag(tag.id);
+                            await loadTags();
                         },
                     },
                 ]
             );
         },
-        [loadOptions]
+        [loadTags]
     );
 
     return (
@@ -76,10 +76,12 @@ export default function TechniquesSettingsScreen() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <FlatList
-                data={options}
+                data={customTags}
                 keyExtractor={(item) => String(item.id)}
                 ListEmptyComponent={
-                    <Text style={styles.empty}>種別がありません。下のフォームから追加してください。</Text>
+                    <Text style={styles.empty}>
+                        カスタムタグがありません。下のフォームから追加してください。
+                    </Text>
                 }
                 renderItem={({ item }) => (
                     <View style={styles.row}>
@@ -102,7 +104,7 @@ export default function TechniquesSettingsScreen() {
                     style={styles.addInput}
                     value={input}
                     onChangeText={setInput}
-                    placeholder="種別名を入力..."
+                    placeholder="タグ名を入力..."
                     returnKeyType="done"
                     onSubmitEditing={handleAdd}
                 />

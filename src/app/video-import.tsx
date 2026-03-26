@@ -36,6 +36,7 @@ export default function VideoImportScreen() {
     const router = useRouter();
 
     const [selectedAsset, setSelectedAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
+    const [title, setTitle] = useState("");
     const [skiResortName, setSkiResortName] = useState<string | null>(null);
     const [techniques, setTechniques] = useState<string[]>([]);
     const [tagIds, setTagIds] = useState<number[]>([]);
@@ -113,7 +114,7 @@ export default function VideoImportScreen() {
 
             await importVideo(
                 mediaAsset as any,
-                { skiResortName, memo, tagIds, techniques },
+                { title: title.trim() || null, skiResortName, memo, tagIds, techniques },
                 { pickerUri: selectedAsset.uri }
             );
 
@@ -174,6 +175,20 @@ export default function VideoImportScreen() {
                         </View>
                     )}
                 </TouchableOpacity>
+
+                {/* タイトル */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>タイトル</Text>
+                    <TextInput
+                        style={styles.titleInput}
+                        value={title}
+                        onChangeText={setTitle}
+                        placeholder={selectedAsset?.fileName ?? "タイトルを入力..."}
+                        placeholderTextColor="#AAAAAA"
+                        returnKeyType="done"
+                        numberOfLines={1}
+                    />
+                </View>
 
                 {/* スキー場名 */}
                 <View style={styles.section}>
@@ -307,6 +322,16 @@ const styles = StyleSheet.create({
     },
     tagSelectorContainer: {
         minHeight: 120,
+    },
+    titleInput: {
+        backgroundColor: "#FFFFFF",
+        borderWidth: 1,
+        borderColor: "#E0E0E0",
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 15,
+        color: "#222222",
     },
     memoInput: {
         backgroundColor: "#FFFFFF",

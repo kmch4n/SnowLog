@@ -68,6 +68,7 @@ export async function importVideo(
         thumbnailUri,
         duration: Math.round(asset.duration),
         capturedAt,
+        title: metadata.title || null,
         skiResortName: metadata.skiResortName,
         memo: metadata.memo,
         techniques: metadata.techniques.length > 0 ? JSON.stringify(metadata.techniques) : null,

@@ -55,6 +55,15 @@ export const techniqueOptions = sqliteTable("technique_options", {
     sortOrder: int("sort_order").notNull().default(0),
 });
 
+/**
+ * お気に入りスキー場テーブル
+ * ユーザーが素早く選択できるように登録するスキー場名の一覧
+ */
+export const favoriteResorts = sqliteTable("favorite_resorts", {
+    id: int("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull().unique(),
+});
+
 export type VideoInsert = typeof videos.$inferInsert;
 export type VideoSelect = typeof videos.$inferSelect;
 export type TagInsert = typeof tags.$inferInsert;
@@ -62,3 +71,5 @@ export type TagSelect = typeof tags.$inferSelect;
 export type VideoTagInsert = typeof videoTags.$inferInsert;
 export type TechniqueOptionInsert = typeof techniqueOptions.$inferInsert;
 export type TechniqueOptionSelect = typeof techniqueOptions.$inferSelect;
+export type FavoriteResortInsert = typeof favoriteResorts.$inferInsert;
+export type FavoriteResortSelect = typeof favoriteResorts.$inferSelect;
