@@ -123,8 +123,21 @@ export default function VideoDetailScreen() {
         if (video.isFileAvailable === 1) {
             (async () => {
                 try {
-                    await requestMediaPermissions();
-                    const info = await getAssetInfo(video.assetId);
+                    const granted = await requestMediaPermissions();
+                    if (!granted) {
+                        // 権限拒否は一時的な状態であり、ファイル欠損ではない
+                        Alert.alert(
+                            "写真ライブラリへのアクセスが必要です",
+                            "動画を再生するには、設定からアクセスを許可してください。",
+                            [
+                                { text: "キャンセル", style: "cancel" },
+                                { text: "設定を開く", onPress: () => Linking.openSettings() },
+                            ]
+                        );
+                        return;
+                    }
+                    // shouldDownloadFromNetwork: false で iCloud 動画のネットワークエラーを防ぐ
+                    const info = await getAssetInfo(video.assetId, { shouldDownloadFromNetwork: false });
                     if (info?.uri) {
                         // localUri（file:///var/mobile/Media/DCIM/...）は iOS のセキュリティで
                         // AVFoundation から直接読めないため、Photos フレームワークの uri を使用する
@@ -135,9 +148,8 @@ export default function VideoDetailScreen() {
                         refresh();
                     }
                 } catch {
-                    // Photos library へのアクセス失敗（PHPhotosErrorDomain 等）→ファイルなし扱い
-                    await updateFileAvailability(video.id, false);
-                    refresh();
+                    // 一時的エラー（iCloud・ネットワーク等）の可能性があるため
+                    // DB の isFileAvailable は更新しない
                 }
             })();
         }

@@ -149,7 +149,7 @@ export default function VideoImportScreen() {
         } finally {
             setIsSaving(false);
         }
-    }, [selectedAsset, skiResortName, memo, tagIds, router]);
+    }, [selectedAsset, title, skiResortName, memo, tagIds, techniques, router]);
 
     // 撮影日時を取得
     const capturedAt = selectedAsset?.exif?.DateTimeOriginal

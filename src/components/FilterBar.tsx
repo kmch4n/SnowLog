@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
     ScrollView,
     StyleSheet,
@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useFocusEffect } from "expo-router";
 
 import { getAllTags } from "../database/repositories/tagRepository";
 import type { FilterOptions, Tag } from "../types";
@@ -24,9 +25,11 @@ interface FilterBarProps {
 export function FilterBar({ filter, onChange }: FilterBarProps) {
     const [allTags, setAllTags] = useState<Tag[]>([]);
 
-    useEffect(() => {
-        getAllTags().then(setAllTags);
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            getAllTags().then(setAllTags);
+        }, [])
+    );
 
     function toggleTag(tagId: number) {
         const current = filter.tagIds ?? [];

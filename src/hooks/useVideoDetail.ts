@@ -8,6 +8,7 @@ import {
 } from "../database/repositories/videoRepository";
 import { setTagsForVideo } from "../database/repositories/tagRepository";
 import { checkAssetExists } from "../services/mediaService";
+import { deleteThumbnail } from "../services/thumbnailService";
 import type { Tag, VideoWithTags } from "../types";
 
 /**
@@ -98,8 +99,11 @@ export function useVideoDetail(videoId: string) {
 
     /** 動画レコードを削除する（動画ファイル自体は削除しない） */
     const removeVideo = useCallback(async () => {
+        if (video?.thumbnailUri) {
+            await deleteThumbnail(video.thumbnailUri);
+        }
         await deleteVideoFromDb(videoId);
-    }, [videoId]);
+    }, [videoId, video]);
 
     return {
         video,
