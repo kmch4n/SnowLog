@@ -66,7 +66,8 @@ SkiLog — スキーヤー向け動画管理・振り返りアプリケーショ
 src/
 ├── app/               # Expo Router 画面（ファイル = ルート）
 │   ├── _layout.tsx    # ルートレイアウト（DB マイグレーション実行）
-│   ├── (tabs)/        # タブ画面群
+│   ├── (tabs)/        # タブ画面群（index, calendar, search, settings）
+│   ├── settings/      # 設定サブ画面（favorite-resorts, techniques, tags）
 │   ├── video-import.tsx
 │   └── video/[id].tsx
 ├── components/        # 再利用可能な UI コンポーネント
@@ -74,8 +75,8 @@ src/
 ├── services/          # ビジネスロジック（インポート・サムネイル・エクスポート等）
 ├── hooks/             # カスタムフック
 ├── types/             # 型定義
-├── constants/         # スキー場マスターデータ・滑走種別プリセット
-└── utils/             # ユーティリティ関数
+├── constants/         # スキー場マスターデータ（JSON）・滑走種別プリセット
+└── utils/             # ユーティリティ関数（日付処理・GPS距離計算）
 drizzle/               # Drizzle 自動生成マイグレーション（手動編集禁止）
 ```
 
@@ -213,11 +214,19 @@ eas build --platform ios --profile development  # Development Build 作成
 | `capturedAt` | int | Unix タイムスタンプ（秒） |
 | `skiResortName` | text nullable | スキー場名 |
 | `memo` | text | ユーザーメモ |
+| `title` | text nullable | ユーザーが設定した任意のタイトル（null → filename にフォールバック） |
+| `techniques` | text nullable | 滑走種別プリセット選択状態（JSON配列文字列 e.g. `'["大回り","コブ"]'`） |
 | `isFileAvailable` | int | 1=ファイル存在, 0=削除済み |
+| `createdAt` | int | 作成日時 Unix タイムスタンプ |
+| `updatedAt` | int | 更新日時 Unix タイムスタンプ |
 
 **tags** — タグマスター。`type` は `"technique"` / `"skier"` / `"custom"` の3種
 
 **video_tags** — 多対多の中間テーブル。`videoId` 削除時にカスケード削除
+
+**technique_options** — 滑走種別オプションマスター。ユーザーが自由に追加・削除可能（`name` + `sortOrder`）
+
+**favorite_resorts** — お気に入りスキー場テーブル。素早い選択用の名前一覧
 
 #### タグタイプ
 
@@ -238,6 +247,13 @@ eas build --platform ios --profile development  # Development Build 作成
 | `thumbnailService.ts` | サムネイルを生成し `DocumentDirectory` に保存 |
 | `exportService.ts` | メタデータを JSON にシリアライズして `expo-sharing` で共有 |
 
+### ユーティリティ
+
+| ファイル | 役割 |
+|----------|------|
+| `utils/geoUtils.ts` | Haversine 公式による GPS 距離計算 + 最寄りスキー場マッチング |
+| `utils/dateUtils.ts` | 日付操作ヘルパー（月初末計算、dateKey 変換等） |
+
 ### カスタムフック
 
 画面コンポーネントはこれらのフックを通じてデータにアクセスする。
@@ -246,18 +262,19 @@ eas build --platform ios --profile development  # Development Build 作成
 |--------|----------|------|
 | `useVideos` | `hooks/useVideos.ts` | 動画一覧取得・フィルタリング。`useFocusEffect` で画面フォーカス時に自動再取得 |
 | `useVideoDetail` | `hooks/useVideoDetail.ts` | 単一動画の取得・メモ更新・スキー場更新・タグ置換・削除・ファイル存在確認 |
+| `useCalendar` | `hooks/useCalendar.ts` | カレンダー画面の月ナビゲーション・ドットマーカー・日付選択 |
 | `useTheme` | `hooks/use-theme.ts` | デバイスのカラースキームに応じたテーマカラーを返す |
 
 ### 主要型定義（`src/types/index.ts`）
 
 ```ts
-Video             // DB レコードそのまま（isFileAvailable は number 1/0）
+Video             // DB レコード（title, techniques, createdAt, updatedAt を含む）
 VideoWithTags     // Video + tags: Tag[]（画面表示で主に使用）
 Tag               // { id, name, type: TagType }
 TagType           // "technique" | "skier" | "custom"
-SkiResort         // { id, name, prefecture }
+SkiResort         // { id, name, prefecture, latitude?, longitude? }
 FilterOptions     // { skiResortName?, tagIds?, dateFrom?, dateTo?, searchText? }
-ImportMetadata    // インポート時の入力データ { skiResortName, memo, tagIds }
+ImportMetadata    // { title, skiResortName, memo, tagIds, techniques }
 ```
 
 ### Web スタブパターン
@@ -269,6 +286,10 @@ mediaService.ts       # iOS 実装
 mediaService.web.ts   # Web 用スタブ（空実装）
 ```
 
+### GPS ベースのスキー場サジェスト
+
+動画の EXIF GPS 座標から最寄りのスキー場を自動サジェストする。`src/utils/geoUtils.ts` が Haversine 公式で距離を計算し、`src/constants/skiResorts.json` のマスターデータ（latitude/longitude 付き）とマッチングする。
+
 ### パスエイリアス
 
 `@/*` → `src/*`（`tsconfig.json` で設定済み）
@@ -277,3 +298,7 @@ mediaService.web.ts   # Web 用スタブ（空実装）
 import { db } from "@/database";     // src/database/index.ts
 import type { Video } from "@/types"; // src/types/index.ts
 ```
+
+### postinstall パッチ
+
+`scripts/patchImageUtilsCache.js` が `postinstall` と `eas-build-post-install` で実行される。expo-image のキャッシュ問題を回避するパッチ。

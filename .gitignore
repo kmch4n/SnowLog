@@ -58,3 +58,6 @@ app-example
 # AI
 .codex/
 .gemini/
+
+# Memo
+notes/
