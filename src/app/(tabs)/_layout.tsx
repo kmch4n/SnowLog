@@ -1,77 +1,41 @@
-import { Tabs } from "expo-router";
-import { SymbolView } from "expo-symbols";
+import { NativeTabs } from "expo-router/unstable-native-tabs";
 
 /**
  * タブバーのレイアウト定義
+ * NativeTabs を使用し、iOS 26 では Liquid Glass タブバーが自動適用される
+ * 各タブのヘッダーはサブフォルダ内の Stack レイアウトで管理する
  */
 export default function TabsLayout() {
     return (
-        <Tabs
-            screenOptions={{
-                tabBarActiveTintColor: "#1A3A5C",
-                tabBarInactiveTintColor: "#AAAAAA",
-                tabBarStyle: {
-                    backgroundColor: "#FFFFFF",
-                    borderTopColor: "#E0E0E0",
-                    height: 62,
-                    paddingBottom: 8,
-                },
-                tabBarLabelStyle: {
-                    fontSize: 11,
-                },
-                headerStyle: { backgroundColor: "#1A3A5C" },
-                headerTintColor: "#FFFFFF",
-                headerTitleStyle: { fontWeight: "700" },
-            }}
-        >
-            <Tabs.Screen
-                name="index"
-                options={{
-                    title: "ホーム",
-                    tabBarLabel: "ホーム",
-                    tabBarIcon: ({ color, focused }) => (
-                        <SymbolView
-                            name={focused ? "house.fill" : "house"}
-                            tintColor={color}
-                            size={24}
-                        />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="calendar"
-                options={{
-                    title: "カレンダー",
-                    tabBarLabel: "カレンダー",
-                    tabBarIcon: ({ color }) => (
-                        <SymbolView name="calendar" tintColor={color} size={24} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="search"
-                options={{
-                    title: "検索",
-                    tabBarLabel: "検索",
-                    tabBarIcon: ({ color }) => (
-                        <SymbolView name="magnifyingglass" tintColor={color} size={24} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="settings"
-                options={{
-                    title: "設定",
-                    tabBarLabel: "設定",
-                    tabBarIcon: ({ color, focused }) => (
-                        <SymbolView
-                            name={focused ? "gearshape.fill" : "gearshape"}
-                            tintColor={color}
-                            size={24}
-                        />
-                    ),
-                }}
-            />
-        </Tabs>
+        <NativeTabs>
+            <NativeTabs.Trigger name="index">
+                <NativeTabs.Trigger.Label>ホーム</NativeTabs.Trigger.Label>
+                <NativeTabs.Trigger.Icon
+                    sf={{ default: "house", selected: "house.fill" }}
+                    md="home"
+                />
+            </NativeTabs.Trigger>
+            <NativeTabs.Trigger name="calendar">
+                <NativeTabs.Trigger.Label>カレンダー</NativeTabs.Trigger.Label>
+                <NativeTabs.Trigger.Icon
+                    sf="calendar"
+                    md="calendar_today"
+                />
+            </NativeTabs.Trigger>
+            <NativeTabs.Trigger name="search">
+                <NativeTabs.Trigger.Label>検索</NativeTabs.Trigger.Label>
+                <NativeTabs.Trigger.Icon
+                    sf="magnifyingglass"
+                    md="search"
+                />
+            </NativeTabs.Trigger>
+            <NativeTabs.Trigger name="settings">
+                <NativeTabs.Trigger.Label>設定</NativeTabs.Trigger.Label>
+                <NativeTabs.Trigger.Icon
+                    sf={{ default: "gearshape", selected: "gearshape.fill" }}
+                    md="settings"
+                />
+            </NativeTabs.Trigger>
+        </NativeTabs>
     );
 }

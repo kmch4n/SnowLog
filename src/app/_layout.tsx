@@ -57,7 +57,7 @@ export default function RootLayout() {
     return (
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "戻る" }} />
                 <Stack.Screen
                     name="video-import"
                     options={{
@@ -81,6 +81,24 @@ export default function RootLayout() {
                     name="settings/techniques"
                     options={{
                         title: "滑走種別の管理",
+                        headerStyle: { backgroundColor: "#1A3A5C" },
+                        headerTintColor: "#FFFFFF",
+                        headerTitleStyle: { fontWeight: "700" },
+                    }}
+                />
+                <Stack.Screen
+                    name="settings/favorite-resorts"
+                    options={{
+                        title: "お気に入りスキー場",
+                        headerStyle: { backgroundColor: "#1A3A5C" },
+                        headerTintColor: "#FFFFFF",
+                        headerTitleStyle: { fontWeight: "700" },
+                    }}
+                />
+                <Stack.Screen
+                    name="settings/tags"
+                    options={{
+                        title: "タグの管理",
                         headerStyle: { backgroundColor: "#1A3A5C" },
                         headerTintColor: "#FFFFFF",
                         headerTitleStyle: { fontWeight: "700" },

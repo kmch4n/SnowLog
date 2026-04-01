@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     },
     fab: {
         position: "absolute",
-        bottom: 32,
+        bottom: 100,
         alignSelf: "center",
         backgroundColor: "#1A3A5C",
         borderRadius: 28,
