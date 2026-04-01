@@ -18,6 +18,10 @@ export async function getAssetInfo(_assetId: string): Promise<null> {
     return null;
 }
 
+export async function getAssetInfoWithDownload(_assetId: string): Promise<null> {
+    return null;
+}
+
 export async function checkAssetExists(_assetId: string): Promise<boolean> {
     return false;
 }

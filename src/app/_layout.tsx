@@ -33,21 +33,29 @@ async function seedTechniqueOptions() {
  */
 const MIN_VALID_TIMESTAMP = 946684800; // 2000-01-01 UTC（秒）
 async function repairInvalidCapturedAt() {
-    const allVideos = await getAllVideos();
-    for (const video of allVideos) {
-        const info = await getAssetInfo(video.assetId, { shouldDownloadFromNetwork: false });
-        if (!info?.creationTime || !Number.isFinite(info.creationTime)) continue;
+    try {
+        const allVideos = await getAllVideos();
+        for (const video of allVideos) {
+            try {
+                const info = await getAssetInfo(video.assetId, { shouldDownloadFromNetwork: false });
+                if (!info?.creationTime || !Number.isFinite(info.creationTime)) continue;
 
-        const correctAt = Math.floor(info.creationTime / 1000);
-        if (correctAt <= MIN_VALID_TIMESTAMP) continue;
+                const correctAt = Math.floor(info.creationTime / 1000);
+                if (correctAt <= MIN_VALID_TIMESTAMP) continue;
 
-        const needsRepair = !Number.isFinite(video.capturedAt)
-            || video.capturedAt <= MIN_VALID_TIMESTAMP
-            || Math.abs(video.capturedAt - correctAt) > 3600;
+                const needsRepair = !Number.isFinite(video.capturedAt)
+                    || video.capturedAt <= MIN_VALID_TIMESTAMP
+                    || Math.abs(video.capturedAt - correctAt) > 3600;
 
-        if (needsRepair) {
-            await updateVideoCapturedAt(video.id, correctAt);
+                if (needsRepair) {
+                    await updateVideoCapturedAt(video.id, correctAt);
+                }
+            } catch {
+                // iCloud 専用アセット等でメタデータ取得に失敗した場合はスキップ
+            }
         }
+    } catch {
+        // DB アクセス失敗等は無視して起動を妨げない
     }
 }
 
@@ -61,8 +69,8 @@ export default function RootLayout() {
 
     useEffect(() => {
         if (success) {
-            seedTechniqueOptions();
-            repairInvalidCapturedAt();
+            seedTechniqueOptions().catch(() => {});
+            repairInvalidCapturedAt().catch(() => {});
         }
     }, [success]);
 

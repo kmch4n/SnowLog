@@ -1,6 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -20,9 +20,39 @@ import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { getVideoByAssetId } from "@/database/repositories/videoRepository";
 import { importVideo } from "@/services/importService";
-import { getAssetInfo } from "@/services/mediaService";
+import { getAssetInfoWithDownload } from "@/services/mediaService";
 import { formatDate, formatDuration, parseExifDateTime } from "@/utils/dateUtils";
 import { findNearbySkiResorts } from "@/utils/geoUtils";
+import * as FileSystem from "expo-file-system/legacy";
+
+const IMPORT_CACHE_DIR = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory}video-import/`;
+
+async function ensureImportCacheDir(): Promise<void> {
+    if (!IMPORT_CACHE_DIR) return;
+    const info = await FileSystem.getInfoAsync(IMPORT_CACHE_DIR);
+    if (!info.exists) {
+        await FileSystem.makeDirectoryAsync(IMPORT_CACHE_DIR, { intermediates: true });
+    }
+}
+
+function inferExtension(filename?: string | null, uri?: string | null): string {
+    const target = filename ?? uri ?? "";
+    const match = target.match(/\.([a-zA-Z0-9]+)(?:$|\?)/);
+    return match ? match[1].toLowerCase() : "mov";
+}
+
+async function stageAssetFile(sourceUri: string, filename?: string | null): Promise<string> {
+    if (!sourceUri.startsWith("file://") || !IMPORT_CACHE_DIR) {
+        throw new Error("ファイルを読み込めませんでした。");
+    }
+    await ensureImportCacheDir();
+    const dest = `${IMPORT_CACHE_DIR}${Date.now()}-${Math.random().toString(36).slice(2)}.${inferExtension(
+        filename,
+        sourceUri
+    )}`;
+    await FileSystem.copyAsync({ from: sourceUri, to: dest });
+    return dest;
+}
 
 /**
  * 動画インポート画面（モーダル）
@@ -47,6 +77,37 @@ export default function VideoImportScreen() {
         { name: string; distanceKm: number }[]
     >([]);
     const [assetCreationTime, setAssetCreationTime] = useState<number | null>(null);
+    const [resolvedAssetUri, setResolvedAssetUri] = useState<string | null>(null);
+    const [isLoadingMeta, setIsLoadingMeta] = useState(false);
+    const stagedFileUriRef = useRef<string | null>(null);
+
+    const cleanupStagedFile = useCallback(async () => {
+        if (stagedFileUriRef.current) {
+            try {
+                await FileSystem.deleteAsync(stagedFileUriRef.current, { idempotent: true });
+            } catch {
+                // noop
+            }
+            stagedFileUriRef.current = null;
+        }
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            cleanupStagedFile();
+        };
+    }, [cleanupStagedFile]);
+
+    const stageForImport = useCallback(
+        async (sourceUri: string | null, filename?: string | null): Promise<string | null> => {
+            if (!sourceUri) return null;
+            if (!sourceUri.startsWith("file://")) return null;
+            const staged = await stageAssetFile(sourceUri, filename);
+            stagedFileUriRef.current = staged;
+            return staged;
+        },
+        []
+    );
 
     /** カメラロールから動画を選択する */
     const handlePickVideo = useCallback(async () => {
@@ -59,16 +120,37 @@ export default function VideoImportScreen() {
             return;
         }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["videos"],
-            allowsEditing: false,
-            quality: 1,
-            exif: true, // GPS フィールドを含む EXIF を取得
-        });
+        let pickerResult: ImagePicker.ImagePickerResult;
+        try {
+            pickerResult = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["videos"],
+                allowsEditing: false,
+                quality: 1,
+                exif: true, // GPS フィールドを含む EXIF を取得
+                shouldDownloadFromNetwork: true,
+                videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
+            });
+        } catch (error) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : typeof error === "string"
+                        ? error
+                        : "不明なエラーが発生しました。";
+            if (message.includes("3164")) {
+                Alert.alert(
+                    "iCloud 動画を取得できませんでした",
+                    "ネットワークに接続されているか確認して、もう一度お試しください。"
+                );
+            } else {
+                Alert.alert("動画の選択に失敗しました", message);
+            }
+            return;
+        }
 
-        if (result.canceled || result.assets.length === 0) return;
+        if (pickerResult.canceled || pickerResult.assets.length === 0) return;
 
-        const asset = result.assets[0];
+        const asset = pickerResult.assets[0];
         if (!asset) return;
 
         // 既にインポート済みかチェック
@@ -90,28 +172,53 @@ export default function VideoImportScreen() {
             }
         }
 
+        await cleanupStagedFile();
         setSelectedAsset(asset);
         setGpsSuggestions([]);
         setAssetCreationTime(null);
+        setResolvedAssetUri(null);
 
         // MediaLibrary のメタデータから GPS 座標・撮影日時を取得
-        // shouldDownloadFromNetwork: false により iCloud コンテンツのダウンロードを抑制し
-        // PHPhotosErrorNetworkAccessRequired (3164) を防ぐ。
-        // GPS・creationTime は Photo Library DB に保存されたメタデータのためネットワーク不要。
+        // iCloud 専用アセットの場合は自動ダウンロードでリトライする
+        let assetInfo: Awaited<ReturnType<typeof getAssetInfoWithDownload>> | null = null;
         if (asset.assetId) {
-            const info = await getAssetInfo(asset.assetId, { shouldDownloadFromNetwork: false });
-            if (info) {
-                if (info.creationTime && Number.isFinite(info.creationTime)) {
-                    setAssetCreationTime(info.creationTime);
+            setIsLoadingMeta(true);
+            try {
+                assetInfo = await getAssetInfoWithDownload(asset.assetId);
+                if (assetInfo?.creationTime && Number.isFinite(assetInfo.creationTime)) {
+                    setAssetCreationTime(assetInfo.creationTime);
                 }
-                if (info.location) {
+                if (assetInfo?.location) {
                     setGpsSuggestions(
-                        findNearbySkiResorts(info.location.latitude, info.location.longitude)
+                        findNearbySkiResorts(assetInfo.location.latitude, assetInfo.location.longitude)
                     );
                 }
+            } catch {
+                assetInfo = null;
+            } finally {
+                setIsLoadingMeta(false);
             }
         }
-    }, []);
+
+        let stagedUri: string | null = null;
+        try {
+            stagedUri = await stageForImport(assetInfo?.localUri ?? asset.uri ?? null, asset.fileName);
+        } catch {
+            stagedUri = null;
+        }
+
+        if (!stagedUri) {
+            Alert.alert(
+                "動画を読み込めませんでした",
+                "iCloud からの取得に失敗しました。もう一度お試しください。"
+            );
+            setSelectedAsset(null);
+            setResolvedAssetUri(null);
+            return;
+        }
+
+        setResolvedAssetUri(stagedUri);
+    }, [cleanupStagedFile, router, stageForImport]);
 
     /** 動画をインポートしてDBに保存する */
     const handleSave = useCallback(async () => {
@@ -121,6 +228,13 @@ export default function VideoImportScreen() {
         }
         if (!selectedAsset.assetId) {
             Alert.alert("エラー", "動画のアセットIDを取得できませんでした。");
+            return;
+        }
+        if (!resolvedAssetUri) {
+            Alert.alert(
+                "動画を取得しています",
+                "iCloud からのダウンロードが完了してから保存してください。"
+            );
             return;
         }
 
@@ -134,7 +248,8 @@ export default function VideoImportScreen() {
                     ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
                     : null) ?? assetCreationTime ?? Date.now(),
                 duration: (selectedAsset.duration ?? 0) / 1000,
-                uri: selectedAsset.uri,
+                uri: resolvedAssetUri,
+                localUri: resolvedAssetUri,
                 width: selectedAsset.width,
                 height: selectedAsset.height,
                 mediaType: "video" as const,
@@ -144,9 +259,10 @@ export default function VideoImportScreen() {
             await importVideo(
                 mediaAsset as any,
                 { title: title.trim() || null, skiResortName, memo, tagIds, techniques },
-                { pickerUri: selectedAsset.uri }
+                { sourceUri: resolvedAssetUri }
             );
 
+            await cleanupStagedFile();
             router.back();
         } catch (e) {
             Alert.alert(
@@ -156,7 +272,18 @@ export default function VideoImportScreen() {
         } finally {
             setIsSaving(false);
         }
-    }, [selectedAsset, assetCreationTime, title, skiResortName, memo, tagIds, techniques, router]);
+    }, [
+        selectedAsset,
+        assetCreationTime,
+        resolvedAssetUri,
+        title,
+        skiResortName,
+        memo,
+        tagIds,
+        techniques,
+        router,
+        cleanupStagedFile,
+    ]);
 
     // 撮影日時を取得（EXIF → MediaLibrary creationTime の順でフォールバック）
     const creationMs = (selectedAsset?.exif?.DateTimeOriginal
@@ -205,6 +332,14 @@ export default function VideoImportScreen() {
                         </View>
                     )}
                 </TouchableOpacity>
+
+                {/* iCloud ダウンロード中のメタデータ取得インジケーター */}
+                {isLoadingMeta && (
+                    <View style={styles.metaLoading}>
+                        <ActivityIndicator size="small" color="#1A3A5C" />
+                        <Text style={styles.metaLoadingText}>メタデータを取得中...</Text>
+                    </View>
+                )}
 
                 {/* タイトル */}
                 <View style={styles.section}>
@@ -282,9 +417,12 @@ export default function VideoImportScreen() {
 
                 {/* 保存ボタン */}
                 <TouchableOpacity
-                    style={[styles.saveButton, !selectedAsset && styles.saveButtonDisabled]}
+                    style={[
+                        styles.saveButton,
+                        (!selectedAsset || !resolvedAssetUri || isLoadingMeta) && styles.saveButtonDisabled,
+                    ]}
                     onPress={handleSave}
-                    disabled={!selectedAsset || isSaving}
+                    disabled={!selectedAsset || isSaving || !resolvedAssetUri || isLoadingMeta}
                 >
                     {isSaving ? (
                         <ActivityIndicator color="#FFFFFF" />
@@ -440,6 +578,18 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         alignItems: "center",
         marginTop: 8,
+    },
+    metaLoading: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        paddingVertical: 8,
+        marginBottom: 8,
+    },
+    metaLoadingText: {
+        fontSize: 13,
+        color: "#888888",
     },
     saveButtonDisabled: {
         backgroundColor: "#AAAAAA",

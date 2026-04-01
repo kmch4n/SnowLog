@@ -7,8 +7,8 @@ import { generateAndSaveThumbnail } from "./thumbnailService";
 import type { ImportMetadata } from "../types";
 
 interface ImportOptions {
-    /** expo-image-picker から取得した一時URI（MediaLibrary が使えない場合のフォールバック） */
-    pickerUri: string;
+    /** iCloud ダウンロード後の実ファイルURI */
+    sourceUri: string;
 }
 
 /**
@@ -25,22 +25,22 @@ export async function importVideo(
     metadata: ImportMetadata,
     options: ImportOptions
 ): Promise<string> {
-    // expo-image-picker の pickerUri を直接使用する。
-    // MediaLibrary.getAssetInfoAsync は iCloud 動画で PHPhotosErrorNetworkAccessRequired を
-    // 発生させるため、インポートフローでは呼び出さない。
-    const videoUri = options.pickerUri;
+    const videoUri = asset.localUri ?? asset.uri ?? options.sourceUri;
+    if (!videoUri) {
+        throw new Error("動画ファイルのURIを解決できませんでした。");
+    }
     const assetCreationTime = asset.creationTime;
 
     // 一意IDを生成
     const videoId = randomUUID();
 
-    // サムネイルを生成・保存（localUri で失敗した場合は pickerUri でリトライ）
+    // サムネイルを生成・保存（ローカルURIで失敗した場合は sourceUri でリトライ）
     let thumbnailUri: string;
     try {
         thumbnailUri = await generateAndSaveThumbnail(videoUri, videoId);
     } catch (e) {
-        if (videoUri !== options.pickerUri) {
-            thumbnailUri = await generateAndSaveThumbnail(options.pickerUri, videoId);
+        if (videoUri !== options.sourceUri) {
+            thumbnailUri = await generateAndSaveThumbnail(options.sourceUri, videoId);
         } else {
             throw e;
         }

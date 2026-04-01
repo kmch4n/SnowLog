@@ -2,7 +2,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getAssetInfo, requestMediaPermissions } from "@/services/mediaService";
+import { getAssetInfoWithDownload, requestMediaPermissions } from "@/services/mediaService";
 import { updateFileAvailability } from "@/database/repositories/videoRepository";
 import {
     Alert,
@@ -136,12 +136,11 @@ export default function VideoDetailScreen() {
                         );
                         return;
                     }
-                    // shouldDownloadFromNetwork: false で iCloud 動画のネットワークエラーを防ぐ
-                    const info = await getAssetInfo(video.assetId, { shouldDownloadFromNetwork: false });
-                    if (info?.uri) {
-                        // localUri（file:///var/mobile/Media/DCIM/...）は iOS のセキュリティで
-                        // AVFoundation から直接読めないため、Photos フレームワークの uri を使用する
-                        setVideoUri(info.uri);
+                    // iCloud 専用アセットの場合は自動ダウンロードでリトライする
+                    const info = await getAssetInfoWithDownload(video.assetId);
+                    if (info?.uri || info?.localUri) {
+                        // 再生には Photos フレームワークの uri (ph://) を優先利用する
+                        setVideoUri(info.uri ?? info.localUri);
                         setAssetInfoMeta({ width: info.width, height: info.height, duration: info.duration });
                     } else {
                         await updateFileAvailability(video.id, false);
