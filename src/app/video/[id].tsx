@@ -18,7 +18,6 @@ import {
 } from "react-native";
 
 import { SkiResortSearch } from "@/components/SkiResortSearch";
-import { TagChip } from "@/components/TagChip";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
@@ -37,8 +36,7 @@ export default function VideoDetailScreen() {
     const [titleSaveStatus, setTitleSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [memoInput, setMemoInput] = useState("");
     const [memoSaveStatus, setMemoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
-    const [isEditingTags, setIsEditingTags] = useState(false);
-    const [tagIdInput, setTagIdInput] = useState<number[]>([]);
+    const [tagIds, setTagIds] = useState<number[]>([]);
     const [videoUri, setVideoUri] = useState<string | null>(null);
     const [assetInfoMeta, setAssetInfoMeta] = useState<{
         width: number;
@@ -115,7 +113,7 @@ export default function VideoDetailScreen() {
         isInitialMemoLoad.current = true;
         setMemoInput(video.memo);
         // technique タグは TechniqueSelector で管理するため除外する
-        setTagIdInput(video.tags.filter((t) => t.type !== "technique").map((t) => t.id));
+        setTagIds(video.tags.filter((t) => t.type !== "technique").map((t) => t.id));
 
         setAssetInfoMeta(null);
 
@@ -180,10 +178,14 @@ export default function VideoDetailScreen() {
         [updateSkiResort]
     );
 
-    const handleSaveTags = useCallback(async () => {
-        await updateTags(tagIdInput);
-        setIsEditingTags(false);
-    }, [tagIdInput, updateTags]);
+    /** タグ変更時に即座に保存する（滑走種別と同じパターン） */
+    const handleTagsChange = useCallback(
+        async (newTagIds: number[]) => {
+            setTagIds(newTagIds);
+            await updateTags(newTagIds);
+        },
+        [updateTags]
+    );
 
     if (isLoading) {
         return (
@@ -273,36 +275,13 @@ export default function VideoDetailScreen() {
                     />
                 </View>
 
-                {/* タグ */}
+                {/* タグ（自動保存） */}
                 <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>タグ</Text>
-                        <TouchableOpacity onPress={() => setIsEditingTags(!isEditingTags)}>
-                            <Text style={styles.editLink}>{isEditingTags ? "完了" : "編集"}</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {isEditingTags ? (
-                        <>
-                            <TagSelector
-                                selectedTagIds={tagIdInput}
-                                onChange={setTagIdInput}
-                            />
-                            <TouchableOpacity style={styles.saveTagButton} onPress={handleSaveTags}>
-                                <Text style={styles.saveTagButtonText}>タグを保存</Text>
-                            </TouchableOpacity>
-                        </>
-                    ) : (
-                        <View style={styles.tagList}>
-                            {video.tags.filter((t) => t.type !== "technique").length > 0 ? (
-                                video.tags
-                                    .filter((t) => t.type !== "technique")
-                                    .map((tag) => <TagChip key={tag.id} tag={tag} />)
-                            ) : (
-                                <Text style={styles.emptyTag}>タグなし</Text>
-                            )}
-                        </View>
-                    )}
+                    <Text style={styles.sectionTitle}>タグ</Text>
+                    <TagSelector
+                        selectedTagIds={tagIds}
+                        onChange={handleTagsChange}
+                    />
                 </View>
 
                 {/* メモ（自動保存） */}
@@ -443,32 +422,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "700",
         color: "#222222",
-    },
-    editLink: {
-        fontSize: 14,
-        color: "#1A3A5C",
-        fontWeight: "600",
-    },
-    tagList: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 6,
-    },
-    emptyTag: {
-        fontSize: 14,
-        color: "#AAAAAA",
-    },
-    saveTagButton: {
-        marginTop: 12,
-        backgroundColor: "#1A3A5C",
-        borderRadius: 8,
-        paddingVertical: 10,
-        alignItems: "center",
-    },
-    saveTagButtonText: {
-        color: "#FFFFFF",
-        fontSize: 14,
-        fontWeight: "600",
     },
     memoInput: {
         borderWidth: 1,

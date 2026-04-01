@@ -3,6 +3,12 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
 
+// タグ種別ごとの配色（TagChip と統一）
+const TAG_CHIP_COLORS: Record<string, { background: string; text: string }> = {
+    skier: { background: "#F3E5F5", text: "#6A1B9A" },
+    custom: { background: "#E8F5E9", text: "#2E7D32" },
+};
+
 interface VideoCardCompactProps {
     video: VideoWithTags;
     onPress: () => void;
@@ -43,7 +49,7 @@ export function VideoCardCompact({ video, onPress }: VideoCardCompactProps) {
 
                 {/* 滑走種別（最大2件） */}
                 {video.techniques && video.techniques.length > 0 && (
-                    <View style={styles.techniques}>
+                    <View style={styles.chipRow}>
                         {video.techniques.slice(0, 2).map((t) => (
                             <View key={t} style={styles.techniqueChip}>
                                 <Text style={styles.techniqueChipText}>{t}</Text>
@@ -54,6 +60,30 @@ export function VideoCardCompact({ video, onPress }: VideoCardCompactProps) {
                         )}
                     </View>
                 )}
+
+                {/* タグ（technique 以外、最大2件） */}
+                {video.tags && video.tags.filter((t) => t.type !== "technique").length > 0 && (() => {
+                    const nonTechniqueTags = video.tags.filter((t) => t.type !== "technique");
+                    return (
+                        <View style={styles.chipRow}>
+                            {nonTechniqueTags.slice(0, 2).map((tag) => (
+                                <View
+                                    key={tag.id}
+                                    style={[styles.tagChip, TAG_CHIP_COLORS[tag.type] && { backgroundColor: TAG_CHIP_COLORS[tag.type].background }]}
+                                >
+                                    <Text
+                                        style={[styles.tagChipText, TAG_CHIP_COLORS[tag.type] && { color: TAG_CHIP_COLORS[tag.type].text }]}
+                                    >
+                                        {tag.name}
+                                    </Text>
+                                </View>
+                            ))}
+                            {nonTechniqueTags.length > 2 && (
+                                <Text style={styles.moreText}>+{nonTechniqueTags.length - 2}</Text>
+                            )}
+                        </View>
+                    );
+                })()}
             </View>
         </TouchableOpacity>
     );
@@ -104,7 +134,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: "#888888",
     },
-    techniques: {
+    chipRow: {
         flexDirection: "row",
         flexWrap: "wrap",
         gap: 4,
@@ -119,6 +149,17 @@ const styles = StyleSheet.create({
     techniqueChipText: {
         fontSize: 11,
         color: "#1A3A5C",
+        fontWeight: "500",
+    },
+    tagChip: {
+        backgroundColor: "#E8F5E9",
+        borderRadius: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+    },
+    tagChipText: {
+        fontSize: 11,
+        color: "#2E7D32",
         fontWeight: "500",
     },
     moreText: {
