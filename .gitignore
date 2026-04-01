@@ -58,6 +58,7 @@ app-example
 # AI
 .codex/
 .gemini/
+.claude/settings.local.json
 
 # Memo
 notes/
