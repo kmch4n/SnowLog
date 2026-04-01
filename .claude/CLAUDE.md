@@ -32,6 +32,8 @@ SkiLog — スキーヤー向け動画管理・振り返りアプリケーショ
 | フレームワーク | Expo SDK 55 / React Native |
 | 言語 | TypeScript (strict) |
 | ルーティング | Expo Router v4 (file-based) |
+| タブナビゲーション | `expo-router/unstable-native-tabs`（NativeTabs / Liquid Glass） |
+| ガラスエフェクト | expo-glass-effect |
 | ローカルDB | expo-sqlite v15 + Drizzle ORM |
 | 動画アクセス | expo-media-library |
 | 動画インポート | expo-image-picker |
@@ -66,7 +68,12 @@ SkiLog — スキーヤー向け動画管理・振り返りアプリケーショ
 src/
 ├── app/               # Expo Router 画面（ファイル = ルート）
 │   ├── _layout.tsx    # ルートレイアウト（DB マイグレーション実行）
-│   ├── (tabs)/        # タブ画面群（index, calendar, search, settings）
+│   ├── (tabs)/        # NativeTabs タブ画面群（フォルダベースルーティング）
+│   │   ├── _layout.tsx        # NativeTabs 定義（Liquid Glass 自動適用）
+│   │   ├── index/_layout.tsx  # ホームタブ Stack ヘッダー
+│   │   ├── calendar/_layout.tsx
+│   │   ├── search/_layout.tsx
+│   │   └── settings/_layout.tsx
 │   ├── settings/      # 設定サブ画面（favorite-resorts, techniques, tags）
 │   ├── video-import.tsx
 │   └── video/[id].tsx
@@ -279,12 +286,35 @@ ImportMetadata    // { title, skiResortName, memo, tagIds, techniques }
 
 ### Web スタブパターン
 
-ネイティブ依存モジュールは Web では動作しないため、ファイルをペアで管理する。Metro がプラットフォームに応じて自動選択する。
+ネイティブ依存モジュールは Web では動作しないため、`.web.ts` / `.web.tsx` ファイルをペアで管理する。Metro がプラットフォーム拡張子に応じて自動選択する。
 
-```
-mediaService.ts       # iOS 実装
-mediaService.web.ts   # Web 用スタブ（空実装）
-```
+スタブが必要な層:
+- **`database/repositories/`** — Drizzle + expo-sqlite 依存（`videoRepository`, `tagRepository`, `techniqueOptionRepository`）
+- **`services/`** — expo-media-library / expo-video-thumbnails 等のネイティブ API 依存（全4サービス）
+- **`hooks/`** — `use-color-scheme`（Appearance API）
+- **`components/`** — `animated-icon`（ネイティブアニメーション）
+- **`app/`** — `_layout`, `video-import`, `video/[id]`（DB 初期化・ネイティブ機能依存画面）
+
+新しいネイティブ依存モジュールを追加する際は、対応する `.web.ts` スタブも必ず作成すること。
+
+### タブナビゲーション（NativeTabs）
+
+`expo-router/unstable-native-tabs` の `NativeTabs` を使用。iOS 26+ で Liquid Glass タブバーが自動適用され、iOS 25 以前は標準ネイティブタブにフォールバックする。
+
+NativeTabs はヘッダーを内蔵しないため、各タブはフォルダベースルーティング（`(tabs)/index/`, `(tabs)/calendar/` 等）を採用し、フォルダ内の `_layout.tsx` に Stack を配置してヘッダーを管理する。
+
+ヘッダースタイル統一: `backgroundColor: "#1A3A5C"`, `headerTintColor: "#FFFFFF"`, `headerTitleStyle: { fontWeight: "700" }`
+
+### Expo 実験的機能
+
+`app.json` の `experiments` で以下が有効:
+- `typedRoutes: true` — 型安全ルーティング（`router.push()` の引数を型チェック）
+- `reactCompiler: true` — React Compiler（自動メモ化）
+
+### ビルド設定（Metro / Babel）
+
+- **Metro:** `.sql` を `sourceExts` に追加（Drizzle マイグレーションファイル用）。Web ビルドでは `expo-sqlite` / `drizzle-orm/expo-sqlite` を空モジュール（`src/mocks/emptyModule.js`）にリダイレクト
+- **Babel:** `inline-import` プラグインで `.sql` ファイルをインライン化。`react-native-reanimated/plugin` を使用
 
 ### GPS ベースのスキー場サジェスト
 
@@ -292,7 +322,7 @@ mediaService.web.ts   # Web 用スタブ（空実装）
 
 ### パスエイリアス
 
-`@/*` → `src/*`（`tsconfig.json` で設定済み）
+`@/*` → `src/*`、`@/assets/*` → `assets/*`（`tsconfig.json` で設定済み）
 
 ```ts
 import { db } from "@/database";     // src/database/index.ts
