@@ -1,12 +1,13 @@
-import { useVideoPlayer, VideoView } from "expo-video";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getAssetInfoWithDownload, requestMediaPermissions } from "@/services/mediaService";
 import { updateFileAvailability } from "@/database/repositories/videoRepository";
 import {
     Alert,
     KeyboardAvoidingView,
+    LayoutAnimation,
     Linking,
     Platform,
     ScrollView,
@@ -15,6 +16,7 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+    useWindowDimensions,
 } from "react-native";
 
 import { Colors } from "@/constants/colors";
@@ -24,6 +26,11 @@ import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
 import { formatDateTime, formatDuration, formatDurationDecimal } from "@/utils/dateUtils";
 
+/** セクション間の薄いディバイダー */
+function SectionDivider() {
+    return <View style={styles.divider} />;
+}
+
 /**
  * 動画詳細画面
  * 動画再生・メタデータ表示・メモ編集・タグ編集を提供する
@@ -31,6 +38,7 @@ import { formatDateTime, formatDuration, formatDurationDecimal } from "@/utils/d
 export default function VideoDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const { video, isLoading, error, refresh, updateTitle, updateTechniques, updateMemo, updateSkiResort, updateTags, removeVideo } = useVideoDetail(id);
 
     const [titleInput, setTitleInput] = useState("");
@@ -44,6 +52,18 @@ export default function VideoDetailScreen() {
         height: number;
         duration: number;
     } | null>(null);
+
+    // アスペクト比に基づく動的プレイヤー高さ
+    const playerHeight = useMemo(() => {
+        if (!assetInfoMeta) return 240;
+        const aspectRatio = assetInfoMeta.width / assetInfoMeta.height;
+        if (aspectRatio < 1) {
+            // 縦動画: 画面高さの 65% を上限にキャップ
+            return Math.min(screenWidth / aspectRatio, screenHeight * 0.65);
+        }
+        // 横動画・正方形: 幅に合わせる
+        return screenWidth / aspectRatio;
+    }, [assetInfoMeta, screenWidth, screenHeight]);
 
     // タイトル自動保存用の debounce タイマー
     const titleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,8 +136,6 @@ export default function VideoDetailScreen() {
         // technique タグは TechniqueSelector で管理するため除外する
         setTagIds(video.tags.filter((t) => t.type !== "technique").map((t) => t.id));
 
-        setAssetInfoMeta(null);
-
         // 元ファイルが存在する場合のみ再生用 URI を取得する
         if (video.isFileAvailable === 1) {
             (async () => {
@@ -138,6 +156,8 @@ export default function VideoDetailScreen() {
                     // iCloud 専用アセットの場合は自動ダウンロードでリトライする
                     const info = await getAssetInfoWithDownload(video.assetId);
                     if (info?.uri || info?.localUri) {
+                        // 高さ変更をアニメーションで滑らかに遷移
+                        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                         // 再生には Photos フレームワークの uri (ph://) を優先利用する
                         setVideoUri(info.uri ?? info.localUri);
                         setAssetInfoMeta({ width: info.width, height: info.height, duration: info.duration });
@@ -188,6 +208,19 @@ export default function VideoDetailScreen() {
         [updateTags]
     );
 
+    /** メタ情報を1行にまとめる（日付 · 時間 · 解像度） */
+    const metaLine = useMemo(() => {
+        if (!video) return "";
+        const parts: string[] = [formatDateTime(video.capturedAt)];
+        if (assetInfoMeta) {
+            parts.push(formatDurationDecimal(assetInfoMeta.duration));
+            parts.push(`${assetInfoMeta.width}×${assetInfoMeta.height}`);
+        } else {
+            parts.push(formatDuration(video.duration));
+        }
+        return parts.join("  ·  ");
+    }, [video, assetInfoMeta]);
+
     if (isLoading) {
         return (
             <View style={styles.center}>
@@ -212,7 +245,10 @@ export default function VideoDetailScreen() {
             <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="always">
                 {/* 動画プレイヤーエリア */}
                 {video.isFileAvailable === 1 && videoUri ? (
-                    <VideoPlayerView uri={videoUri} style={styles.videoPlayer} />
+                    <VideoPlayerView
+                        uri={videoUri}
+                        style={{ width: "100%", height: playerHeight, backgroundColor: "#000000" }}
+                    />
                 ) : video.isFileAvailable !== 1 ? (
                     <View style={styles.unavailableBanner}>
                         <Text style={styles.unavailableText}>
@@ -220,7 +256,7 @@ export default function VideoDetailScreen() {
                         </Text>
                     </View>
                 ) : (
-                    <View style={styles.videoPlayer} />
+                    <View style={{ width: "100%", height: playerHeight, backgroundColor: "#000000" }} />
                 )}
 
                 {/* メタデータ */}
@@ -244,18 +280,30 @@ export default function VideoDetailScreen() {
                                   : ""}
                         </Text>
                     </View>
-                    <Text style={styles.metaRow}>
-                        📅 {formatDateTime(video.capturedAt)}
-                    </Text>
-                    <Text style={styles.metaRow}>
-                        ⏱{" "}
-                        {assetInfoMeta
-                            ? formatDurationDecimal(assetInfoMeta.duration)
-                            : formatDuration(video.duration)}
-                        {assetInfoMeta
-                            ? `　📐 ${assetInfoMeta.width} × ${assetInfoMeta.height}`
-                            : ""}
-                    </Text>
+
+                    {/* メタ行 + 写真アプリリンク */}
+                    <View style={styles.metaRow}>
+                        <Text style={styles.metaText} numberOfLines={1}>
+                            {metaLine}
+                        </Text>
+                        {video.isFileAvailable === 1 && (
+                            <TouchableOpacity
+                                onPress={async () => {
+                                    try {
+                                        await Linking.openURL("photos-redirect://");
+                                    } catch {
+                                        Alert.alert(
+                                            "写真アプリを開けません",
+                                            "写真アプリへのアクセスが利用できません。"
+                                        );
+                                    }
+                                }}
+                                hitSlop={8}
+                            >
+                                <Text style={styles.photosLink}>写真アプリ ↗</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
 
                     {/* スキー場名（編集可能） */}
                     <View style={styles.fieldSection}>
@@ -267,6 +315,8 @@ export default function VideoDetailScreen() {
                     </View>
                 </View>
 
+                <SectionDivider />
+
                 {/* 滑走種別 */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>滑走種別</Text>
@@ -276,6 +326,8 @@ export default function VideoDetailScreen() {
                     />
                 </View>
 
+                <SectionDivider />
+
                 {/* タグ（自動保存） */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>タグ</Text>
@@ -284,6 +336,8 @@ export default function VideoDetailScreen() {
                         onChange={handleTagsChange}
                     />
                 </View>
+
+                <SectionDivider />
 
                 {/* メモ（自動保存） */}
                 <View style={styles.section}>
@@ -309,25 +363,6 @@ export default function VideoDetailScreen() {
                     />
                 </View>
 
-                {/* 写真アプリを開くボタン（ファイルが存在する場合のみ） */}
-                {video.isFileAvailable === 1 && (
-                    <TouchableOpacity
-                        style={styles.openInPhotosButton}
-                        onPress={async () => {
-                            try {
-                                await Linking.openURL("photos-redirect://");
-                            } catch {
-                                Alert.alert(
-                                    "写真アプリを開けません",
-                                    "写真アプリへのアクセスが利用できません。"
-                                );
-                            }
-                        }}
-                    >
-                        <Text style={styles.openInPhotosButtonText}>写真アプリを開く</Text>
-                    </TouchableOpacity>
-                )}
-
                 {/* 削除ボタン */}
                 <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
                     <Text style={styles.deleteButtonText}>この動画の記録を削除</Text>
@@ -339,37 +374,47 @@ export default function VideoDetailScreen() {
 
 /** videoUri が確定してから useVideoPlayer を呼ぶためのラッパーコンポーネント */
 function VideoPlayerView({ uri, style }: { uri: string; style: object }) {
+    const ref = useRef<VideoView>(null);
     const player = useVideoPlayer(uri, (p) => {
         p.loop = false;
     });
-    return <VideoView player={player} style={style} nativeControls />;
+    return (
+        <VideoView
+            ref={ref}
+            player={player}
+            style={style}
+            nativeControls
+            contentFit="contain"
+            fullscreenOptions={{
+                enable: true,
+                orientation: "default",
+                autoExitOnRotate: true,
+            }}
+        />
+    );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.glacierWhite,
+        backgroundColor: Colors.freshSnow,
     },
     center: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: Colors.freshSnow,
     },
     loadingText: {
         color: Colors.textSecondary,
         fontSize: 14,
     },
     scroll: {
-        paddingBottom: 40,
-    },
-    videoPlayer: {
-        width: "100%",
-        height: 240,
-        backgroundColor: "#000000",
+        paddingBottom: 48,
     },
     unavailableBanner: {
         height: 80,
-        backgroundColor: "#424242",
+        backgroundColor: Colors.alpineBlueDark,
         justifyContent: "center",
         alignItems: "center",
     },
@@ -377,27 +422,44 @@ const styles = StyleSheet.create({
         color: Colors.headerText,
         fontSize: 14,
     },
+    divider: {
+        height: 1,
+        backgroundColor: Colors.borderLight,
+        marginHorizontal: 16,
+    },
     metaSection: {
-        backgroundColor: Colors.freshSnow,
-        padding: 16,
-        marginBottom: 8,
+        paddingHorizontal: 16,
+        paddingTop: 12,
+        paddingBottom: 16,
     },
     titleRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 4,
+        marginBottom: 6,
     },
     titleInput: {
         flex: 1,
-        fontSize: 16,
-        fontWeight: "700",
+        fontSize: 20,
+        fontWeight: "800",
         color: Colors.textPrimary,
         padding: 0,
     },
     metaRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 14,
+    },
+    metaText: {
+        flex: 1,
         fontSize: 13,
         color: Colors.textSecondary,
-        marginBottom: 12,
+    },
+    photosLink: {
+        fontSize: 13,
+        color: Colors.alpineBlue,
+        fontWeight: "600",
+        marginLeft: 12,
     },
     fieldSection: {
         marginTop: 4,
@@ -409,9 +471,8 @@ const styles = StyleSheet.create({
         marginBottom: 6,
     },
     section: {
-        backgroundColor: Colors.freshSnow,
-        padding: 16,
-        marginBottom: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
     },
     sectionHeader: {
         flexDirection: "row",
@@ -420,50 +481,33 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     sectionTitle: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: "700",
-        color: Colors.textPrimary,
+        color: Colors.textSecondary,
+        marginBottom: 10,
     },
     memoInput: {
-        borderWidth: 1,
-        borderColor: Colors.border,
-        borderRadius: 8,
-        padding: 10,
+        borderRadius: 12,
+        padding: 14,
         fontSize: 15,
         minHeight: 120,
         lineHeight: 22,
-        backgroundColor: Colors.frostGray,
+        backgroundColor: Colors.glacierWhite,
     },
     saveStatus: {
         fontSize: 12,
         color: Colors.textSecondary,
     },
-    openInPhotosButton: {
-        marginHorizontal: 16,
-        marginTop: 8,
-        paddingVertical: 14,
-        alignItems: "center",
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: Colors.alpineBlue,
-    },
-    openInPhotosButtonText: {
-        fontSize: 14,
-        color: Colors.alpineBlue,
-        fontWeight: "600",
-    },
     deleteButton: {
         marginHorizontal: 16,
-        marginTop: 8,
-        paddingVertical: 14,
+        marginTop: 24,
+        marginBottom: 16,
+        paddingVertical: 12,
         alignItems: "center",
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: Colors.border,
     },
     deleteButtonText: {
-        fontSize: 14,
-        color: Colors.error,
-        fontWeight: "600",
+        fontSize: 13,
+        color: Colors.textTertiary,
+        fontWeight: "500",
     },
 });
