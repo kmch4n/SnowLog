@@ -330,16 +330,14 @@ export default function VideoDetailScreen() {
                     />
                 </View>
 
-                {/* 写真アプリで開くボタン（ファイルが存在する場合のみ） */}
+                {/* 写真アプリを開くボタン（ファイルが存在する場合のみ） */}
                 {video.isFileAvailable === 1 && (
                     <TouchableOpacity
                         style={styles.openInPhotosButton}
                         onPress={async () => {
-                            const url = `ph://${video.assetId}`;
-                            const canOpen = await Linking.canOpenURL(url);
-                            if (canOpen) {
-                                await Linking.openURL(url);
-                            } else {
+                            try {
+                                await Linking.openURL("photos-redirect://");
+                            } catch {
                                 Alert.alert(
                                     "写真アプリを開けません",
                                     "写真アプリへのアクセスが利用できません。"
@@ -347,7 +345,7 @@ export default function VideoDetailScreen() {
                             }
                         }}
                     >
-                        <Text style={styles.openInPhotosButtonText}>写真アプリで開く</Text>
+                        <Text style={styles.openInPhotosButtonText}>写真アプリを開く</Text>
                     </TouchableOpacity>
                 )}
 
