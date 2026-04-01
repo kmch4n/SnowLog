@@ -109,3 +109,7 @@ export async function deleteVideo(_id: string): Promise<void> {
 export async function getAllVideos(): Promise<VideoWithTags[]> {
     return [...MOCK_VIDEOS].sort((a, b) => b.capturedAt - a.capturedAt);
 }
+
+export async function updateVideoCapturedAt(_id: string, _capturedAt: number): Promise<void> {
+    // Web stub
+}

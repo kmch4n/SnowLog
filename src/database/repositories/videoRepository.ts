@@ -94,3 +94,11 @@ export async function deleteVideo(id: string): Promise<void> {
 export async function getAllVideos() {
     return db.select().from(videos).orderBy(desc(videos.capturedAt));
 }
+
+/** capturedAt を更新する（NaN修復用） */
+export async function updateVideoCapturedAt(id: string, capturedAt: number): Promise<void> {
+    await db
+        .update(videos)
+        .set({ capturedAt, updatedAt: Date.now() })
+        .where(eq(videos.id, id));
+}

@@ -9,6 +9,8 @@ import {
     getAllTechniqueOptions,
     insertTechniqueOption,
 } from "@/database/repositories/techniqueOptionRepository";
+import { getAllVideos, updateVideoCapturedAt } from "@/database/repositories/videoRepository";
+import { getAssetInfo } from "@/services/mediaService";
 import { DEFAULT_TECHNIQUE_OPTIONS } from "@/constants/techniques";
 import migrations from "../../drizzle/migrations";
 
@@ -24,6 +26,28 @@ async function seedTechniqueOptions() {
 }
 
 /**
+ * capturedAt が NaN/0/null など不正な値で保存されたレコードを修復する
+ * MediaLibrary から creationTime を再取得して上書きする
+ */
+const MIN_VALID_TIMESTAMP = 946684800; // 2000-01-01 UTC（秒）
+async function repairInvalidCapturedAt() {
+    const allVideos = await getAllVideos();
+    for (const video of allVideos) {
+        if (Number.isFinite(video.capturedAt) && video.capturedAt > MIN_VALID_TIMESTAMP) {
+            continue;
+        }
+        // MediaLibrary から撮影日時を再取得（ネットワーク不要）
+        const info = await getAssetInfo(video.assetId, { shouldDownloadFromNetwork: false });
+        if (info?.creationTime && Number.isFinite(info.creationTime)) {
+            const repairedAt = Math.floor(info.creationTime / 1000);
+            if (repairedAt > MIN_VALID_TIMESTAMP) {
+                await updateVideoCapturedAt(video.id, repairedAt);
+            }
+        }
+    }
+}
+
+/**
  * ルートレイアウト
  * アプリ起動時にDBマイグレーションを実行してから画面を表示する
  */
@@ -34,6 +58,7 @@ export default function RootLayout() {
     useEffect(() => {
         if (success) {
             seedTechniqueOptions();
+            repairInvalidCapturedAt();
         }
     }, [success]);
 
