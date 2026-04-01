@@ -15,6 +15,7 @@ import {
     getFavoriteResorts,
     removeFavoriteResort,
 } from "@/database/repositories/favoriteResortRepository";
+import { Colors } from "@/constants/colors";
 import { SkiResortSearch } from "@/components/SkiResortSearch";
 
 /**
@@ -118,15 +119,15 @@ export default function FavoriteResortsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
     },
     addForm: {
         flexDirection: "row",
         gap: 8,
         padding: 16,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         borderBottomWidth: 1,
-        borderBottomColor: "#E0E0E0",
+        borderBottomColor: Colors.border,
         alignItems: "flex-start",
         zIndex: 10,
     },
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     addButton: {
-        backgroundColor: "#1A3A5C",
+        backgroundColor: Colors.alpineBlue,
         borderRadius: 8,
         paddingHorizontal: 16,
         paddingVertical: 10,
@@ -143,10 +144,10 @@ const styles = StyleSheet.create({
         alignSelf: "flex-start",
     },
     addButtonDisabled: {
-        backgroundColor: "#AAAAAA",
+        backgroundColor: Colors.textTertiary,
     },
     addButtonText: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontSize: 14,
         fontWeight: "600",
     },
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         paddingHorizontal: 16,
         paddingVertical: 14,
         borderRadius: 8,
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
     rowText: {
         flex: 1,
         fontSize: 16,
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     deleteButton: {
         paddingHorizontal: 12,
@@ -172,17 +173,17 @@ const styles = StyleSheet.create({
     },
     deleteButtonText: {
         fontSize: 14,
-        color: "#CC3333",
+        color: Colors.error,
         fontWeight: "600",
     },
     separator: {
         height: 1,
-        backgroundColor: "#E0E0E0",
+        backgroundColor: Colors.border,
         marginHorizontal: 16,
     },
     empty: {
         fontSize: 14,
-        color: "#AAAAAA",
+        color: Colors.textTertiary,
         textAlign: "center",
         marginTop: 24,
         lineHeight: 22,

@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
+import { Colors } from "@/constants/colors";
 import { FilterBar } from "@/components/FilterBar";
 import { VideoCard } from "@/components/VideoCard";
 import { useVideos } from "@/hooks/useVideos";
@@ -60,18 +61,18 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
     },
     resultCountRow: {
         paddingHorizontal: 16,
         paddingVertical: 6,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#F0F0F0",
+        borderBottomColor: Colors.borderLight,
     },
     resultCount: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
     listContent: {
         paddingTop: 8,
@@ -83,6 +84,6 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 15,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
 });

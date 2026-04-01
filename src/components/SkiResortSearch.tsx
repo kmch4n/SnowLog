@@ -8,6 +8,7 @@ import {
     View,
 } from "react-native";
 
+import { Colors } from "../constants/colors";
 import { getFavoriteResorts } from "../database/repositories/favoriteResortRepository";
 import SKI_RESORTS from "../constants/skiResorts.json";
 import type { SkiResort } from "../types";
@@ -154,9 +155,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
         borderRadius: 8,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
     },
     input: {
         flex: 1,
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
     },
     clearText: {
         fontSize: 18,
-        color: "#AAAAAA",
+        color: Colors.textTertiary,
     },
     favoriteScroll: {
         marginTop: 8,
@@ -179,24 +180,24 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     favoriteChip: {
-        backgroundColor: "#EBF2FA",
+        backgroundColor: Colors.alpineBlueLight,
         borderRadius: 16,
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderWidth: 1,
-        borderColor: "#C8DCEF",
+        borderColor: Colors.border,
     },
     favoriteChipText: {
         fontSize: 13,
-        color: "#1A3A5C",
+        color: Colors.alpineBlue,
         fontWeight: "600",
     },
     suggestionWrapper: {
         marginTop: 6,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.12,
@@ -213,15 +214,15 @@ const styles = StyleSheet.create({
     },
     suggestionName: {
         fontSize: 14,
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     suggestionPrefecture: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
         marginTop: 1,
     },
     separator: {
         height: 1,
-        backgroundColor: "#F0F0F0",
+        backgroundColor: Colors.borderLight,
     },
 });

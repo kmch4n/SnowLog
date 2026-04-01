@@ -1,12 +1,14 @@
 import { Stack } from "expo-router";
 
+import { Colors } from "@/constants/colors";
+
 export default function CalendarLayout() {
     return (
         <Stack
             id="calendar-stack"
             screenOptions={{
-                headerStyle: { backgroundColor: "#1A3A5C" },
-                headerTintColor: "#FFFFFF",
+                headerStyle: { backgroundColor: Colors.headerBg },
+                headerTintColor: Colors.headerText,
                 headerTitleStyle: { fontWeight: "700" },
             }}
         >

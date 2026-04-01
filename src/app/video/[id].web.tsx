@@ -14,6 +14,7 @@ import {
     View,
 } from "react-native";
 
+import { Colors } from "@/constants/colors";
 import { TagChip } from "@/components/TagChip";
 import { exportAllToJSON } from "@/services/exportService";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
@@ -34,7 +35,7 @@ export default function VideoDetailScreen() {
                     style={{ marginRight: 16 }}
                     disabled={isExporting}
                 >
-                    <Text style={{ color: "#FFFFFF", fontSize: 14 }}>
+                    <Text style={{ color: Colors.headerText, fontSize: 14 }}>
                         {isExporting ? "..." : "書き出し"}
                     </Text>
                 </TouchableOpacity>
@@ -135,7 +136,7 @@ export default function VideoDetailScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
     },
     center: {
         flex: 1,
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     loadingText: {
-        color: "#888888",
+        color: Colors.textSecondary,
         fontSize: 14,
     },
     scroll: {
@@ -159,27 +160,27 @@ const styles = StyleSheet.create({
     },
     videoPlaceholderIcon: {
         fontSize: 40,
-        color: "#FFFFFF",
+        color: Colors.headerText,
         opacity: 0.4,
     },
     videoPlaceholderText: {
-        color: "#AAAAAA",
+        color: Colors.textTertiary,
         fontSize: 13,
     },
     metaSection: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         padding: 16,
         marginBottom: 8,
     },
     filename: {
         fontSize: 16,
         fontWeight: "700",
-        color: "#222222",
+        color: Colors.textPrimary,
         marginBottom: 4,
     },
     metaRow: {
         fontSize: 13,
-        color: "#666666",
+        color: Colors.textSecondary,
         marginBottom: 12,
     },
     fieldSection: {
@@ -188,11 +189,11 @@ const styles = StyleSheet.create({
     fieldLabel: {
         fontSize: 13,
         fontWeight: "600",
-        color: "#555555",
+        color: Colors.textSecondary,
         marginBottom: 6,
     },
     section: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         padding: 16,
         marginBottom: 8,
     },
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 15,
         fontWeight: "700",
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     tagList: {
         flexDirection: "row",
@@ -214,26 +215,26 @@ const styles = StyleSheet.create({
     },
     emptyTag: {
         fontSize: 14,
-        color: "#AAAAAA",
+        color: Colors.textTertiary,
     },
     memoText: {
         fontSize: 15,
-        color: "#333333",
+        color: Colors.textPrimary,
         lineHeight: 22,
     },
     readonlyText: {
         fontSize: 15,
-        color: "#333333",
+        color: Colors.textPrimary,
     },
     iosNotice: {
         margin: 16,
         padding: 12,
-        backgroundColor: "#EAF2FB",
+        backgroundColor: Colors.alpineBlueLight,
         borderRadius: 8,
     },
     iosNoticeText: {
         fontSize: 13,
-        color: "#1A3A5C",
+        color: Colors.alpineBlue,
         textAlign: "center",
     },
 });

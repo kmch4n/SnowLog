@@ -7,6 +7,7 @@ import {
     View,
 } from "react-native";
 
+import { Colors } from "../constants/colors";
 import { getAllTags, getOrCreateTag } from "../database/repositories/tagRepository";
 import type { Tag } from "../types";
 import { TagChip } from "./TagChip";
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     sectionLabel: {
         fontSize: 13,
         fontWeight: "600",
-        color: "#555555",
+        color: Colors.textSecondary,
         marginTop: 12,
         marginBottom: 6,
     },
@@ -136,21 +137,21 @@ const styles = StyleSheet.create({
     customInput: {
         flex: 1,
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
         borderRadius: 8,
         paddingHorizontal: 12,
         paddingVertical: 8,
         fontSize: 14,
     },
     addButton: {
-        backgroundColor: "#1A3A5C",
+        backgroundColor: Colors.alpineBlue,
         borderRadius: 8,
         paddingHorizontal: 16,
         paddingVertical: 8,
         justifyContent: "center",
     },
     addButtonText: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontSize: 14,
         fontWeight: "600",
     },

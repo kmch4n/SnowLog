@@ -1,5 +1,6 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { Colors } from "../constants/colors";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
 import { TagChip } from "./TagChip";
@@ -80,14 +81,14 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         borderRadius: 12,
         marginHorizontal: 16,
         marginVertical: 6,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
         elevation: 2,
         overflow: "hidden",
     },
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
         position: "relative",
         width: "100%",
         height: 180,
-        backgroundColor: "#E0E0E0",
+        backgroundColor: Colors.border,
     },
     thumbnail: {
         width: "100%",
@@ -105,24 +106,24 @@ const styles = StyleSheet.create({
         position: "absolute",
         bottom: 8,
         right: 8,
-        backgroundColor: "rgba(0,0,0,0.7)",
+        backgroundColor: Colors.overlayDark,
         borderRadius: 4,
         paddingHorizontal: 6,
         paddingVertical: 2,
     },
     durationText: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontSize: 12,
         fontWeight: "600",
     },
     unavailableOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: Colors.overlayLight,
         justifyContent: "center",
         alignItems: "center",
     },
     unavailableText: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontSize: 14,
         fontWeight: "700",
     },
@@ -131,24 +132,24 @@ const styles = StyleSheet.create({
     },
     date: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
         marginBottom: 2,
     },
     title: {
         fontSize: 15,
         fontWeight: "700",
-        color: "#222222",
+        color: Colors.textPrimary,
         marginBottom: 4,
     },
     resort: {
         fontSize: 16,
         fontWeight: "600",
-        color: "#1A3A5C",
+        color: Colors.alpineBlue,
         marginBottom: 6,
     },
     resortEmpty: {
         fontSize: 14,
-        color: "#AAAAAA",
+        color: Colors.textTertiary,
         marginBottom: 6,
     },
     tags: {
@@ -159,12 +160,12 @@ const styles = StyleSheet.create({
     },
     moreTag: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
         alignSelf: "center",
     },
     memo: {
         fontSize: 13,
-        color: "#555555",
+        color: Colors.textSecondary,
         lineHeight: 18,
     },
 });

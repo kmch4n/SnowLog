@@ -6,6 +6,8 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native
 import { Stack } from "expo-router";
 import { useColorScheme } from "react-native";
 
+import { Colors } from "@/constants/colors";
+
 export default function RootLayout() {
     const colorScheme = useColorScheme();
 
@@ -18,8 +20,8 @@ export default function RootLayout() {
                     options={{
                         presentation: "modal",
                         title: "動画をインポート",
-                        headerStyle: { backgroundColor: "#1A3A5C" },
-                        headerTintColor: "#FFFFFF",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
                     }}
                 />
@@ -27,8 +29,8 @@ export default function RootLayout() {
                     name="video/[id]"
                     options={{
                         title: "動画詳細",
-                        headerStyle: { backgroundColor: "#1A3A5C" },
-                        headerTintColor: "#FFFFFF",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
                     }}
                 />

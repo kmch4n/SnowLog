@@ -17,6 +17,7 @@ import {
     View,
 } from "react-native";
 
+import { Colors } from "@/constants/colors";
 import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
@@ -231,7 +232,7 @@ export default function VideoDetailScreen() {
                             value={titleInput}
                             onChangeText={setTitleInput}
                             placeholder={video.filename}
-                            placeholderTextColor="#AAAAAA"
+                            placeholderTextColor={Colors.textTertiary}
                             returnKeyType="done"
                             numberOfLines={1}
                         />
@@ -347,7 +348,7 @@ function VideoPlayerView({ uri, style }: { uri: string; style: object }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
     },
     center: {
         flex: 1,
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     loadingText: {
-        color: "#888888",
+        color: Colors.textSecondary,
         fontSize: 14,
     },
     scroll: {
@@ -373,11 +374,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     unavailableText: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontSize: 14,
     },
     metaSection: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         padding: 16,
         marginBottom: 8,
     },
@@ -390,12 +391,12 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 16,
         fontWeight: "700",
-        color: "#222222",
+        color: Colors.textPrimary,
         padding: 0,
     },
     metaRow: {
         fontSize: 13,
-        color: "#666666",
+        color: Colors.textSecondary,
         marginBottom: 12,
     },
     fieldSection: {
@@ -404,11 +405,11 @@ const styles = StyleSheet.create({
     fieldLabel: {
         fontSize: 13,
         fontWeight: "600",
-        color: "#555555",
+        color: Colors.textSecondary,
         marginBottom: 6,
     },
     section: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         padding: 16,
         marginBottom: 8,
     },
@@ -421,21 +422,21 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 15,
         fontWeight: "700",
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     memoInput: {
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
         borderRadius: 8,
         padding: 10,
         fontSize: 15,
         minHeight: 120,
         lineHeight: 22,
-        backgroundColor: "#FAFAFA",
+        backgroundColor: Colors.frostGray,
     },
     saveStatus: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
     openInPhotosButton: {
         marginHorizontal: 16,
@@ -444,11 +445,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: "#1A3A5C",
+        borderColor: Colors.alpineBlue,
     },
     openInPhotosButtonText: {
         fontSize: 14,
-        color: "#1A3A5C",
+        color: Colors.alpineBlue,
         fontWeight: "600",
     },
     deleteButton: {
@@ -458,11 +459,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
     },
     deleteButtonText: {
         fontSize: 14,
-        color: "#CC3333",
+        color: Colors.error,
         fontWeight: "600",
     },
 });

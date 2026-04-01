@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import { CalendarGrid } from "@/components/CalendarGrid";
+import { Colors } from "@/constants/colors";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useCalendar } from "@/hooks/useCalendar";
 
@@ -109,7 +110,7 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
     },
     navRow: {
         flexDirection: "row",
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#E0E0E0",
+        borderBottomColor: Colors.border,
     },
     navButton: {
         width: 40,
@@ -128,22 +129,22 @@ const styles = StyleSheet.create({
     },
     navArrow: {
         fontSize: 28,
-        color: "#1A3A5C",
+        color: Colors.alpineBlue,
         lineHeight: 32,
     },
     monthTitle: {
         fontSize: 17,
         fontWeight: "700",
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     calendarContainer: {
         paddingVertical: 8,
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#E0E0E0",
+        borderBottomColor: Colors.border,
     },
     panelContainer: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
     },
     panelHeader: {
         flexDirection: "row",
@@ -156,11 +157,11 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 15,
         fontWeight: "700",
-        color: "#333333",
+        color: Colors.textPrimary,
     },
     panelCount: {
         fontSize: 13,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
     panelEmpty: {
         alignItems: "center",
@@ -168,11 +169,11 @@ const styles = StyleSheet.create({
     },
     panelEmptyText: {
         fontSize: 14,
-        color: "#AAAAAA",
+        color: Colors.textTertiary,
     },
     separator: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: "#E0E0E0",
+        backgroundColor: Colors.border,
         marginLeft: 16 + 72 + 12,
     },
 });

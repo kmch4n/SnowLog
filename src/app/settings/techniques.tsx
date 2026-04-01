@@ -16,6 +16,7 @@ import {
     getAllTechniqueOptions,
     insertTechniqueOption,
 } from "@/database/repositories/techniqueOptionRepository";
+import { Colors } from "@/constants/colors";
 import type { TechniqueOptionSelect } from "@/database/schema";
 
 /**
@@ -121,7 +122,7 @@ export default function TechniquesSettingsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
     },
     list: {
         padding: 16,
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         paddingHorizontal: 16,
         paddingVertical: 14,
         borderRadius: 8,
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     rowText: {
         flex: 1,
         fontSize: 16,
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     deleteButton: {
         paddingHorizontal: 12,
@@ -145,17 +146,17 @@ const styles = StyleSheet.create({
     },
     deleteButtonText: {
         fontSize: 14,
-        color: "#CC3333",
+        color: Colors.error,
         fontWeight: "600",
     },
     separator: {
         height: 1,
-        backgroundColor: "#E0E0E0",
+        backgroundColor: Colors.border,
         marginHorizontal: 16,
     },
     empty: {
         fontSize: 14,
-        color: "#AAAAAA",
+        color: Colors.textTertiary,
         textAlign: "center",
         marginTop: 24,
     },
@@ -163,32 +164,32 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         gap: 8,
         padding: 16,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         borderTopWidth: 1,
-        borderTopColor: "#E0E0E0",
+        borderTopColor: Colors.border,
     },
     addInput: {
         flex: 1,
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
         borderRadius: 8,
         paddingHorizontal: 12,
         paddingVertical: 10,
         fontSize: 15,
-        backgroundColor: "#FAFAFA",
+        backgroundColor: Colors.frostGray,
     },
     addButton: {
-        backgroundColor: "#1A3A5C",
+        backgroundColor: Colors.alpineBlue,
         borderRadius: 8,
         paddingHorizontal: 16,
         alignItems: "center",
         justifyContent: "center",
     },
     addButtonDisabled: {
-        backgroundColor: "#AAAAAA",
+        backgroundColor: Colors.textTertiary,
     },
     addButtonText: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontSize: 14,
         fontWeight: "600",
     },

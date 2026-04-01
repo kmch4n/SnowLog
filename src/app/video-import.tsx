@@ -15,6 +15,7 @@ import {
     View,
 } from "react-native";
 
+import { Colors } from "@/constants/colors";
 import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
@@ -340,7 +341,7 @@ export default function VideoImportScreen() {
                 {/* iCloud ダウンロード中のメタデータ取得インジケーター */}
                 {isLoadingMeta && (
                     <View style={styles.metaLoading}>
-                        <ActivityIndicator size="small" color="#1A3A5C" />
+                        <ActivityIndicator size="small" color={Colors.alpineBlue} />
                         <Text style={styles.metaLoadingText}>メタデータを取得中...</Text>
                     </View>
                 )}
@@ -353,7 +354,7 @@ export default function VideoImportScreen() {
                         value={title}
                         onChangeText={setTitle}
                         placeholder={selectedAsset?.fileName ?? "タイトルを入力..."}
-                        placeholderTextColor="#AAAAAA"
+                        placeholderTextColor={Colors.textTertiary}
                         returnKeyType="done"
                         numberOfLines={1}
                     />
@@ -429,7 +430,7 @@ export default function VideoImportScreen() {
                     disabled={!selectedAsset || isSaving || !resolvedAssetUri || isLoadingMeta}
                 >
                     {isSaving ? (
-                        <ActivityIndicator color="#FFFFFF" />
+                        <ActivityIndicator color={Colors.headerText} />
                     ) : (
                         <Text style={styles.saveButtonText}>保存する</Text>
                     )}
@@ -442,19 +443,19 @@ export default function VideoImportScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
     },
     scroll: {
         padding: 16,
         paddingBottom: 40,
     },
     pickButton: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         borderRadius: 12,
         marginBottom: 16,
         overflow: "hidden",
         borderWidth: 2,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
         borderStyle: "dashed",
     },
     pickPlaceholder: {
@@ -468,7 +469,7 @@ const styles = StyleSheet.create({
     },
     pickText: {
         fontSize: 15,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
     previewContainer: {
         flexDirection: "row",
@@ -480,7 +481,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 60,
         borderRadius: 6,
-        backgroundColor: "#E0E0E0",
+        backgroundColor: Colors.border,
     },
     previewMeta: {
         flex: 1,
@@ -488,26 +489,26 @@ const styles = StyleSheet.create({
     previewFilename: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     previewDate: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
         marginTop: 2,
     },
     previewDuration: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
     changeButton: {
-        backgroundColor: "#F0F0F0",
+        backgroundColor: Colors.frostGray,
         borderRadius: 6,
         paddingHorizontal: 12,
         paddingVertical: 6,
     },
     changeButtonText: {
         fontSize: 13,
-        color: "#333333",
+        color: Colors.textPrimary,
     },
     section: {
         marginBottom: 16,
@@ -518,26 +519,26 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 14,
         fontWeight: "700",
-        color: "#333333",
+        color: Colors.textPrimary,
         marginBottom: 8,
     },
     tagSelectorContainer: {
         minHeight: 120,
     },
     titleInput: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
         borderRadius: 8,
         paddingHorizontal: 12,
         paddingVertical: 10,
         fontSize: 15,
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     memoInput: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
         borderRadius: 8,
         padding: 12,
         fontSize: 15,
@@ -545,7 +546,7 @@ const styles = StyleSheet.create({
         lineHeight: 22,
     },
     gpsBanner: {
-        backgroundColor: "#E8F0F8",
+        backgroundColor: Colors.alpineBlueLight,
         borderRadius: 8,
         paddingVertical: 8,
         paddingHorizontal: 10,
@@ -553,7 +554,7 @@ const styles = StyleSheet.create({
     },
     gpsBannerLabel: {
         fontSize: 12,
-        color: "#1A3A5C",
+        color: Colors.alpineBlue,
         fontWeight: "600",
         marginBottom: 6,
     },
@@ -561,26 +562,26 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     gpsBannerChip: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         borderRadius: 20,
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderWidth: 1,
-        borderColor: "#1A3A5C",
+        borderColor: Colors.alpineBlue,
         alignItems: "center",
     },
     gpsBannerChipName: {
         fontSize: 13,
-        color: "#1A3A5C",
+        color: Colors.alpineBlue,
         fontWeight: "600",
     },
     gpsBannerChipDist: {
         fontSize: 11,
-        color: "#5580A0",
+        color: Colors.textSecondary,
         marginTop: 1,
     },
     saveButton: {
-        backgroundColor: "#1A3A5C",
+        backgroundColor: Colors.alpineBlue,
         borderRadius: 12,
         paddingVertical: 16,
         alignItems: "center",
@@ -596,13 +597,13 @@ const styles = StyleSheet.create({
     },
     metaLoadingText: {
         fontSize: 13,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
     saveButtonDisabled: {
-        backgroundColor: "#AAAAAA",
+        backgroundColor: Colors.textTertiary,
     },
     saveButtonText: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontSize: 16,
         fontWeight: "700",
     },

@@ -1,5 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { Colors } from "../constants/colors";
 import { toDateKey } from "../utils/dateUtils";
 
 const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     },
     dayLabel: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
         fontWeight: "600",
         paddingVertical: 6,
     },
@@ -143,28 +144,28 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     dayCircleSelected: {
-        backgroundColor: "#1A3A5C",
+        backgroundColor: Colors.alpineBlue,
     },
     dayCircleToday: {
         borderWidth: 1.5,
-        borderColor: "#1A3A5C",
+        borderColor: Colors.alpineBlue,
     },
     dayText: {
         fontSize: 14,
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     dayTextSelected: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontWeight: "700",
     },
     dot: {
         width: 5,
         height: 5,
         borderRadius: 2.5,
-        backgroundColor: "#1A3A5C",
+        backgroundColor: Colors.alpineBlue,
         marginTop: 2,
     },
     dotSelected: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.headerText,
     },
 });

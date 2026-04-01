@@ -1,12 +1,14 @@
 import { Stack } from "expo-router";
 
+import { Colors } from "@/constants/colors";
+
 export default function HomeLayout() {
     return (
         <Stack
             id="home-stack"
             screenOptions={{
-                headerStyle: { backgroundColor: "#1A3A5C" },
-                headerTintColor: "#FFFFFF",
+                headerStyle: { backgroundColor: Colors.headerBg },
+                headerTintColor: Colors.headerText,
                 headerTitleStyle: { fontWeight: "700" },
             }}
         >

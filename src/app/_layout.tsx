@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, useColorScheme, View } from "react-native";
 
+import { Colors } from "@/constants/colors";
 import { db } from "@/database";
 import {
     getAllTechniqueOptions,
@@ -86,7 +87,7 @@ export default function RootLayout() {
     if (!success) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color="#1A3A5C" />
+                <ActivityIndicator size="large" color={Colors.alpineBlue} />
             </View>
         );
     }
@@ -100,8 +101,8 @@ export default function RootLayout() {
                     options={{
                         presentation: "modal",
                         title: "動画をインポート",
-                        headerStyle: { backgroundColor: "#1A3A5C" },
-                        headerTintColor: "#FFFFFF",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
                     }}
                 />
@@ -109,8 +110,8 @@ export default function RootLayout() {
                     name="video/[id]"
                     options={{
                         title: "動画詳細",
-                        headerStyle: { backgroundColor: "#1A3A5C" },
-                        headerTintColor: "#FFFFFF",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
                     }}
                 />
@@ -118,8 +119,8 @@ export default function RootLayout() {
                     name="settings/techniques"
                     options={{
                         title: "滑走種別の管理",
-                        headerStyle: { backgroundColor: "#1A3A5C" },
-                        headerTintColor: "#FFFFFF",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
                     }}
                 />
@@ -127,8 +128,8 @@ export default function RootLayout() {
                     name="settings/favorite-resorts"
                     options={{
                         title: "お気に入りスキー場",
-                        headerStyle: { backgroundColor: "#1A3A5C" },
-                        headerTintColor: "#FFFFFF",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
                     }}
                 />
@@ -136,8 +137,8 @@ export default function RootLayout() {
                     name="settings/tags"
                     options={{
                         title: "タグの管理",
-                        headerStyle: { backgroundColor: "#1A3A5C" },
-                        headerTintColor: "#FFFFFF",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
                     }}
                 />
@@ -151,16 +152,16 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
     },
     errorText: {
         fontSize: 16,
         fontWeight: "700",
-        color: "#E53935",
+        color: Colors.error,
         marginBottom: 8,
     },
     errorDetail: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
 });

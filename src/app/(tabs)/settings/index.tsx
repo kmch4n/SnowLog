@@ -1,6 +1,8 @@
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { Colors } from "@/constants/colors";
+
 interface SettingsItem {
     label: string;
     description: string;
@@ -61,19 +63,19 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
         padding: 16,
     },
     section: {
         borderRadius: 12,
         overflow: "hidden",
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
     },
     row: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         paddingHorizontal: 16,
         paddingVertical: 14,
     },
@@ -90,16 +92,16 @@ const styles = StyleSheet.create({
     },
     rowLabel: {
         fontSize: 16,
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     rowDescription: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
         marginTop: 2,
     },
     chevron: {
         fontSize: 22,
-        color: "#AAAAAA",
+        color: Colors.textTertiary,
         marginLeft: 8,
     },
 });

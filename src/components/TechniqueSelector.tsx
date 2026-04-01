@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { Colors } from "../constants/colors";
 import { getAllTechniqueOptions } from "../database/repositories/techniqueOptionRepository";
 import type { TechniqueOptionSelect } from "../database/schema";
 
@@ -64,24 +65,24 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         paddingHorizontal: 12,
         paddingVertical: 6,
-        backgroundColor: "#F0F0F0",
+        backgroundColor: Colors.frostGray,
         borderWidth: 1,
-        borderColor: "#E0E0E0",
+        borderColor: Colors.border,
     },
     chipSelected: {
-        backgroundColor: "#1A3A5C",
-        borderColor: "#1A3A5C",
+        backgroundColor: Colors.alpineBlue,
+        borderColor: Colors.alpineBlue,
     },
     chipText: {
         fontSize: 13,
-        color: "#333333",
+        color: Colors.textPrimary,
     },
     chipTextSelected: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontWeight: "600",
     },
     empty: {
         fontSize: 13,
-        color: "#AAAAAA",
+        color: Colors.textTertiary,
     },
 });

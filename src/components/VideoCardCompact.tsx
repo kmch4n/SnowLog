@@ -1,13 +1,8 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { Colors } from "../constants/colors";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
-
-// タグ種別ごとの配色（TagChip と統一）
-const TAG_CHIP_COLORS: Record<string, { background: string; text: string }> = {
-    skier: { background: "#F3E5F5", text: "#6A1B9A" },
-    custom: { background: "#E8F5E9", text: "#2E7D32" },
-};
 
 interface VideoCardCompactProps {
     video: VideoWithTags;
@@ -69,10 +64,10 @@ export function VideoCardCompact({ video, onPress }: VideoCardCompactProps) {
                             {nonTechniqueTags.slice(0, 2).map((tag) => (
                                 <View
                                     key={tag.id}
-                                    style={[styles.tagChip, TAG_CHIP_COLORS[tag.type] && { backgroundColor: TAG_CHIP_COLORS[tag.type].background }]}
+                                    style={[styles.tagChip, Colors.tag[tag.type as keyof typeof Colors.tag] && { backgroundColor: Colors.tag[tag.type as keyof typeof Colors.tag].bg }]}
                                 >
                                     <Text
-                                        style={[styles.tagChipText, TAG_CHIP_COLORS[tag.type] && { color: TAG_CHIP_COLORS[tag.type].text }]}
+                                        style={[styles.tagChipText, Colors.tag[tag.type as keyof typeof Colors.tag] && { color: Colors.tag[tag.type as keyof typeof Colors.tag].text }]}
                                     >
                                         {tag.name}
                                     </Text>
@@ -92,7 +87,7 @@ export function VideoCardCompact({ video, onPress }: VideoCardCompactProps) {
 const styles = StyleSheet.create({
     container: {
         flexDirection: "row",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         paddingHorizontal: 16,
         paddingVertical: 10,
         alignItems: "center",
@@ -102,7 +97,7 @@ const styles = StyleSheet.create({
         width: 72,
         height: 54,
         borderRadius: 6,
-        backgroundColor: "#E0E0E0",
+        backgroundColor: Colors.border,
         overflow: "hidden",
         flexShrink: 0,
     },
@@ -112,12 +107,12 @@ const styles = StyleSheet.create({
     },
     unavailableOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: Colors.overlayLight,
         justifyContent: "center",
         alignItems: "center",
     },
     unavailableText: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontSize: 10,
         fontWeight: "700",
     },
@@ -128,11 +123,11 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#222222",
+        color: Colors.textPrimary,
     },
     date: {
         fontSize: 12,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
     chipRow: {
         flexDirection: "row",
@@ -141,30 +136,30 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     techniqueChip: {
-        backgroundColor: "#E8F0FA",
+        backgroundColor: Colors.tag.technique.bg,
         borderRadius: 4,
         paddingHorizontal: 6,
         paddingVertical: 2,
     },
     techniqueChipText: {
         fontSize: 11,
-        color: "#1A3A5C",
+        color: Colors.tag.technique.text,
         fontWeight: "500",
     },
     tagChip: {
-        backgroundColor: "#E8F5E9",
+        backgroundColor: Colors.tag.custom.bg,
         borderRadius: 4,
         paddingHorizontal: 6,
         paddingVertical: 2,
     },
     tagChipText: {
         fontSize: 11,
-        color: "#2E7D32",
+        color: Colors.tag.custom.text,
         fontWeight: "500",
     },
     moreText: {
         fontSize: 11,
-        color: "#888888",
+        color: Colors.textSecondary,
         alignSelf: "center",
     },
 });

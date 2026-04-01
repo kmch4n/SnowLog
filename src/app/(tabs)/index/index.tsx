@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import { VideoCardCompact } from "@/components/VideoCardCompact";
+import { Colors } from "@/constants/colors";
 import { useVideos } from "@/hooks/useVideos";
 import type { VideoWithTags } from "@/types";
 
@@ -96,7 +97,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
     },
     listContent: {
         paddingBottom: 100,
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
     sectionHeader: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
         paddingHorizontal: 16,
         paddingTop: 16,
         paddingBottom: 6,
@@ -113,19 +114,19 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 14,
         fontWeight: "700",
-        color: "#333333",
+        color: Colors.textPrimary,
     },
     sectionCount: {
         fontSize: 13,
-        color: "#888888",
+        color: Colors.textSecondary,
     },
     sectionFooter: {
         height: 8,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: Colors.glacierWhite,
     },
     separator: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: "#F0F0F0",
+        backgroundColor: Colors.borderLight,
         marginLeft: 16 + 72 + 12, // サムネイル分インデント
     },
     empty: {
@@ -137,12 +138,12 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: "700",
-        color: "#333333",
+        color: Colors.textPrimary,
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: "#888888",
+        color: Colors.textSecondary,
         textAlign: "center",
         lineHeight: 20,
     },
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         bottom: 100,
         alignSelf: "center",
-        backgroundColor: "#1A3A5C",
+        backgroundColor: Colors.alpineBlue,
         borderRadius: 28,
         paddingHorizontal: 24,
         paddingVertical: 14,
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     fabText: {
-        color: "#FFFFFF",
+        color: Colors.headerText,
         fontSize: 16,
         fontWeight: "700",
     },

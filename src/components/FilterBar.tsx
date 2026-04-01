@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 
+import { Colors } from "../constants/colors";
 import { getAllTags } from "../database/repositories/tagRepository";
 import type { FilterOptions, Tag } from "../types";
 import { SkiResortSearch } from "./SkiResortSearch";
@@ -97,12 +98,12 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.freshSnow,
         paddingHorizontal: 16,
         paddingTop: 12,
         paddingBottom: 8,
         borderBottomWidth: 1,
-        borderBottomColor: "#F0F0F0",
+        borderBottomColor: Colors.borderLight,
     },
     resortRow: {
         marginBottom: 8,
@@ -125,6 +126,6 @@ const styles = StyleSheet.create({
     },
     clearButtonText: {
         fontSize: 12,
-        color: "#E53935",
+        color: Colors.error,
     },
 });
