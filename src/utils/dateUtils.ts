@@ -3,6 +3,20 @@
  */
 
 /**
+ * EXIF DateTimeOriginal 文字列をミリ秒タイムスタンプに変換する
+ * EXIF 2.32 仕様の "YYYY:MM:DD HH:MM:SS" を ISO 8601 に変換してパースする。
+ * パース失敗時は null を返す。
+ */
+export function parseExifDateTime(exifStr: string): number | null {
+    // "2026:03:31 13:42:10" → "2026-03-31T13:42:10"
+    const m = exifStr.match(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}:\d{2}:\d{2})$/);
+    if (!m) return null;
+    const iso = `${m[1]}-${m[2]}-${m[3]}T${m[4]}`;
+    const ts = new Date(iso).getTime();
+    return Number.isFinite(ts) ? ts : null;
+}
+
+/**
  * Unix timestamp（秒）を日本語形式の日付文字列に変換する
  * 例: 1735689600 → "2025年1月1日"
  */

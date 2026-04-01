@@ -46,7 +46,9 @@ export async function importVideo(
         }
     }
 
-    const capturedAt = Math.floor(assetCreationTime / 1000);
+    const capturedAt = Number.isFinite(assetCreationTime)
+        ? Math.floor(assetCreationTime / 1000)
+        : Math.floor(Date.now() / 1000);
     const now = Date.now();
 
     // DBに動画レコードを挿入

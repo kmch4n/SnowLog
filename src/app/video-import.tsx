@@ -21,7 +21,7 @@ import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { getVideoByAssetId } from "@/database/repositories/videoRepository";
 import { importVideo } from "@/services/importService";
 import { getAssetInfo } from "@/services/mediaService";
-import { formatDate, formatDuration } from "@/utils/dateUtils";
+import { formatDate, formatDuration, parseExifDateTime } from "@/utils/dateUtils";
 import { findNearbySkiResorts } from "@/utils/geoUtils";
 
 /**
@@ -123,9 +123,9 @@ export default function VideoImportScreen() {
             const mediaAsset = {
                 id: selectedAsset.assetId,
                 filename: selectedAsset.fileName ?? "video.mp4",
-                creationTime: selectedAsset.exif?.DateTimeOriginal
-                    ? new Date(selectedAsset.exif.DateTimeOriginal).getTime()
-                    : Date.now(),
+                creationTime: (selectedAsset.exif?.DateTimeOriginal
+                    ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
+                    : null) ?? Date.now(),
                 duration: (selectedAsset.duration ?? 0) / 1000,
                 uri: selectedAsset.uri,
                 width: selectedAsset.width,
@@ -152,9 +152,10 @@ export default function VideoImportScreen() {
     }, [selectedAsset, title, skiResortName, memo, tagIds, techniques, router]);
 
     // 撮影日時を取得
-    const capturedAt = selectedAsset?.exif?.DateTimeOriginal
-        ? Math.floor(new Date(selectedAsset.exif.DateTimeOriginal).getTime() / 1000)
+    const exifMs = selectedAsset?.exif?.DateTimeOriginal
+        ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
         : null;
+    const capturedAt = exifMs != null ? Math.floor(exifMs / 1000) : null;
 
     return (
         <KeyboardAvoidingView
