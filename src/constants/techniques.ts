@@ -17,4 +17,6 @@ export const DEFAULT_TECHNIQUE_OPTIONS = [
     "グラトリ",
     "パーク",
     "ハーフパイプ",
+    // 汎用
+    "その他",
 ];

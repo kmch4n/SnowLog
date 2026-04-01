@@ -12,12 +12,14 @@ import {
 import { DEFAULT_TECHNIQUE_OPTIONS } from "@/constants/techniques";
 import migrations from "../../drizzle/migrations";
 
-/** 初回起動時にデフォルトの滑走種別を登録する */
+/** デフォルトの滑走種別を登録する（差分シード：未登録の項目のみ追加） */
 async function seedTechniqueOptions() {
     const existing = await getAllTechniqueOptions();
-    if (existing.length > 0) return;
+    const existingNames = new Set(existing.map((o) => o.name));
     for (const name of DEFAULT_TECHNIQUE_OPTIONS) {
-        await insertTechniqueOption(name);
+        if (!existingNames.has(name)) {
+            await insertTechniqueOption(name);
+        }
     }
 }
 
