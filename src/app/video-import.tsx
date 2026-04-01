@@ -296,7 +296,11 @@ export default function VideoImportScreen() {
             style={styles.container}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-            <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+            <ScrollView
+                contentContainerStyle={styles.scroll}
+                keyboardShouldPersistTaps="always"
+                nestedScrollEnabled
+            >
                 {/* 動画選択エリア */}
                 <TouchableOpacity style={styles.pickButton} onPress={handlePickVideo}>
                     {selectedAsset ? (
@@ -356,7 +360,7 @@ export default function VideoImportScreen() {
                 </View>
 
                 {/* スキー場名 */}
-                <View style={styles.section}>
+                <View style={[styles.section, styles.resortSection]}>
                     <Text style={styles.sectionTitle}>スキー場</Text>
                     {/* GPS撮影地からのサジェスト（スキー場未設定かつ GPS検出成功時のみ表示） */}
                     {gpsSuggestions.length > 0 && !skiResortName && (
@@ -366,7 +370,7 @@ export default function VideoImportScreen() {
                                 horizontal
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={styles.gpsBannerChips}
-                                keyboardShouldPersistTaps="handled"
+                                keyboardShouldPersistTaps="always"
                             >
                                 {gpsSuggestions.map((s) => (
                                     <TouchableOpacity
@@ -507,6 +511,9 @@ const styles = StyleSheet.create({
     },
     section: {
         marginBottom: 16,
+    },
+    resortSection: {
+        zIndex: 300,
     },
     sectionTitle: {
         fontSize: 14,

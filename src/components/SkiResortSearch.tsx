@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     ScrollView,
     StyleSheet,
@@ -27,6 +27,7 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
     const [query, setQuery] = useState(value ?? "");
     const [isFocused, setIsFocused] = useState(false);
     const [favorites, setFavorites] = useState<string[]>([]);
+    const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // 親から value が変化したとき（clearAll など）に内部状態を同期する
     useEffect(() => {
@@ -51,6 +52,11 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
     }, [query]);
 
     function handleSelect(resort: SkiResort) {
+        // onBlur タイマーが残っていればキャンセル（レース条件防止）
+        if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
+            blurTimeoutRef.current = null;
+        }
         setQuery(resort.name);
         setIsFocused(false);
         onSelect(resort.name);
@@ -76,7 +82,12 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
                         setQuery(text);
                     }}
                     onFocus={() => setIsFocused(true)}
-                    onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+                    onBlur={() => {
+                        blurTimeoutRef.current = setTimeout(() => {
+                            setIsFocused(false);
+                            blurTimeoutRef.current = null;
+                        }, 200);
+                    }}
                     placeholder="スキー場名を検索..."
                     returnKeyType="done"
                 />
@@ -94,7 +105,7 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
                     showsHorizontalScrollIndicator={false}
                     style={styles.favoriteScroll}
                     contentContainerStyle={styles.favoriteScrollContent}
-                    keyboardShouldPersistTaps="handled"
+                    keyboardShouldPersistTaps="always"
                 >
                     {favorites.map((name) => (
                         <TouchableOpacity
@@ -110,24 +121,26 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
 
             {/* サジェストリスト */}
             {isFocused && suggestions.length > 0 && (
-                <ScrollView
-                    style={styles.suggestionList}
-                    keyboardShouldPersistTaps="handled"
-                    nestedScrollEnabled
-                >
-                    {suggestions.map((item, index) => (
-                        <View key={String(item.id)}>
-                            {index > 0 && <View style={styles.separator} />}
-                            <TouchableOpacity
-                                style={styles.suggestionItem}
-                                onPress={() => handleSelect(item)}
-                            >
-                                <Text style={styles.suggestionName}>{item.name}</Text>
-                                <Text style={styles.suggestionPrefecture}>{item.prefecture}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    ))}
-                </ScrollView>
+                <View style={styles.suggestionWrapper}>
+                    <ScrollView
+                        style={styles.suggestionList}
+                        keyboardShouldPersistTaps="always"
+                        nestedScrollEnabled
+                    >
+                        {suggestions.map((item, index) => (
+                            <View key={String(item.id)}>
+                                {index > 0 && <View style={styles.separator} />}
+                                <TouchableOpacity
+                                    style={styles.suggestionItem}
+                                    onPress={() => handleSelect(item)}
+                                >
+                                    <Text style={styles.suggestionName}>{item.name}</Text>
+                                    <Text style={styles.suggestionPrefecture}>{item.prefecture}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </ScrollView>
+                </View>
             )}
         </View>
     );
@@ -136,7 +149,6 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
 const styles = StyleSheet.create({
     container: {
         position: "relative",
-        zIndex: 10,
     },
     inputRow: {
         flexDirection: "row",
@@ -179,21 +191,21 @@ const styles = StyleSheet.create({
         color: "#1A3A5C",
         fontWeight: "600",
     },
-    suggestionList: {
-        position: "absolute",
-        top: "100%",
-        left: 0,
-        right: 0,
+    suggestionWrapper: {
+        marginTop: 6,
         backgroundColor: "#FFFFFF",
+        borderRadius: 8,
         borderWidth: 1,
         borderColor: "#E0E0E0",
-        borderRadius: 8,
-        maxHeight: 240,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.12,
         shadowRadius: 6,
         elevation: 4,
+        overflow: "hidden",
+    },
+    suggestionList: {
+        maxHeight: 240,
     },
     suggestionItem: {
         paddingHorizontal: 14,

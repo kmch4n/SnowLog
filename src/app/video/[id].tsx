@@ -206,7 +206,7 @@ export default function VideoDetailScreen() {
             style={styles.container}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-            <ScrollView contentContainerStyle={styles.scroll}>
+            <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="always">
                 {/* 動画プレイヤーエリア */}
                 {video.isFileAvailable === 1 && videoUri ? (
                     <VideoPlayerView uri={videoUri} style={styles.videoPlayer} />
