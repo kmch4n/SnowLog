@@ -46,6 +46,7 @@ export default function VideoImportScreen() {
     const [gpsSuggestions, setGpsSuggestions] = useState<
         { name: string; distanceKm: number }[]
     >([]);
+    const [assetCreationTime, setAssetCreationTime] = useState<number | null>(null);
 
     /** カメラロールから動画を選択する */
     const handlePickVideo = useCallback(async () => {
@@ -91,17 +92,23 @@ export default function VideoImportScreen() {
 
         setSelectedAsset(asset);
         setGpsSuggestions([]);
+        setAssetCreationTime(null);
 
-        // MediaLibrary のメタデータから GPS 座標を取得してスキー場をサジェスト
+        // MediaLibrary のメタデータから GPS 座標・撮影日時を取得
         // shouldDownloadFromNetwork: false により iCloud コンテンツのダウンロードを抑制し
         // PHPhotosErrorNetworkAccessRequired (3164) を防ぐ。
-        // GPS は Photo Library DB に保存されたメタデータのためネットワーク不要で取得できる。
+        // GPS・creationTime は Photo Library DB に保存されたメタデータのためネットワーク不要。
         if (asset.assetId) {
             const info = await getAssetInfo(asset.assetId, { shouldDownloadFromNetwork: false });
-            if (info?.location) {
-                setGpsSuggestions(
-                    findNearbySkiResorts(info.location.latitude, info.location.longitude)
-                );
+            if (info) {
+                if (info.creationTime && Number.isFinite(info.creationTime)) {
+                    setAssetCreationTime(info.creationTime);
+                }
+                if (info.location) {
+                    setGpsSuggestions(
+                        findNearbySkiResorts(info.location.latitude, info.location.longitude)
+                    );
+                }
             }
         }
     }, []);
@@ -125,7 +132,7 @@ export default function VideoImportScreen() {
                 filename: selectedAsset.fileName ?? "video.mp4",
                 creationTime: (selectedAsset.exif?.DateTimeOriginal
                     ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
-                    : null) ?? Date.now(),
+                    : null) ?? assetCreationTime ?? Date.now(),
                 duration: (selectedAsset.duration ?? 0) / 1000,
                 uri: selectedAsset.uri,
                 width: selectedAsset.width,
@@ -149,13 +156,13 @@ export default function VideoImportScreen() {
         } finally {
             setIsSaving(false);
         }
-    }, [selectedAsset, title, skiResortName, memo, tagIds, techniques, router]);
+    }, [selectedAsset, assetCreationTime, title, skiResortName, memo, tagIds, techniques, router]);
 
-    // 撮影日時を取得
-    const exifMs = selectedAsset?.exif?.DateTimeOriginal
+    // 撮影日時を取得（EXIF → MediaLibrary creationTime の順でフォールバック）
+    const creationMs = (selectedAsset?.exif?.DateTimeOriginal
         ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
-        : null;
-    const capturedAt = exifMs != null ? Math.floor(exifMs / 1000) : null;
+        : null) ?? assetCreationTime;
+    const capturedAt = creationMs != null ? Math.floor(creationMs / 1000) : null;
 
     return (
         <KeyboardAvoidingView

@@ -26,23 +26,27 @@ async function seedTechniqueOptions() {
 }
 
 /**
- * capturedAt が NaN/0/null など不正な値で保存されたレコードを修復する
- * MediaLibrary から creationTime を再取得して上書きする
+ * capturedAt が不正なレコードを修復する
+ * NaN/0/null だけでなく、Date.now()（インポート時刻）で保存されたレコードも対象。
+ * MediaLibrary の creationTime と比較し、1時間以上乖離していれば修復する。
+ * 冪等: 修復済みレコードは correctAt と一致するためスキップされる。
  */
 const MIN_VALID_TIMESTAMP = 946684800; // 2000-01-01 UTC（秒）
 async function repairInvalidCapturedAt() {
     const allVideos = await getAllVideos();
     for (const video of allVideos) {
-        if (Number.isFinite(video.capturedAt) && video.capturedAt > MIN_VALID_TIMESTAMP) {
-            continue;
-        }
-        // MediaLibrary から撮影日時を再取得（ネットワーク不要）
         const info = await getAssetInfo(video.assetId, { shouldDownloadFromNetwork: false });
-        if (info?.creationTime && Number.isFinite(info.creationTime)) {
-            const repairedAt = Math.floor(info.creationTime / 1000);
-            if (repairedAt > MIN_VALID_TIMESTAMP) {
-                await updateVideoCapturedAt(video.id, repairedAt);
-            }
+        if (!info?.creationTime || !Number.isFinite(info.creationTime)) continue;
+
+        const correctAt = Math.floor(info.creationTime / 1000);
+        if (correctAt <= MIN_VALID_TIMESTAMP) continue;
+
+        const needsRepair = !Number.isFinite(video.capturedAt)
+            || video.capturedAt <= MIN_VALID_TIMESTAMP
+            || Math.abs(video.capturedAt - correctAt) > 3600;
+
+        if (needsRepair) {
+            await updateVideoCapturedAt(video.id, correctAt);
         }
     }
 }
