@@ -7,11 +7,13 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
-import { CalendarGrid } from "@/components/CalendarGrid";
+import { CalendarMonthGrid } from "@/components/CalendarMonthGrid";
+import { CalendarWeekStrip } from "@/components/CalendarWeekStrip";
 import { Colors } from "@/constants/colors";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
-import { useCalendar } from "@/hooks/useCalendar";
+import { useCalendarEnhanced } from "@/hooks/useCalendarEnhanced";
 
 const MONTH_NAMES = [
     "1月", "2月", "3月", "4月", "5月", "6月",
@@ -20,7 +22,7 @@ const MONTH_NAMES = [
 
 /**
  * カレンダー画面
- * 月次カレンダーで動画の撮影日を確認し、日付タップで当日の動画一覧を表示する
+ * 月次/週次カレンダーで動画の撮影日を確認し、日付タップで当日の動画一覧を表示する
  */
 export default function CalendarScreen() {
     const router = useRouter();
@@ -29,11 +31,18 @@ export default function CalendarScreen() {
         month,
         selectedDay,
         setSelectedDay,
+        viewMode,
+        toggleViewMode,
+        weekStartDay,
+        dayInfoMap,
         prevMonth,
         nextMonth,
-        datesWithVideos,
+        weekDates,
+        weekTitle,
+        prevWeek,
+        nextWeek,
         selectedDateVideos,
-    } = useCalendar();
+    } = useCalendarEnhanced();
 
     const handleVideoPress = useCallback(
         (id: string) => {
@@ -42,39 +51,87 @@ export default function CalendarScreen() {
         [router]
     );
 
+    const isMonthView = viewMode === "month";
+
+    // 選択日のパネルタイトル
+    const panelTitle = selectedDay !== null
+        ? isMonthView
+            ? `${month}月${selectedDay}日の動画`
+            : (() => {
+                const d = weekDates.find((wd) => wd.getDate() === selectedDay);
+                return d ? `${d.getMonth() + 1}月${d.getDate()}日の動画` : "";
+            })()
+        : "";
+
     return (
         <View style={styles.container}>
-            {/* 月ナビゲーション */}
+            {/* ナビゲーションバー */}
             <View style={styles.navRow}>
-                <TouchableOpacity style={styles.navButton} onPress={prevMonth}>
+                <TouchableOpacity
+                    style={styles.navButton}
+                    onPress={isMonthView ? prevMonth : prevWeek}
+                >
                     <Text style={styles.navArrow}>‹</Text>
                 </TouchableOpacity>
-                <Text style={styles.monthTitle}>
-                    {year}年 {MONTH_NAMES[month - 1]}
-                </Text>
-                <TouchableOpacity style={styles.navButton} onPress={nextMonth}>
+
+                <TouchableOpacity onPress={toggleViewMode} activeOpacity={0.7}>
+                    <Text style={styles.monthTitle}>
+                        {isMonthView
+                            ? `${year}年 ${MONTH_NAMES[month - 1]}`
+                            : weekTitle}
+                    </Text>
+                    <Text style={styles.viewModeHint}>
+                        {isMonthView ? "タップで週表示" : "タップで月表示"}
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.navButton}
+                    onPress={isMonthView ? nextMonth : nextWeek}
+                >
                     <Text style={styles.navArrow}>›</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* カレンダーグリッド */}
+            {/* カレンダーグリッド（ビュー切替アニメーション付き） */}
             <View style={styles.calendarContainer}>
-                <CalendarGrid
-                    year={year}
-                    month={month}
-                    selectedDay={selectedDay}
-                    datesWithVideos={datesWithVideos}
-                    onSelectDay={setSelectedDay}
-                />
+                {isMonthView ? (
+                    <Animated.View
+                        key="month"
+                        entering={FadeIn.duration(200)}
+                        exiting={FadeOut.duration(150)}
+                    >
+                        <CalendarMonthGrid
+                            year={year}
+                            month={month}
+                            selectedDay={selectedDay}
+                            dayInfoMap={dayInfoMap}
+                            weekStartDay={weekStartDay}
+                            onSelectDay={setSelectedDay}
+                        />
+                    </Animated.View>
+                ) : (
+                    <Animated.View
+                        key="week"
+                        entering={FadeIn.duration(200)}
+                        exiting={FadeOut.duration(150)}
+                    >
+                        <CalendarWeekStrip
+                            weekDates={weekDates}
+                            selectedDay={selectedDay}
+                            dayInfoMap={dayInfoMap}
+                            weekStartDay={weekStartDay}
+                            onSelectDay={setSelectedDay}
+                        />
+                    </Animated.View>
+                )}
             </View>
 
             {/* 選択日の動画一覧 */}
             {selectedDay !== null && (
                 <View style={styles.panelContainer}>
                     <View style={styles.panelHeader}>
-                        <Text style={styles.panelTitle}>
-                            {month}月{selectedDay}日の動画
-                        </Text>
+                        <Text style={styles.panelTitle}>{panelTitle}</Text>
                         <Text style={styles.panelCount}>
                             {selectedDateVideos.length}件
                         </Text>
@@ -136,6 +193,13 @@ const styles = StyleSheet.create({
         fontSize: 17,
         fontWeight: "700",
         color: Colors.textPrimary,
+        textAlign: "center",
+    },
+    viewModeHint: {
+        fontSize: 11,
+        color: Colors.textTertiary,
+        textAlign: "center",
+        marginTop: 2,
     },
     calendarContainer: {
         paddingVertical: 8,

@@ -11,6 +11,11 @@ interface SettingsItem {
 
 const SETTINGS_ITEMS: SettingsItem[] = [
     {
+        label: "カレンダー設定",
+        description: "週の開始曜日の変更",
+        route: "/settings/calendar",
+    },
+    {
         label: "滑走種別の管理",
         description: "種別の追加・削除",
         route: "/settings/techniques",

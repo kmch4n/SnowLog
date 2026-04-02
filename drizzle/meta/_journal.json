@@ -29,6 +29,13 @@
       "when": 1774523986505,
       "tag": "0003_rich_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1775130434782,
+      "tag": "0004_chilly_moondragon",
+      "breakpoints": true
     }
   ]
 }

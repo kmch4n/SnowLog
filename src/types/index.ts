@@ -82,3 +82,17 @@ export interface BulkImportGpsGroup {
     videoIds: string[];
     confirmed: boolean;
 }
+
+// カレンダー: 週の開始曜日
+export type WeekStartDay = "monday" | "sunday";
+
+// カレンダー: 表示モード
+export type CalendarViewMode = "month" | "week";
+
+// カレンダー: 1日分の集約情報
+export interface DayInfo {
+    dateKey: string;
+    videoCount: number;
+    resortNames: string[];      // ユニークなスキー場名（カラードット用、最大3件）
+    thumbnailUri: string | null; // 最初の動画のサムネイル（週表示用）
+}

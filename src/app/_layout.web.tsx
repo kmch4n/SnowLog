@@ -34,6 +34,15 @@ export default function RootLayout() {
                         headerTitleStyle: { fontWeight: "700" },
                     }}
                 />
+                <Stack.Screen
+                    name="settings/calendar"
+                    options={{
+                        title: "カレンダー設定",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
+                        headerTitleStyle: { fontWeight: "700" },
+                    }}
+                />
             </Stack>
         </ThemeProvider>
     );

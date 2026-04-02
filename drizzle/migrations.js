@@ -5,6 +5,7 @@ import m0000 from './0000_absurd_archangel.sql';
 import m0001 from './0001_ordinary_roland_deschain.sql';
 import m0002 from './0002_volatile_puff_adder.sql';
 import m0003 from './0003_rich_vapor.sql';
+import m0004 from './0004_chilly_moondragon.sql';
 
   export default {
     journal,
@@ -12,7 +13,8 @@ import m0003 from './0003_rich_vapor.sql';
       m0000,
 m0001,
 m0002,
-m0003
+m0003,
+m0004
     }
   }
   

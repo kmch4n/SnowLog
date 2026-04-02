@@ -44,4 +44,10 @@ export const Colors = {
     // Header — 冬の澄んだ空
     headerBg: "#1565C0",
     headerText: "#FFFFFF",
+
+    // Calendar — スキー場インジケーター（最大3色ローテーション）
+    resortDots: ["#1565C0", "#D4A843", "#2E7D32"] as const,
+    // Calendar — 週末テキスト色（日本のカレンダー慣習）
+    saturdayText: "#1565C0",
+    sundayText: "#CC3333",
 } as const;

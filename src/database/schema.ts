@@ -73,3 +73,15 @@ export type TechniqueOptionInsert = typeof techniqueOptions.$inferInsert;
 export type TechniqueOptionSelect = typeof techniqueOptions.$inferSelect;
 export type FavoriteResortInsert = typeof favoriteResorts.$inferInsert;
 export type FavoriteResortSelect = typeof favoriteResorts.$inferSelect;
+
+/**
+ * アプリ設定テーブル（汎用 key-value ストア）
+ * 将来の設定追加時もマイグレーション不要
+ */
+export const appPreferences = sqliteTable("app_preferences", {
+    key: text("key").primaryKey(),
+    value: text("value").notNull(),
+});
+
+export type AppPreferenceInsert = typeof appPreferences.$inferInsert;
+export type AppPreferenceSelect = typeof appPreferences.$inferSelect;
