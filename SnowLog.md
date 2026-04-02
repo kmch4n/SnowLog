@@ -1,188 +1,179 @@
-# SnowLog プロジェクト仕様書
+﻿# SnowLog 技術仕様書
 
-> スキーヤー向け動画管理・振り返りアプリケーション
-> 「撮って渡す」の先を担う、スキー動画の整理・振り返りプラットフォーム
-
-**作成日:** 2026年3月12日
-**バージョン:** v0.1 (MVP仕様)
+最終更新: 2026-04-02
+対象バージョン: v0.1 (MVP)
 
 ---
 
-## 1. プロジェクト概要
-
-### 1.1 背景と課題
-
-スキーの滑走映像の管理において、以下の課題が存在する。
-
-- 滑りの映像を毎回AirDropで交換しているが、その後の整理が煩雑
-- カメラロールに動画が埋もれ、日付・ゲレンデ・滑走者ごとの分類ができない
-- 動画について自分で考えたことをメモできる場所がない
-
-### 1.2 コアコンセプト
-
-> **「撮って渡す」の先を担うアプリ**
->
-> - ゲレンデでの即時共有はAirDropに任せ、アプリは「整理・振り返り」に特化
-> - AirDropと敵対せず、AirDropの「その先」を担うポジショニング
-
-ゲレンデでは無制限のインターネット環境がなく、サーバーへのアップロードは大量の通信・バッテリー消費を伴うため、リアルタイムの動画転送でAirDropに勝つことは不可能である。この制約を踏まえた設計判断として、即時共有機能はMVPから除外した。
-
-### 1.3 ターゲットユーザー
-
-- **メイン:** 自分自身とスキー仲間（固定メンバーおよび都度変わる相手）
-- **想定規模:** 小規模グループ（数人〜十数人程度）
-
-### 1.4 開発目的
-
-- 自分とスキー仲間で実際に使えるアプリを作る
-- ポートフォリオ・技術力向上
-- 将来的にリリースも視野に入れる
-- 趣味の範囲で楽しく開発する
+## 1. プロダクト概要
+- **目的**: iPhone で撮影した滑走動画・メモをローカルで整理し、ゲレンデ別/日付別/タグ別にすぐ振り返れるようにする。
+- **ユーザーペルソナ**: 個人スキーヤー・スノーボーダー。撮影本数が多く、クラウド共有よりも素早い整理とトレーニングログ化を優先する層。
+- **価値仮説**: 撮影直後に SnowLog へ取り込むだけでタイムライン・カレンダー・タグ管理が自動整備され、練習計画の意思決定コストを下げられる。
 
 ---
 
-## 2. MVP機能仕様
+## 2. システムアーキテクチャ
+### 2.1 クライアント構成
+- Expo Router v4 を採用し、`src/app/_layout.tsx` をルート Stack としてネイティブタブ (`src/app/(tabs)`)・動画詳細 (`src/app/video/[id].tsx`)・インポートモーダル (`src/app/video-import.tsx`) を統括。
+- 画面分割は以下の 4 タブ:
+    1. `index`(ホーム: ゲレンデ別タイムライン)
+    2. `calendar`(月/週カレンダー)
+    3. `search`(フィルタ + リスト)
+    4. `settings`(各種設定ランチャー)
 
-### 2.1 動画インポート・メタデータ自動取得
+### 2.2 永続化レイヤー
+- `expo-sqlite` + Drizzle ORM を利用。DB 接続は `src/database/index.ts` の `db` が単一エントリポイント。
+- マイグレーションは `drizzle/` 配下に SQL 生成済み。`npm run db:generate` でスキーマ変更を反映。
+- 変更検知のため `openDatabaseSync("snowlog.db", { enableChangeListener: true })` を使用し、UI 側で即時再読込を行うフック (`useVideos`, `useAppPreference`) が存在。
 
-カメラロールから動画を選択し、アプリにインポートする。インポート時に以下を自動取得する。
+### 2.3 メディア連携
+- **動画取得**: `expo-image-picker` + `expo-media-library`。iCloud アセットは `MediaLibrary.getAssetInfoAsync(..., { shouldDownloadFromNetwork: true })` でフェッチ。
+- **サムネイル生成**: `expo-video-thumbnails` で 0 秒付近のフレームを JPEG として `FileSystem.documentDirectory/thumbnails` に保存。
+- **再生**: `expo-video` の `VideoView` + `useVideoPlayer`。
 
-- **撮影日時** — EXIFデータから自動取得
-- **スキー場名** — 手動入力（内蔵マスターデータから検索・選択）
-- **サムネイル** — 自動生成・保存
-
-#### ファイル管理方針: 参照方式
-
-| 項目 | 方針 |
-|------|------|
-| 動画ファイルのコピー | **作成しない**（ストレージ節約） |
-| アプリが保持するもの | メタデータ + サムネイルのみ |
-| 動画本体 | 端末のフォトライブラリを参照 |
-| 元動画が削除された場合 | サムネイル + メタデータは保持、UIで「元ファイルが見つかりません」と表示 |
-
-動画本体は保持しないため、アプリのストレージ使用量は動画100本でも数十MB程度に収まる見込み。
-
-### 2.2 動画へのメモ・コメント
-
-- 動画ごとに自分用メモを記録可能
-- 技術的な振り返り（ターンのタイミング、ポジション等）を想定
-- MVPでは動画単位のメモ（将来的にタイムライン上の特定位置への紐付けも検討）
-
-### 2.3 タグ付け・検索・フィルタ
-
-動画に以下のタグを付与し、検索・フィルタリングを可能にする。
-
-| タグ種別 | 入力方法 | 説明 |
-|----------|----------|------|
-| 日付 | 自動（EXIF） | 撮影日時から自動取得 |
-| スキー場名 | 手動（検索・選択） | アプリ内蔵の全国スキー場マスターデータからテキスト検索で選択。GPS自動判定はPhase2以降 |
-| 滑走種別 | 手動選択 | 大回り・小回り・コブ・フリー等のプリセット |
-| 滑走者 | 手動選択 | 誰の滑りかを記録 |
-| 自由タグ | 手動入力 | ユーザーが自由に追加できるカスタムタグ |
-
-### 2.4 エクスポート
-
-記録したメタデータ・メモをアプリ外部に書き出す機能。
-
-- **対象:** 日時・スキー場名・タグ・メモ・サムネイルパス・元ファイル参照
-- **用途:** データ移行、バックアップ、外部ツールでの分析
-- **形式:** 詳細は今後決定
+### 2.4 主な依存パッケージ
+| カテゴリ | ライブラリ | 用途 |
+|----------|-----------|------|
+| UI | expo-router / react-native-reanimated | 画面遷移、アニメーション |
+| データ | drizzle-orm / zod | 型付 DB 操作、入力検証 (今後予定) |
+| 位置/GPS | 自前 geoUtils + Haversine | EXIF/GPS からゲレンデ距離算出 |
+| 共有 | expo-sharing | JSON 書き出しと共有 |
 
 ---
 
-## 3. アーキテクチャ
+## 3. データモデル
+スキーマ定義は `src/database/schema.ts` に集約。
 
-### 3.1 プラットフォーム方針
+```ts
+export const videos = sqliteTable("videos", {
+    id: text("id").primaryKey(),
+    assetId: text("asset_id").notNull().unique(),
+    filename: text("filename").notNull(),
+    thumbnailUri: text("thumbnail_uri").notNull(),
+    duration: int("duration").notNull().default(0),
+    capturedAt: int("captured_at").notNull(),
+    skiResortName: text("ski_resort_name"),
+    memo: text("memo").notNull().default(""),
+    title: text("title"),
+    techniques: text("techniques"), // JSON string
+    isFileAvailable: int("is_file_available").notNull().default(1),
+    createdAt: int("created_at").notNull(),
+    updatedAt: int("updated_at").notNull(),
+});
+```
 
-当初はWebアプリを検討していたが、以下の理由からネイティブ/ハイブリッドアプリに切り替えた。
+### 3.1 テーブル一覧
+| テーブル | 役割 | 備考 |
+|----------|------|------|
+| `videos` | 動画メタデータ | `techniques` は JSON 文字列 (`string[]`) |
+| `tags` / `video_tags` | タグマスタ・多対多関係 | `TagType = "technique" | "skier" | "custom"`
+| `technique_options` | UI で選べるテクニック候補 | 初期データは `_layout.tsx` でシード |
+| `favorite_resorts` | よく使うゲレンデ候補 | `settings/favorite-resorts.tsx` から CRUD |
+| `app_preferences` | Key-Value 形式の設定 | 週開始曜日など |
 
-- カメラロールの動画を「参照」で扱うにはフォトライブラリへの永続的アクセスが必要（Webブラウザでは不可）
-- EXIF/GPSメタデータの自動抽出はネイティブAPIが最適
-- ファイルのコピーを作らず参照する設計はネイティブアプリの得意領域
-
-### 3.2 技術スタック
-
-| レイヤー | 技術 | 選定理由 |
-|----------|------|----------|
-| フレームワーク | React Native (Expo) | 環境構築が容易。expo-media-libraryでフォトライブラリアクセスが可能 |
-| ターゲットOS | **iOS専用** | 利用者の周囲がiPhone中心。Android対応は予定しない |
-| ローカルDB | SQLite (expo-sqlite) | メタデータ・タグ・メモの保存。オフライン完結 |
-| メタデータ取得 | expo-media-library | EXIF・日時・GPSの取得。フォトライブラリへの参照アクセス |
-| サムネイル生成 | expo-image-manipulator | 動画から軽量なサムネイル画像を生成・保存 |
-| スキー場マスターデータ | 自前JSONファイル | 日本全国のスキー場名一覧を内蔵。インポート時の検索・選択に使用。GPS座標はPhase2で追加 |
-
-### 3.3 データ構造（概念設計）
-
-アプリが動画1本ごとに保持するデータ:
-
-| データ項目 | サイズ目安 | 備考 |
-|------------|-----------|------|
-| サムネイル画像 | 数百KB/本 | アプリが生成・保存 |
-| メタデータ | 数十Bytes/本 | 日時、GPS、スキー場名、タグ等 |
-| メモ・コメント | 数KB/本 | ユーザー入力のテキスト |
-| 元ファイル参照 | 数十Bytes/本 | フォトライブラリのアセットID等 |
-
----
-
-## 4. ユーザーフロー
-
-### 4.1 基本フロー
-
-1. ゲレンデで仲間とAirDropで動画を交換
-2. 帰りの電車やホテルでアプリを開く
-3. カメラロールから動画を選択してインポート
-4. 日時が自動入力される。スキー場名を検索・選択して入力
-5. 滑走種別・滑走者などのタグを追加
-6. メモを書く（「ターンが遅い」「ポジション良かった」など）
-7. 後日、タグや検索で動画を振り返る
-
-### 4.2 画面構成（想定）
-
-- **ホーム:** 最近のインポート動画一覧・スキー場別サマリー
-- **インポート画面:** 動画選択 → 日時自動取得・スキー場名検索選択 → タグ追加 → 保存
-- **動画詳細:** 再生 + メタデータ + メモ・コメント欄
-- **検索・フィルタ:** スキー場・日付・タグで絞り込み
+### 3.2 エンティティ関連図 (簡易)
+```
+videos --< video_tags >-- tags
+   |
+   +-- technique_options (候補リスト)
+   +-- favorite_resorts (入力補助)
+   +-- app_preferences (表示設定)
+```
 
 ---
 
-## 5. スキー場マスターデータ
+## 4. アプリ主要フロー
+### 4.1 動画インポート (`src/app/video-import.tsx`)
+1. ImagePicker でアセット選択。
+2. `getAssetInfoWithDownload` が localUri / creationTime / GPS を取得。
+3. `stageAssetFile` で `FileSystem.cacheDirectory` に一時コピー。
+4. `generateAndSaveThumbnail` がサムネイル生成。
+5. `importVideo` が `videos` へ Insert、タグ設定を `setTagsForVideo` で適用。
+6. バルク処理時は最大 20 本をキュー化し、`BulkImportProgress` で可視化。GPS 未取得アセットは `GpsConfirmationDialog` で後から一括紐付け。
 
-### 5.1 MVP: 手動検索・選択
+### 4.2 動画詳細編集 (`src/app/video/[id].tsx` + `useVideoDetail`)
+- タイトル/メモは 1 秒の debounce 後に `updateVideoMeta` を呼び出し、`setTimeout` で保存ステータスをトースト表示。
+- タグ編集は `TagSelector` → `setTagsForVideo`。
+- ファイル欠損チェックは `checkAssetExists`(MediaLibrary False を返したら `isFileAvailable` を 0 へ更新予定)。
+- 削除時はサムネイルを `deleteThumbnail` → `deleteVideo`。
 
-インポート時にスキー場名をテキスト検索で選択する。GPS自動判定は行わない。
+### 4.3 カレンダー集計 (`src/hooks/useCalendarEnhanced.ts`)
+- `useVideos(filter)` が Drizzle から該当期間の動画を抽出。
+- `toDateKey` で日付 key を生成し、`Map<string, DayInfo>` に集約。`thumbnailUri` は最初の動画を代表値として利用。
+- 週ビューは `getWeekDates` と `getWeekDateRange` で連続 7 日を求め、`weekOffset` をインクリメント/デクリメントしてページング。
+- 週開始曜日 (`weekStartDay`) は `useAppPreference` で永続化。
 
-- アプリに日本全国のスキー場名一覧をJSONファイルとして同梱
-- データ収集: Wikipedia等の公開情報から開発者が手動整備
-- 規模目安: 日本全国 約400〜600件
+### 4.4 検索 / フィルタ
+- `FilterBar` が `SkiResortSearch` とタグチップを束ね、`FilterOptions` を `useVideos` に渡す。
+- `getVideosByFilter` は `AND` 条件を構築し、タグ条件は中間テーブル経由で `video_ids` を絞り込み。
 
-### 5.2 Phase2以降: GPS自動判定
-
-マスターデータにGPS座標・判定半径を追加することで、インポート時にスキー場を自動判定する機能を追加予定。
-
-| スキー場名 | 緯度 | 経度 | 判定半径 |
-|------------|------|------|----------|
-| 白馬八方尾根 | 36.6969 | 137.7981 | 2.0 km |
-| 志賀高原 | 36.7833 | 138.5278 | 3.0 km |
-| ニセコ | 42.8586 | 140.6772 | 2.5 km |
-| ... | ... | ... | ... |
-
-※ Phase2でGPS座標を追記する設計にしておくことで、マスターデータの使い回しが可能。
+### 4.5 エクスポート (`src/services/exportService.ts`)
+- `getAllVideos` + `getTagsForVideo` を全件 fetch。
+- JSON フォーマット:
+```json
+{
+    "exportedAt": "2026-04-02T...Z",
+    "totalCount": 42,
+    "videos": [
+        {
+            "id": "...",
+            "filename": "IMG_1234.MOV",
+            "capturedAt": "2026-03-12",
+            "duration": 52,
+            "skiResortName": "Hakuba47",
+            "memo": "朝イチの圧雪",
+            "tags": [{"name": "180", "type": "technique"}],
+            "thumbnailUri": "file:///...jpg",
+            "isFileAvailable": true
+        }
+    ]
+}
+```
+- `expo-sharing` で共有し、Sharing が無効なプラットフォームでは例外を投げる。
 
 ---
 
-## 6. 将来の拡張候補
-
-以下は現時点で検討した拡張候補であり、MVPには含まない。
-
-- **スキー場自動特定（Phase2）:** GPS座標からスキー場を自動判定。マスターデータに座標を追加することで実現
-- **タイムラインコメント:** 動画の特定秒数に紐付いたコメント機能
+## 5. サービス / リポジトリ対応表
+| レイヤー | ファイル | 主責務 |
+|----------|----------|--------|
+| Repository | `videoRepository.ts` | CRUD + フィルタ、`updateVideoCapturedAt` など保守ロジック |
+| Repository | `tagRepository.ts` | タグ CRUD、多対多関係の設定 |
+| Repository | `favoriteResortRepository.ts` | お気に入りゲレンデリスト |
+| Repository | `techniqueOptionRepository.ts` | テクニック候補、挿入時は現在件数を `sortOrder` に採用 |
+| Service | `importService.ts` | Expo MediaLibrary をラップして DB へ保存 |
+| Service | `mediaService.ts` | 権限チェック、アセット取得、存在確認 |
+| Service | `thumbnailService.ts` | サムネイル生成/削除 |
+| Service | `exportService.ts` | JSON 出力と共有 |
 
 ---
 
-## 7. 開発体制・進め方
+## 6. 設定・ユーザー環境
+- **アプリ設定**: `app_preferences` に key-value で保存。現在は `weekStartDay` のみ実装。
+- **お気に入りゲレンデ**: `favorite_resorts` に保存。`SkiResortSearch` で入力補完に使用。
+- **タグ / テクニック**: 設定タブからカスタム項目を追加。テクニック候補は `_layout.tsx` の `seedTechniqueOptions` が初回起動時にデフォルト値を補充。
 
-| 項目 | 内容 |
-|------|------|
-| 開発体制 | 1人開発 |
-| 主言語 | TypeScript / JavaScript（React Native）、バックエンドが必要になればPython |
-| デプロイ | Expo Goで開発・テスト、最終的にTestFlight（iOS）で配布 |
+---
+
+## 7. ビルド・運用・スクリプト
+| コマンド | 用途 |
+|----------|------|
+| `npm run start` | Expo DevTools の起動 |
+| `npm run ios` / `npm run web` | プラットフォーム別プレビュー |
+| `npm run lint` | ESLint (Expo preset) |
+| `npm run db:generate` | Drizzle スキーマ → SQL 生成 |
+| `npm run db:studio` | Drizzle Studio の起動 |
+
+- キャッシュ破損時は `scripts/reset-project.js` を実行。
+- 新規端末では `scripts/patchImageUtilsCache.js` (必要に応じて) を再適用。
+
+---
+
+## 8. 今後の拡張案
+1. **メタデータ補完**: iOS で `asset.id` が `null` になるケースに備え、ファイルハッシュによる代替キーを検討。
+2. **分析ビュー**: 技術タグ別の練習時間ヒートマップ、滑走距離推計など。
+3. **クラウドバックアップ**: ローカル完結を保ちつつ、任意エクスポート先 (iCloud Drive など) を選択できるようにする。
+4. **オフライン通知**: `isFileAvailable` が 0 になった動画をまとめて復旧するウィザードの追加。
+
+---
+
+本書に記載されていない挙動や例外ケースは、各コンポーネント/サービスの JSDoc およびソースコメントを参照してください。

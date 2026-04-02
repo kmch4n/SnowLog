@@ -1,139 +1,40 @@
-# SnowLog
+﻿# SnowLog – 滑走記録を“思い出”のまま閉じ込めない
 
-スキーヤー向け動画管理・振り返りアプリ。
+仲間と撮り合ったクリップや、リフトで走り書きしたメモ。時間が経つとどこにしまったか覚えていない……そんなモヤモヤをほどくために SnowLog を作りました。すべてローカル完結で、撮影直後の高揚感のまま振り返れる個人用ログブックです。
 
-「撮って渡す」の先を担うアプリ。ゲレンデでの即時共有は AirDrop に任せ、アプリは **整理・振り返り** に特化する。
+## SnowLog の全体像 ⛷️
+- **ゲレンデ別タイムライン**：撮影地ごとにまとまったホーム画面。リストを眺めながら「あの朝イチの一本」へすぐ遡れます。
+- **カレンダー & 週ビュー**：月単位で俯瞰、週単位でじっくり。各日付には撮影本数と縮小サムネが並び、タップすると関連動画だけを抽出。
+- **スマートインポート**：動画を 1 本ずつでも 20 本まとめても OK。GPS/EXIF からゲレンデ候補を推定し、iCloud 上のアセットも必要な分だけ自動取得します。
+- **タグ & テクニック管理**：技術メニューやライダー名、自由なキーワードを組み合わせて、練習の履歴を自分の言葉で整理。
 
-## Features
+## SnowLog の機能📔
+### 1. 滑走ログの深化
+タイトル／メモ／ゲレンデ名に加えて、テクニックやタグを添付できます。タグは `technique / skier / custom` といった種別で分類され、検索バーやフィルタバーから好きな組み合わせで呼び出せます。お気に入りゲレンデを登録しておけば、入力候補にすぐ出現。
 
-- **動画インポート** — フォトライブラリから動画を選択し、メタデータとともに管理
-- **サムネイル生成** — 動画先頭フレームを自動生成して保存
-- **タグ付け** — 技術タグ（大回り・小回り・コブ等）、スキーヤータグ、カスタムタグを動画に紐付け
-- **スキー場検索** — 全国230件超のスキー場マスターデータからインクリメンタル検索
-- **メモ** — 各動画に自由記述のメモを残せる
-- **フィルター検索** — スキー場名・タグ・日付範囲・テキストで動画を絞り込み
-- **エクスポート** — メタデータ＋メモを JSON 形式でエクスポートしてシステム共有
+### 2. スマートな取り込み体験
+1 本ずつの取り込みでは、動画プレビューと同時に撮影日時・GPS 情報から推測した候補地チップが現れます。バルクインポートでは iPhone カメラロールから 20 本まで一気に選択し、進捗ダイアログで処理状況を確認。GPS が取れなかった動画だけ後でまとめて補完できるよう、距離順にグルーピングされた確認ダイアログも用意しています。
 
-## Design Principles
+### 3. 振り返りやすい UI
+ホームの SectionList は「ゲレンデ名 → その日の動画」という自然なまとまりで表示。カレンダー画面は月／週ビューのワンタップ切り替えに加え、週の開始曜日を好みで選択できます。どのビューからでも動画カードを開けば expo-video のプレイヤーで即再生、メモ欄は自動保存でテンポを崩しません。
 
-- **参照方式** — 動画ファイルのコピーは作成しない。メタデータとサムネイルのみ保持し、フォトライブラリの元ファイルを参照する
-- **完全ローカル** — クラウド連携なし。データはデバイス内のみに保存
-- **iOS 専用** — Android 非対応
+### 4. 検索と整理
+FilterBar からゲレンデ名とタグを組み合わせて検索でき、件数表示ですぐ効果を把握。テキスト検索はファイル名にも対応しているので、撮影機材や条件も拾えます。タグやテクニック候補は設定タブで追加・削除可能。SQLite + Drizzle ORM で実装したリポジトリ層が一貫性を保ってくれます。
 
-## Tech Stack
+### 5. データコントロール
+SnowLog は Expo + SQLite 上で動作し、クラウド送信は行いません。JSON エクスポートでいつでも手元にバックアップを作成でき、AirDrop などで仲間と共有しても OK。データベースのマイグレーションやシードスクリプトは `drizzle/` と `scripts/` 内にまとまっているので、環境をリセットしたい時も迷いません。
 
-| レイヤー | 技術 |
-|---------|------|
-| フレームワーク | Expo SDK 55 |
-| 言語 | TypeScript (strict) |
-| ルーティング | Expo Router v4 (file-based) |
-| DB | expo-sqlite v15 + Drizzle ORM |
-| 動画アクセス | expo-media-library |
-| 動画インポート | expo-image-picker |
-| 動画再生 | expo-video |
-| サムネイル | expo-video-thumbnails |
-| ファイル保存 | expo-file-system |
-| エクスポート共有 | expo-sharing |
-| ID生成 | expo-crypto |
+## ひと通り使うとこんな感じ
+1. 撮影（通常のカメラアプリで OK）
+2. SnowLog を開き、単体 or バルクインポートで動画を取得
+3. ゲレンデ・メモ・テクニック・タグをさっと記入
+4. ホーム／カレンダー／検索で過去の滑りを掘り返す
+5. 必要に応じて JSON を吐き出し、ほかのノートや分析ツールへ
 
-## Project Structure
+## ユーザー設定も忘れずに
+- **お気に入りゲレンデ管理**：よく滑る場所を登録しておくと、入力候補にピン留めされます。
+- **カスタムタグ／テクニック**：自分流の名前で管理できるので、「バックサイド 180」でも「板をねじる練習」でも自由につけられます。
+- **カレンダー設定**：週頭を月曜／日曜から選択。生活リズムに合わせた見え方を保てます。
 
-```
-SnowLog/
-├── src/
-│   ├── app/                      # Expo Router 画面
-│   │   ├── _layout.tsx           # ルートレイアウト（DB初期化）
-│   │   ├── (tabs)/
-│   │   │   ├── _layout.tsx       # タブバー定義
-│   │   │   ├── index.tsx         # ホーム（動画一覧）
-│   │   │   └── search.tsx        # 検索・フィルタ
-│   │   ├── video-import.tsx      # インポートモーダル
-│   │   └── video/[id].tsx        # 動画詳細
-│   ├── components/               # UIコンポーネント
-│   │   ├── VideoCard.tsx
-│   │   ├── TagChip.tsx
-│   │   ├── TagSelector.tsx
-│   │   ├── SkiResortSearch.tsx
-│   │   └── FilterBar.tsx
-│   ├── database/
-│   │   ├── index.ts              # DB インスタンス
-│   │   ├── schema.ts             # Drizzle スキーマ
-│   │   └── repositories/
-│   │       ├── videoRepository.ts
-│   │       └── tagRepository.ts
-│   ├── services/
-│   │   ├── mediaService.ts       # expo-media-library ラッパー
-│   │   ├── thumbnailService.ts   # サムネイル生成・保存
-│   │   ├── importService.ts      # インポートフロー
-│   │   └── exportService.ts      # JSON エクスポート
-│   ├── hooks/
-│   │   ├── useVideos.ts
-│   │   └── useVideoDetail.ts
-│   ├── constants/
-│   │   ├── skiResorts.json       # 全国スキー場マスターデータ（230件）
-│   │   └── techniques.ts         # 滑走種別プリセット
-│   ├── types/index.ts
-│   └── utils/dateUtils.ts
-├── drizzle/                      # Drizzle 生成マイグレーションファイル
-├── babel.config.js
-├── metro.config.js
-├── drizzle.config.ts
-└── app.json
-```
-
-## Database Schema
-
-```
-videos          動画レコード（メタデータ + サムネイルパス）
-tags            タグマスター（technique / skier / custom）
-video_tags      動画↔タグ 中間テーブル
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- Expo CLI (`npm install -g expo-cli`)
-- EAS CLI (`npm install -g eas-cli`)
-- Apple Developer Program アカウント（実機テスト用）
-
-> **注意:** `expo-sqlite` + Drizzle ORM は Expo Go 非対応です。Development Build が必須です。
-
-### Install
-
-```bash
-npm install
-```
-
-### Generate DB migrations
-
-```bash
-npm run db:generate
-```
-
-### Build (EAS)
-
-```bash
-# EAS にログイン
-eas login
-
-# iOS Development Build を作成
-eas build --platform ios --profile development
-```
-
-ビルド後、生成された `.ipa` を iPhone にインストールし、以下で開発サーバーを起動します：
-
-```bash
-npx expo start
-```
-
-## Scripts
-
-| コマンド | 内容 |
-|---------|------|
-| `npm start` | Expo 開発サーバー起動 |
-| `npm run ios` | iOS シミュレータ起動（Mac 必須） |
-| `npm run lint` | ESLint 実行 |
-| `npm run db:generate` | Drizzle マイグレーションファイル生成 |
-| `npm run db:studio` | Drizzle Studio 起動 |
+## もっと潜りたい方へ
+実装の詳細やセットアップ手順、スクリプトの使い方は `SnowLog.md` にまとめています。そちらでは Expo Router の構成や Drizzle マイグレーション、メディアライブラリとの連携仕様まで掘り下げています。README では「SnowLog を使うとどんな気持ちになるか」に焦点を当てました。気になったら `npm install` → `npx expo start` で、あなたの滑走ログを救い上げてください。
