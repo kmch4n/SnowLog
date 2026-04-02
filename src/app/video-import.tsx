@@ -16,17 +16,27 @@ import {
 } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import { BulkImportProgress } from "@/components/BulkImportProgress";
+import { GpsConfirmationDialog } from "@/components/GpsConfirmationDialog";
 import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
-import { getVideoByAssetId } from "@/database/repositories/videoRepository";
+import {
+    getExistingAssetIds,
+    getVideoByAssetId,
+    updateSkiResortForVideos,
+} from "@/database/repositories/videoRepository";
 import { importVideo } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
+import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
 import { formatDate, formatDuration, parseExifDateTime } from "@/utils/dateUtils";
 import { findNearbySkiResorts } from "@/utils/geoUtils";
 import * as FileSystem from "expo-file-system/legacy";
 
 const IMPORT_CACHE_DIR = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory}video-import/`;
+const BULK_SELECTION_LIMIT = 20;
+
+type BulkPhase = "idle" | "importing" | "gps-confirm";
 
 async function ensureImportCacheDir(): Promise<void> {
     if (!IMPORT_CACHE_DIR) return;
@@ -81,6 +91,16 @@ export default function VideoImportScreen() {
     const [resolvedAssetUri, setResolvedAssetUri] = useState<string | null>(null);
     const [isLoadingMeta, setIsLoadingMeta] = useState(false);
     const stagedFileUriRef = useRef<string | null>(null);
+
+    // 一括インポート用 state
+    const [bulkPhase, setBulkPhase] = useState<BulkPhase>("idle");
+    const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+    const [bulkCurrentFilename, setBulkCurrentFilename] = useState<string | undefined>();
+    const [bulkSkippedCount, setBulkSkippedCount] = useState(0);
+    const [bulkErrorCount, setBulkErrorCount] = useState(0);
+    const [bulkGpsGroups, setBulkGpsGroups] = useState<BulkImportGpsGroup[]>([]);
+    const [bulkNoGpsCount, setBulkNoGpsCount] = useState(0);
+    const [isApplyingGps, setIsApplyingGps] = useState(false);
 
     const cleanupStagedFile = useCallback(async () => {
         if (stagedFileUriRef.current) {
@@ -286,11 +306,292 @@ export default function VideoImportScreen() {
         cleanupStagedFile,
     ]);
 
+    // ── 一括インポート ──
+
+    /** GPS グループを構築する */
+    const buildGpsGroups = useCallback((items: BulkImportItem[]): BulkImportGpsGroup[] => {
+        const map = new Map<string, { distanceKm: number; videoIds: string[] }>();
+        for (const item of items) {
+            if (item.status === "success" && item.detectedResort && item.videoId) {
+                const entry = map.get(item.detectedResort);
+                if (entry) {
+                    entry.videoIds.push(item.videoId);
+                } else {
+                    map.set(item.detectedResort, {
+                        distanceKm: item.detectedResortDistance ?? 0,
+                        videoIds: [item.videoId],
+                    });
+                }
+            }
+        }
+        return Array.from(map.entries()).map(([resortName, data]) => ({
+            resortName,
+            distanceKm: data.distanceKm,
+            videoIds: data.videoIds,
+            confirmed: true,
+        }));
+    }, []);
+
+    /** サマリー Alert を表示して画面を閉じる */
+    const showBulkSummary = useCallback(
+        (successCount: number, skippedCount: number, errorCount: number) => {
+            const parts: string[] = [];
+            parts.push(`${successCount}本インポートしました`);
+            if (skippedCount > 0) parts.push(`スキップ: ${skippedCount}本`);
+            if (errorCount > 0) parts.push(`エラー: ${errorCount}本`);
+
+            Alert.alert("一括インポート完了", parts.join("\n"), [
+                { text: "OK", onPress: () => router.back() },
+            ]);
+        },
+        [router]
+    );
+
+    /** 一括インポートのコアロジック */
+    const processBulkImport = useCallback(
+        async (assets: ImagePicker.ImagePickerAsset[]) => {
+            // 重複チェック
+            const assetIds = assets
+                .map((a) => a.assetId)
+                .filter((id): id is string => id != null);
+            const existingIds = await getExistingAssetIds(assetIds);
+
+            const items: BulkImportItem[] = assets.map((a) => ({
+                assetId: a.assetId ?? "",
+                filename: a.fileName ?? "video.mp4",
+                status: (a.assetId && existingIds.has(a.assetId)) ? "skipped" as const : "pending" as const,
+            }));
+
+            const skipped = items.filter((i) => i.status === "skipped").length;
+            setBulkSkippedCount(skipped);
+
+            const pendingItems = items.filter((i) => i.status === "pending");
+            setBulkProgress({ current: 0, total: pendingItems.length });
+
+            let errorCount = 0;
+
+            for (let idx = 0; idx < pendingItems.length; idx++) {
+                const item = pendingItems[idx];
+                const asset = assets.find((a) => (a.assetId ?? "") === item.assetId)!;
+                item.status = "importing";
+                setBulkCurrentFilename(item.filename);
+
+                try {
+                    // メタデータ取得（GPS + localUri）
+                    let assetInfo: Awaited<ReturnType<typeof getAssetInfoWithDownload>> | null = null;
+                    if (asset.assetId) {
+                        try {
+                            assetInfo = await getAssetInfoWithDownload(asset.assetId);
+                        } catch {
+                            assetInfo = null;
+                        }
+                    }
+
+                    // ファイルをステージング
+                    const sourceUri = assetInfo?.localUri ?? asset.uri ?? null;
+                    if (!sourceUri || !sourceUri.startsWith("file://")) {
+                        throw new Error("ファイルを読み込めませんでした。");
+                    }
+                    const stagedUri = await stageAssetFile(sourceUri, asset.fileName);
+
+                    try {
+                        // 撮影日時を解決
+                        const creationTime =
+                            (asset.exif?.DateTimeOriginal
+                                ? parseExifDateTime(asset.exif.DateTimeOriginal)
+                                : null) ??
+                            assetInfo?.creationTime ??
+                            Date.now();
+
+                        const mediaAsset = {
+                            id: asset.assetId ?? "",
+                            filename: asset.fileName ?? "video.mp4",
+                            creationTime,
+                            duration: (asset.duration ?? 0) / 1000,
+                            uri: stagedUri,
+                            localUri: stagedUri,
+                            width: asset.width,
+                            height: asset.height,
+                            mediaType: "video" as const,
+                            albumId: undefined,
+                        };
+
+                        const videoId = await importVideo(
+                            mediaAsset as any,
+                            {
+                                title: null,
+                                skiResortName: null,
+                                memo: "",
+                                tagIds: [],
+                                techniques: [],
+                            },
+                            { sourceUri: stagedUri }
+                        );
+
+                        item.status = "success";
+                        item.videoId = videoId;
+
+                        // GPS スキー場検出
+                        if (assetInfo?.location) {
+                            const nearby = findNearbySkiResorts(
+                                assetInfo.location.latitude,
+                                assetInfo.location.longitude
+                            );
+                            if (nearby.length > 0) {
+                                item.detectedResort = nearby[0].name;
+                                item.detectedResortDistance = nearby[0].distanceKm;
+                            }
+                        }
+                    } finally {
+                        // ステージファイル即時削除（ディスク節約）
+                        try {
+                            await FileSystem.deleteAsync(stagedUri, { idempotent: true });
+                        } catch {
+                            // noop
+                        }
+                    }
+                } catch (e) {
+                    item.status = "error";
+                    item.error = e instanceof Error ? e.message : "不明なエラー";
+                    errorCount++;
+                }
+
+                setBulkProgress({ current: idx + 1, total: pendingItems.length });
+                setBulkErrorCount(errorCount);
+            }
+
+            // GPS グループ構築
+            const gpsGroups = buildGpsGroups(items);
+            const successCount = items.filter((i) => i.status === "success").length;
+            const noGpsCount = items.filter(
+                (i) => i.status === "success" && !i.detectedResort
+            ).length;
+
+            if (gpsGroups.length > 0) {
+                setBulkGpsGroups(gpsGroups);
+                setBulkNoGpsCount(noGpsCount);
+                setBulkPhase("gps-confirm");
+            } else {
+                // GPS 検出なし → サマリーを表示して戻る
+                showBulkSummary(successCount, skipped, errorCount);
+            }
+        },
+        [buildGpsGroups, showBulkSummary]
+    );
+
+    /** 複数動画を選択して一括インポートを開始する */
+    const handlePickBulk = useCallback(async () => {
+        const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permResult.granted) {
+            Alert.alert(
+                "権限が必要��す",
+                "フォトライブラリへ��アクセスを許可してください。"
+            );
+            return;
+        }
+
+        let pickerResult: ImagePicker.ImagePickerResult;
+        try {
+            pickerResult = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["videos"],
+                allowsMultipleSelection: true,
+                selectionLimit: BULK_SELECTION_LIMIT,
+                orderedSelection: true,
+                exif: true,
+                shouldDownloadFromNetwork: true,
+                videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
+            });
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : "不明なエラーが発生しました。";
+            Alert.alert("動画の選択に失敗しまし��", message);
+            return;
+        }
+
+        if (pickerResult.canceled || pickerResult.assets.length === 0) return;
+
+        // 一括モード開始
+        setBulkPhase("importing");
+        setBulkProgress({ current: 0, total: 0 });
+        setBulkSkippedCount(0);
+        setBulkErrorCount(0);
+        setBulkCurrentFilename(undefined);
+
+        await processBulkImport(pickerResult.assets);
+    }, [processBulkImport]);
+
+    /** GPS グループのチェック状態をトグルする */
+    const handleToggleGpsGroup = useCallback((resortName: string) => {
+        setBulkGpsGroups((prev) =>
+            prev.map((g) =>
+                g.resortName === resortName ? { ...g, confirmed: !g.confirmed } : g
+            )
+        );
+    }, []);
+
+    /** GPS スキー場を適用して完了する */
+    const handleGpsConfirm = useCallback(async () => {
+        setIsApplyingGps(true);
+        try {
+            const confirmedGroups = bulkGpsGroups.filter((g) => g.confirmed);
+            for (const group of confirmedGroups) {
+                await updateSkiResortForVideos(group.videoIds, group.resortName);
+            }
+        } catch (e) {
+            Alert.alert(
+                "スキー場の設定に失敗しました",
+                e instanceof Error ? e.message : "不明なエラーが発生しました"
+            );
+        } finally {
+            setIsApplyingGps(false);
+        }
+
+        const totalSuccess = bulkGpsGroups.reduce((sum, g) => sum + g.videoIds.length, 0) + bulkNoGpsCount;
+        showBulkSummary(totalSuccess, bulkSkippedCount, bulkErrorCount);
+    }, [bulkGpsGroups, bulkNoGpsCount, bulkSkippedCount, bulkErrorCount, showBulkSummary]);
+
+    /** GPS 設定をスキップして完了する */
+    const handleGpsSkip = useCallback(() => {
+        const totalSuccess = bulkGpsGroups.reduce((sum, g) => sum + g.videoIds.length, 0) + bulkNoGpsCount;
+        showBulkSummary(totalSuccess, bulkSkippedCount, bulkErrorCount);
+    }, [bulkGpsGroups, bulkNoGpsCount, bulkSkippedCount, bulkErrorCount, showBulkSummary]);
+
     // 撮影日時を取得（EXIF → MediaLibrary creationTime の順でフォールバック）
     const creationMs = (selectedAsset?.exif?.DateTimeOriginal
         ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
         : null) ?? assetCreationTime;
     const capturedAt = creationMs != null ? Math.floor(creationMs / 1000) : null;
+
+    // 一括インポート中 → プログレス表示
+    if (bulkPhase === "importing") {
+        return (
+            <View style={styles.container}>
+                <BulkImportProgress
+                    current={bulkProgress.current}
+                    total={bulkProgress.total}
+                    skippedCount={bulkSkippedCount}
+                    errorCount={bulkErrorCount}
+                    currentFilename={bulkCurrentFilename}
+                />
+            </View>
+        );
+    }
+
+    // 一括インポート後 → GPS 確認
+    if (bulkPhase === "gps-confirm") {
+        return (
+            <View style={styles.container}>
+                <GpsConfirmationDialog
+                    groups={bulkGpsGroups}
+                    noGpsCount={bulkNoGpsCount}
+                    onToggleGroup={handleToggleGpsGroup}
+                    onConfirm={handleGpsConfirm}
+                    onSkip={handleGpsSkip}
+                    isApplying={isApplyingGps}
+                />
+            </View>
+        );
+    }
 
     return (
         <KeyboardAvoidingView
@@ -337,6 +638,15 @@ export default function VideoImportScreen() {
                         </View>
                     )}
                 </TouchableOpacity>
+
+                {/* 一括インポートボタン（動画未選択時のみ表示） */}
+                {!selectedAsset && (
+                    <TouchableOpacity style={styles.bulkButton} onPress={handlePickBulk}>
+                        <Text style={styles.bulkButtonText}>
+                            まとめてインポート (最大{BULK_SELECTION_LIMIT}本)
+                        </Text>
+                    </TouchableOpacity>
+                )}
 
                 {/* iCloud ダウンロード中のメタデータ取得インジケーター */}
                 {isLoadingMeta && (
@@ -606,5 +916,17 @@ const styles = StyleSheet.create({
         color: Colors.headerText,
         fontSize: 16,
         fontWeight: "700",
+    },
+    bulkButton: {
+        backgroundColor: Colors.alpineBlueLight,
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    bulkButtonText: {
+        fontSize: 15,
+        fontWeight: "600",
+        color: Colors.alpineBlue,
     },
 });

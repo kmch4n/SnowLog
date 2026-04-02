@@ -63,3 +63,22 @@ export interface ImportMetadata {
     tagIds: number[];
     techniques: string[];
 }
+
+// 一括インポート: 個々の動画の進捗状態
+export interface BulkImportItem {
+    assetId: string;
+    filename: string;
+    status: "pending" | "importing" | "success" | "skipped" | "error";
+    error?: string;
+    videoId?: string;
+    detectedResort?: string;
+    detectedResortDistance?: number;
+}
+
+// 一括インポート: GPS スキー場グループ
+export interface BulkImportGpsGroup {
+    resortName: string;
+    distanceKm: number;
+    videoIds: string[];
+    confirmed: boolean;
+}

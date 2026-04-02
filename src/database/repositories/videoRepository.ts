@@ -102,3 +102,27 @@ export async function updateVideoCapturedAt(id: string, capturedAt: number): Pro
         .set({ capturedAt, updatedAt: Date.now() })
         .where(eq(videos.id, id));
 }
+
+/** 複数動画のスキー場名を一括更新する（一括インポート用） */
+export async function updateSkiResortForVideos(
+    videoIds: string[],
+    skiResortName: string
+): Promise<void> {
+    if (videoIds.length === 0) return;
+    await db
+        .update(videos)
+        .set({ skiResortName, updatedAt: Date.now() })
+        .where(inArray(videos.id, videoIds));
+}
+
+/** 既にインポート済みの assetId を一括チェックする（重複検出用） */
+export async function getExistingAssetIds(
+    assetIds: string[]
+): Promise<Set<string>> {
+    if (assetIds.length === 0) return new Set();
+    const rows = await db
+        .select({ assetId: videos.assetId })
+        .from(videos)
+        .where(inArray(videos.assetId, assetIds));
+    return new Set(rows.map((r) => r.assetId));
+}
