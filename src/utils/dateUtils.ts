@@ -2,6 +2,8 @@
  * 日時フォーマットユーティリティ
  */
 
+import type { Season } from "../types/dashboard";
+
 /**
  * EXIF DateTimeOriginal 文字列をミリ秒タイムスタンプに変換する
  * EXIF 2.32 仕様の "YYYY:MM:DD HH:MM:SS" を ISO 8601 に変換してパースする。
@@ -104,4 +106,41 @@ export function startOfMonth(year: number, month: number): number {
 export function endOfMonth(year: number, month: number): number {
     // 翌月0日 = 当月末日
     return Math.floor(new Date(year, month, 0, 23, 59, 59, 999).getTime() / 1000);
+}
+
+// --- ダッシュボード用ユーティリティ ---
+
+/**
+ * シーズンオブジェクトを構築する（11月〜翌年5月）
+ * @param startYear シーズン開始年（例: 2025 → 2025年11月〜2026年5月）
+ */
+export function buildSeason(startYear: number): Season {
+    return {
+        label: `${startYear}-${String(startYear + 1).slice(2)}`,
+        startYear,
+        endYear: startYear + 1,
+        dateFrom: startOfMonth(startYear, 11),
+        dateTo: endOfMonth(startYear + 1, 5),
+    };
+}
+
+/** 現在の日時に基づいて現在のシーズンを返す */
+export function getCurrentSeason(): Season {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    // 11月以降は今年開始のシーズン、10月以前は前年開始のシーズン
+    const startYear = month >= 11 ? year : year - 1;
+    return buildSeason(startYear);
+}
+
+/**
+ * 秒数を "X時間Y分" 形式にフォーマットする（ダッシュボード表示用）
+ * 例: 12240 → "3時間24分", 300 → "5分"
+ */
+export function formatDurationHM(totalSeconds: number): string {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    if (h === 0) return `${m}分`;
+    return `${h}時間${m}分`;
 }

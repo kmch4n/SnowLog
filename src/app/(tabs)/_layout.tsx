@@ -15,6 +15,13 @@ export default function TabsLayout() {
                     md="home"
                 />
             </NativeTabs.Trigger>
+            <NativeTabs.Trigger name="dashboard">
+                <NativeTabs.Trigger.Label>統計</NativeTabs.Trigger.Label>
+                <NativeTabs.Trigger.Icon
+                    sf={{ default: "chart.bar", selected: "chart.bar.fill" }}
+                    md="bar_chart"
+                />
+            </NativeTabs.Trigger>
             <NativeTabs.Trigger name="calendar">
                 <NativeTabs.Trigger.Label>カレンダー</NativeTabs.Trigger.Label>
                 <NativeTabs.Trigger.Icon
