@@ -4,7 +4,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
 import { FilterBar } from "@/components/FilterBar";
-import { VideoCard } from "@/components/VideoCard";
+import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useVideos } from "@/hooks/useVideos";
 import type { FilterOptions } from "@/types";
 
@@ -39,8 +39,9 @@ export default function SearchScreen() {
                 data={videos}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                    <VideoCard video={item} onPress={() => handleVideoPress(item.id)} />
+                    <VideoCardCompact video={item} onPress={() => handleVideoPress(item.id)} showResort />
                 )}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
                 onRefresh={refresh}
                 refreshing={isLoading && videos.length > 0}
                 contentContainerStyle={styles.listContent}
@@ -75,8 +76,12 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
     },
     listContent: {
-        paddingTop: 8,
         paddingBottom: 32,
+    },
+    separator: {
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: Colors.borderLight,
+        marginLeft: 16 + 72 + 12,
     },
     empty: {
         alignItems: "center",

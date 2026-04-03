@@ -7,6 +7,7 @@ import { formatDate, formatDuration } from "../utils/dateUtils";
 interface VideoCardCompactProps {
     video: VideoWithTags;
     onPress: () => void;
+    showResort?: boolean;
 }
 
 /**
@@ -14,7 +15,7 @@ interface VideoCardCompactProps {
  * ホームのスキー場別グループ表示・カレンダー画面で使用する
  * スキー場名は親のセクションヘッダーに表示されるため省略
  */
-export function VideoCardCompact({ video, onPress }: VideoCardCompactProps) {
+export function VideoCardCompact({ video, onPress, showResort = false }: VideoCardCompactProps) {
     const isUnavailable = video.isFileAvailable === 0;
 
     return (
@@ -46,6 +47,11 @@ export function VideoCardCompact({ video, onPress }: VideoCardCompactProps) {
                 <Text style={styles.date}>
                     {formatDate(video.capturedAt)} · {formatDuration(video.duration)}
                 </Text>
+                {showResort && video.skiResortName && (
+                    <Text style={styles.resort} numberOfLines={1}>
+                        {video.skiResortName}
+                    </Text>
+                )}
 
                 {/* 滑走種別（最大2件） */}
                 {video.techniques && video.techniques.length > 0 && (
@@ -146,6 +152,11 @@ const styles = StyleSheet.create({
     date: {
         fontSize: 12,
         color: Colors.textSecondary,
+    },
+    resort: {
+        fontSize: 12,
+        color: Colors.alpineBlue,
+        fontWeight: "600",
     },
     chipRow: {
         flexDirection: "row",

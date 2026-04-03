@@ -85,7 +85,12 @@ export async function getVideosByFilter(options: FilterOptions = {}): Promise<Vi
     }
     if (options.searchText) {
         const q = options.searchText.toLowerCase();
-        result = result.filter((v) => v.filename.toLowerCase().includes(q));
+        result = result.filter(
+            (v) =>
+                v.filename.toLowerCase().includes(q) ||
+                (v.title?.toLowerCase().includes(q) ?? false) ||
+                (v.memo?.toLowerCase().includes(q) ?? false)
+        );
     }
     if (options.tagIds && options.tagIds.length > 0) {
         result = result.filter((v) => v.tags.some((t) => options.tagIds!.includes(t.id)));

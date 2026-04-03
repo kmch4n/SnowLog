@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, like, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like, lte, or } from "drizzle-orm";
 
 import { db, videoTags, videos } from "../index";
 import type { FilterOptions } from "../../types";
@@ -39,7 +39,14 @@ export async function getVideosByFilter(options: FilterOptions = {}) {
         conditions.push(lte(videos.capturedAt, options.dateTo));
     }
     if (options.searchText) {
-        conditions.push(like(videos.filename, `%${options.searchText}%`));
+        const pattern = `%${options.searchText}%`;
+        conditions.push(
+            or(
+                like(videos.filename, pattern),
+                like(videos.title, pattern),
+                like(videos.memo, pattern),
+            )!
+        );
     }
     if (options.favoritesOnly) {
         conditions.push(eq(videos.isFavorite, 1));
