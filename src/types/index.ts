@@ -28,6 +28,8 @@ export interface Video {
     techniques: string[] | null;
     // 元ファイルが存在するかどうか（1: 存在する、0: 削除済み）
     isFileAvailable: number;
+    // お気に入り状態（1: お気に入り、0: 通常）
+    isFavorite: number;
     createdAt: number;
     updatedAt: number;
 }
@@ -53,6 +55,7 @@ export interface FilterOptions {
     dateFrom?: number; // Unix timestamp
     dateTo?: number; // Unix timestamp
     searchText?: string;
+    favoritesOnly?: boolean;
 }
 
 // 動画インポート時に必要なメタデータ

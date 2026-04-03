@@ -41,6 +41,9 @@ export async function getVideosByFilter(options: FilterOptions = {}) {
     if (options.searchText) {
         conditions.push(like(videos.filename, `%${options.searchText}%`));
     }
+    if (options.favoritesOnly) {
+        conditions.push(eq(videos.isFavorite, 1));
+    }
 
     // タグフィルターがある場合は該当する動画IDを先に取得
     if (options.tagIds && options.tagIds.length > 0) {
@@ -74,6 +77,14 @@ export async function updateVideoMeta(
     await db
         .update(videos)
         .set({ ...data, updatedAt: Date.now() })
+        .where(eq(videos.id, id));
+}
+
+/** お気に入り状態をトグルする */
+export async function toggleFavorite(id: string, isFavorite: boolean): Promise<void> {
+    await db
+        .update(videos)
+        .set({ isFavorite: isFavorite ? 1 : 0, updatedAt: Date.now() })
         .where(eq(videos.id, id));
 }
 

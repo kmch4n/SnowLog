@@ -30,7 +30,13 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
                 <View style={styles.durationBadge}>
                     <Text style={styles.durationText}>{formatDuration(video.duration)}</Text>
                 </View>
-                {/* ファイル削除済みの警告 */}
+                {/* お気に入りバッジ */}
+                {video.isFavorite === 1 && (
+                    <View style={styles.favBadge}>
+                        <Text style={styles.favBadgeText}>★</Text>
+                    </View>
+                )}
+                {/* フ���イル削除済みの警告 */}
                 {isUnavailable && (
                     <View style={styles.unavailableOverlay}>
                         <Text style={styles.unavailableText}>ファイルなし</Text>
@@ -115,6 +121,19 @@ const styles = StyleSheet.create({
         color: Colors.headerText,
         fontSize: 12,
         fontWeight: "600",
+    },
+    favBadge: {
+        position: "absolute",
+        top: 8,
+        left: 8,
+        backgroundColor: Colors.overlayDark,
+        borderRadius: 4,
+        paddingHorizontal: 5,
+        paddingVertical: 1,
+    },
+    favBadgeText: {
+        color: Colors.morningGold,
+        fontSize: 14,
     },
     unavailableOverlay: {
         ...StyleSheet.absoluteFillObject,

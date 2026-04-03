@@ -83,9 +83,14 @@ export default function VideoDetailScreen() {
 
                 {/* メタデータ */}
                 <View style={styles.metaSection}>
-                    <Text style={styles.filename} numberOfLines={1}>
-                        {video.filename}
-                    </Text>
+                    <View style={styles.titleRow}>
+                        <Text style={styles.filename} numberOfLines={1}>
+                            {video.filename}
+                        </Text>
+                        <Text style={video.isFavorite === 1 ? styles.starActive : styles.starInactive}>
+                            {video.isFavorite === 1 ? "★" : "☆"}
+                        </Text>
+                    </View>
                     <Text style={styles.metaRow}>
                         📅 {formatDate(video.capturedAt)}　⏱ {formatDuration(video.duration)}
                     </Text>
@@ -172,11 +177,26 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 8,
     },
+    titleRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 4,
+    },
     filename: {
+        flex: 1,
         fontSize: 16,
         fontWeight: "700",
         color: Colors.textPrimary,
-        marginBottom: 4,
+    },
+    starActive: {
+        fontSize: 20,
+        color: Colors.morningGold,
+        marginLeft: 8,
+    },
+    starInactive: {
+        fontSize: 20,
+        color: Colors.textTertiary,
+        marginLeft: 8,
     },
     metaRow: {
         fontSize: 13,

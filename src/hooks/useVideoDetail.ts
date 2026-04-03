@@ -4,6 +4,7 @@ import { getTagsForVideo } from "../database/repositories/tagRepository";
 import {
     deleteVideo as deleteVideoFromDb,
     getVideoById,
+    toggleFavorite as toggleFavoriteInDb,
     updateVideoMeta,
 } from "../database/repositories/videoRepository";
 import { setTagsForVideo } from "../database/repositories/tagRepository";
@@ -91,6 +92,13 @@ export function useVideoDetail(videoId: string) {
         [videoId, fetchVideo]
     );
 
+    /** お気に入り状態をトグルする */
+    const toggleFavorite = useCallback(async () => {
+        if (!video) return;
+        await toggleFavoriteInDb(videoId, video.isFavorite !== 1);
+        await fetchVideo();
+    }, [video, videoId, fetchVideo]);
+
     /** 元ファイルの存在を確認する */
     const checkFileExists = useCallback(async (): Promise<boolean> => {
         if (!video) return false;
@@ -115,6 +123,7 @@ export function useVideoDetail(videoId: string) {
         updateMemo,
         updateSkiResort,
         updateTags,
+        toggleFavorite,
         checkFileExists,
         removeVideo,
     };

@@ -16,6 +16,7 @@ const MOCK_VIDEOS: VideoWithTags[] = [
         skiResortName: "白馬八方尾根スキー場",
         memo: "カービングの練習。外足荷重を意識してターンの弧を大きくした。次回は上体の先行動作を改善したい。",
         isFileAvailable: 1,
+        isFavorite: 1,
         createdAt: 1706800000,
         updatedAt: 1706800000,
         tags: [
@@ -33,6 +34,7 @@ const MOCK_VIDEOS: VideoWithTags[] = [
         skiResortName: "蔵王温泉スキー場",
         memo: "コブに入ったが吸収が追いつかなかった。ストックワークを見直す必要がある。",
         isFileAvailable: 1,
+        isFavorite: 0,
         createdAt: 1707660000,
         updatedAt: 1707660000,
         tags: [
@@ -50,6 +52,7 @@ const MOCK_VIDEOS: VideoWithTags[] = [
         skiResortName: "ニセコグランヒラフ",
         memo: "50cmのパウダー。重心を少し後ろに引いて浮力を確保。最高のコンディションだった。",
         isFileAvailable: 1,
+        isFavorite: 0,
         createdAt: 1708870000,
         updatedAt: 1708870000,
         tags: [{ id: 5, name: "パウダー", type: "technique" }],
@@ -87,6 +90,9 @@ export async function getVideosByFilter(options: FilterOptions = {}): Promise<Vi
     if (options.tagIds && options.tagIds.length > 0) {
         result = result.filter((v) => v.tags.some((t) => options.tagIds!.includes(t.id)));
     }
+    if (options.favoritesOnly) {
+        result = result.filter((v) => v.isFavorite === 1);
+    }
 
     return result.sort((a, b) => b.capturedAt - a.capturedAt);
 }
@@ -95,6 +101,10 @@ export async function updateVideoMeta(
     _id: string,
     _data: { memo?: string; skiResortName?: string | null }
 ): Promise<void> {
+    // Web では保存しない
+}
+
+export async function toggleFavorite(_id: string, _isFavorite: boolean): Promise<void> {
     // Web では保存しない
 }
 

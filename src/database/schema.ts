@@ -19,6 +19,8 @@ export const videos = sqliteTable("videos", {
     techniques: text("techniques"),
     // 元ファイルが存在するかどうか（1: 存在する、0: 削除済み）
     isFileAvailable: int("is_file_available").notNull().default(1),
+    // お気に入り状態（1: お気に入り、0: 通常）
+    isFavorite: int("is_favorite").notNull().default(0),
     createdAt: int("created_at").notNull(),
     updatedAt: int("updated_at").notNull(),
 });

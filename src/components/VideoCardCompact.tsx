@@ -26,6 +26,11 @@ export function VideoCardCompact({ video, onPress }: VideoCardCompactProps) {
                     style={styles.thumbnail}
                     resizeMode="cover"
                 />
+                {video.isFavorite === 1 && (
+                    <View style={styles.favBadge}>
+                        <Text style={styles.favBadgeText}>★</Text>
+                    </View>
+                )}
                 {isUnavailable && (
                     <View style={styles.unavailableOverlay}>
                         <Text style={styles.unavailableText}>なし</Text>
@@ -104,6 +109,19 @@ const styles = StyleSheet.create({
     thumbnail: {
         width: "100%",
         height: "100%",
+    },
+    favBadge: {
+        position: "absolute",
+        top: 2,
+        left: 2,
+        backgroundColor: Colors.overlayDark,
+        borderRadius: 3,
+        paddingHorizontal: 3,
+        paddingVertical: 0,
+    },
+    favBadgeText: {
+        color: Colors.morningGold,
+        fontSize: 10,
     },
     unavailableOverlay: {
         ...StyleSheet.absoluteFillObject,

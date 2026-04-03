@@ -39,7 +39,7 @@ export default function VideoDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-    const { video, isLoading, error, refresh, updateTitle, updateTechniques, updateMemo, updateSkiResort, updateTags, removeVideo } = useVideoDetail(id);
+    const { video, isLoading, error, refresh, updateTitle, updateTechniques, updateMemo, updateSkiResort, updateTags, toggleFavorite, removeVideo } = useVideoDetail(id);
 
     const [titleInput, setTitleInput] = useState("");
     const [titleSaveStatus, setTitleSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -272,6 +272,11 @@ export default function VideoDetailScreen() {
                             returnKeyType="done"
                             numberOfLines={1}
                         />
+                        <TouchableOpacity onPress={toggleFavorite} hitSlop={8}>
+                            <Text style={video.isFavorite === 1 ? styles.starActive : styles.starInactive}>
+                                {video.isFavorite === 1 ? "★" : "☆"}
+                            </Text>
+                        </TouchableOpacity>
                         <Text style={styles.saveStatus}>
                             {titleSaveStatus === "saving"
                                 ? "保存中..."
@@ -509,5 +514,15 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: Colors.textTertiary,
         fontWeight: "500",
+    },
+    starActive: {
+        fontSize: 24,
+        color: Colors.morningGold,
+        marginLeft: 8,
+    },
+    starInactive: {
+        fontSize: 24,
+        color: Colors.textTertiary,
+        marginLeft: 8,
     },
 });
