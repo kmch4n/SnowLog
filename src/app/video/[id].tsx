@@ -65,6 +65,15 @@ export default function VideoDetailScreen() {
         return screenWidth / aspectRatio;
     }, [assetInfoMeta, screenWidth, screenHeight]);
 
+    // Stable refs for callbacks used inside debounce effects
+    // (avoids adding them to deps, which would reset the debounce timer)
+    const updateTitleRef = useRef(updateTitle);
+    updateTitleRef.current = updateTitle;
+    const updateMemoRef = useRef(updateMemo);
+    updateMemoRef.current = updateMemo;
+    const refreshRef = useRef(refresh);
+    refreshRef.current = refresh;
+
     // タイトル自動保存用の debounce タイマー
     const titleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isInitialTitleLoad = useRef(true);
@@ -87,7 +96,7 @@ export default function VideoDetailScreen() {
         setTitleSaveStatus("idle");
         titleTimerRef.current = setTimeout(async () => {
             setTitleSaveStatus("saving");
-            await updateTitle(titleInput.trim() || null);
+            await updateTitleRef.current(titleInput.trim() || null);
             setTitleSaveStatus("saved");
             setTimeout(() => setTitleSaveStatus("idle"), 2000);
         }, 1000);
@@ -114,7 +123,7 @@ export default function VideoDetailScreen() {
         setMemoSaveStatus("idle");
         memoTimerRef.current = setTimeout(async () => {
             setMemoSaveStatus("saving");
-            await updateMemo(memoInput);
+            await updateMemoRef.current(memoInput);
             setMemoSaveStatus("saved");
             // 2秒後にステータスをリセット
             setTimeout(() => setMemoSaveStatus("idle"), 2000);
@@ -156,7 +165,7 @@ export default function VideoDetailScreen() {
                     // Synthetic assets have no MediaLibrary entry — mark unavailable
                     if (isSyntheticAssetId(video.assetId)) {
                         await updateFileAvailability(video.id, false);
-                        refresh();
+                        refreshRef.current();
                         return;
                     }
                     // iCloud 専用アセットの場合は自動ダウンロードでリトライする
@@ -169,7 +178,7 @@ export default function VideoDetailScreen() {
                         setAssetInfoMeta({ width: info.width, height: info.height, duration: info.duration });
                     } else {
                         await updateFileAvailability(video.id, false);
-                        refresh();
+                        refreshRef.current();
                     }
                 } catch {
                     // 一時的エラー（iCloud・ネットワーク等）の可能性があるため

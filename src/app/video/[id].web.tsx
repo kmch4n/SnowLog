@@ -27,6 +27,17 @@ export default function VideoDetailScreen() {
 
     const [isExporting, setIsExporting] = useState(false);
 
+    const handleExport = useCallback(async () => {
+        setIsExporting(true);
+        try {
+            await exportAllToJSON();
+        } catch (e) {
+            Alert.alert("書き出し失敗", e instanceof Error ? e.message : "エラーが発生しました");
+        } finally {
+            setIsExporting(false);
+        }
+    }, []);
+
     useLayoutEffect(() => {
         navigation.setOptions({
             headerRight: () => (
@@ -41,18 +52,7 @@ export default function VideoDetailScreen() {
                 </TouchableOpacity>
             ),
         });
-    }, [navigation, isExporting]);
-
-    const handleExport = useCallback(async () => {
-        setIsExporting(true);
-        try {
-            await exportAllToJSON();
-        } catch (e) {
-            Alert.alert("書き出し失敗", e instanceof Error ? e.message : "エラーが発生しました");
-        } finally {
-            setIsExporting(false);
-        }
-    }, []);
+    }, [navigation, isExporting, handleExport]);
 
     if (isLoading) {
         return (
