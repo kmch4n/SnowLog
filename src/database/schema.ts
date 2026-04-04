@@ -87,3 +87,26 @@ export const appPreferences = sqliteTable("app_preferences", {
 
 export type AppPreferenceInsert = typeof appPreferences.$inferInsert;
 export type AppPreferenceSelect = typeof appPreferences.$inferSelect;
+
+/**
+ * 日記エントリーテーブル
+ * 1日1エントリー（dateKey で一意）
+ */
+export const diaryEntries = sqliteTable("diary_entries", {
+    id: int("id").primaryKey({ autoIncrement: true }),
+    dateKey: text("date_key").notNull().unique(),          // "YYYY-MM-DD"
+    skiResortName: text("ski_resort_name"),
+    weather: text("weather"),                              // "sunny" | "cloudy" | etc.
+    snowCondition: text("snow_condition"),                  // "powder" | "packed" | etc.
+    impressions: text("impressions").notNull().default(""),
+    temperature: int("temperature"),                        // Celsius
+    companions: text("companions"),                         // free text
+    fatigueLevel: int("fatigue_level"),                     // 1-5
+    expenses: int("expenses"),                              // yen
+    numberOfRuns: int("number_of_runs"),
+    createdAt: int("created_at").notNull(),
+    updatedAt: int("updated_at").notNull(),
+});
+
+export type DiaryEntryInsert = typeof diaryEntries.$inferInsert;
+export type DiaryEntrySelect = typeof diaryEntries.$inferSelect;

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
     FlatList,
     StyleSheet,
@@ -11,9 +11,12 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 import { CalendarMonthGrid } from "@/components/CalendarMonthGrid";
 import { CalendarWeekStrip } from "@/components/CalendarWeekStrip";
+import { DiaryCard } from "@/components/DiaryCard";
+import { DiaryEditModal } from "@/components/DiaryEditModal";
 import { Colors } from "@/constants/colors";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useCalendarEnhanced } from "@/hooks/useCalendarEnhanced";
+import { useDiaryEntry } from "@/hooks/useDiaryEntry";
 
 const MONTH_NAMES = [
     "1月", "2月", "3月", "4月", "5月", "6月",
@@ -42,7 +45,11 @@ export default function CalendarScreen() {
         prevWeek,
         nextWeek,
         selectedDateVideos,
+        selectedDateKey,
     } = useCalendarEnhanced();
+
+    const { diary, save: saveDiary, remove: removeDiary, refresh: refreshDiary } = useDiaryEntry(selectedDateKey);
+    const [diaryModalVisible, setDiaryModalVisible] = useState(false);
 
     const handleVideoPress = useCallback(
         (id: string) => {
@@ -51,15 +58,20 @@ export default function CalendarScreen() {
         [router]
     );
 
+    const handleDiaryClose = useCallback(() => {
+        setDiaryModalVisible(false);
+        refreshDiary();
+    }, [refreshDiary]);
+
     const isMonthView = viewMode === "month";
 
     // 選択日のパネルタイトル
     const panelTitle = selectedDay !== null
         ? isMonthView
-            ? `${month}月${selectedDay}日の動画`
+            ? `${month}月${selectedDay}日`
             : (() => {
                 const d = weekDates.find((wd) => wd.getDate() === selectedDay);
-                return d ? `${d.getMonth() + 1}月${d.getDate()}日の動画` : "";
+                return d ? `${d.getMonth() + 1}月${d.getDate()}日` : "";
             })()
         : "";
 
@@ -127,7 +139,7 @@ export default function CalendarScreen() {
                 )}
             </View>
 
-            {/* 選択日の動画一覧 */}
+            {/* 選択日の日記 + 動画一覧 */}
             {selectedDay !== null && (
                 <View style={styles.panelContainer}>
                     <View style={styles.panelHeader}>
@@ -137,28 +149,45 @@ export default function CalendarScreen() {
                         </Text>
                     </View>
 
-                    {selectedDateVideos.length === 0 ? (
-                        <View style={styles.panelEmpty}>
-                            <Text style={styles.panelEmptyText}>
-                                この日の動画はありません
-                            </Text>
-                        </View>
-                    ) : (
-                        <FlatList
-                            data={selectedDateVideos}
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item }) => (
-                                <VideoCardCompact
-                                    video={item}
-                                    onPress={() => handleVideoPress(item.id)}
-                                />
-                            )}
-                            ItemSeparatorComponent={() => (
-                                <View style={styles.separator} />
-                            )}
-                        />
-                    )}
+                    <FlatList
+                        data={selectedDateVideos}
+                        keyExtractor={(item) => item.id}
+                        ListHeaderComponent={
+                            <DiaryCard
+                                diary={diary}
+                                onPress={() => setDiaryModalVisible(true)}
+                            />
+                        }
+                        renderItem={({ item }) => (
+                            <VideoCardCompact
+                                video={item}
+                                onPress={() => handleVideoPress(item.id)}
+                            />
+                        )}
+                        ItemSeparatorComponent={() => (
+                            <View style={styles.separator} />
+                        )}
+                        ListEmptyComponent={
+                            <View style={styles.panelEmpty}>
+                                <Text style={styles.panelEmptyText}>
+                                    この日の動画はありません
+                                </Text>
+                            </View>
+                        }
+                    />
                 </View>
+            )}
+
+            {/* Diary edit modal */}
+            {selectedDateKey != null && (
+                <DiaryEditModal
+                    visible={diaryModalVisible}
+                    dateKey={selectedDateKey}
+                    diary={diary}
+                    onSave={saveDiary}
+                    onDelete={removeDiary}
+                    onClose={handleDiaryClose}
+                />
             )}
         </View>
     );

@@ -98,4 +98,22 @@ export interface DayInfo {
     videoCount: number;
     resortNames: string[];      // ユニークなスキー場名（カラードット用、最大3件）
     thumbnailUri: string | null; // 最初の動画のサムネイル（週表示用）
+    hasDiary: boolean;           // 日記エントリーの有無
+}
+
+// 日記エントリー
+export interface DiaryEntry {
+    id: number;
+    dateKey: string;
+    skiResortName: string | null;
+    weather: string | null;
+    snowCondition: string | null;
+    impressions: string;
+    temperature: number | null;
+    companions: string | null;
+    fatigueLevel: number | null;
+    expenses: number | null;
+    numberOfRuns: number | null;
+    createdAt: number;
+    updatedAt: number;
 }

@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAppPreference } from "./useAppPreference";
 import { useVideos } from "./useVideos";
+import { getDiaryDateKeysInRange } from "@/database/repositories/diaryEntryRepository";
 import {
     getWeekDateRange,
     getWeekDates,
@@ -59,6 +60,27 @@ export function useCalendarEnhanced() {
 
     const { videos, isLoading } = useVideos(activeFilter);
 
+    // --- Diary presence ---
+
+    const dateKeyRange = useMemo(() => {
+        const from = activeFilter.dateFrom;
+        const to = activeFilter.dateTo;
+        if (from == null || to == null) return null;
+        return { from: toDateKey(from), to: toDateKey(to) };
+    }, [activeFilter]);
+
+    const [diaryDateKeys, setDiaryDateKeys] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (dateKeyRange == null) {
+            setDiaryDateKeys(new Set());
+            return;
+        }
+        getDiaryDateKeysInRange(dateKeyRange.from, dateKeyRange.to).then(
+            (keys) => setDiaryDateKeys(new Set(keys))
+        );
+    }, [dateKeyRange]);
+
     // --- DayInfo マップ ---
 
     const dayInfoMap = useMemo(() => {
@@ -80,28 +102,46 @@ export function useCalendarEnhanced() {
                     videoCount: 1,
                     resortNames: v.skiResortName ? [v.skiResortName] : [],
                     thumbnailUri: v.thumbnailUri,
+                    hasDiary: false,
+                });
+            }
+        }
+        // Overlay diary presence
+        for (const dk of diaryDateKeys) {
+            const existing = map.get(dk);
+            if (existing) {
+                existing.hasDiary = true;
+            } else {
+                map.set(dk, {
+                    dateKey: dk,
+                    videoCount: 0,
+                    resortNames: [],
+                    thumbnailUri: null,
+                    hasDiary: true,
                 });
             }
         }
         return map;
-    }, [videos]);
+    }, [videos, diaryDateKeys]);
+
+    // --- 選択日の dateKey ---
+
+    const selectedDateKey = useMemo<string | null>(() => {
+        if (selectedDay === null) return null;
+        if (viewMode === "month") {
+            return `${year}-${String(month).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`;
+        }
+        const targetDate = weekDates.find((d) => d.getDate() === selectedDay);
+        if (!targetDate) return null;
+        return toDateKey(Math.floor(targetDate.getTime() / 1000));
+    }, [selectedDay, year, month, viewMode, weekDates]);
 
     // --- 選択日の動画 ---
 
     const selectedDateVideos = useMemo(() => {
-        if (selectedDay === null) return [];
-
-        if (viewMode === "month") {
-            const key = `${year}-${String(month).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`;
-            return videos.filter((v) => toDateKey(v.capturedAt) === key);
-        }
-
-        // 週表示: weekDates から該当日を探す
-        const targetDate = weekDates.find((d) => d.getDate() === selectedDay);
-        if (!targetDate) return [];
-        const key = toDateKey(Math.floor(targetDate.getTime() / 1000));
-        return videos.filter((v) => toDateKey(v.capturedAt) === key);
-    }, [selectedDay, videos, year, month, viewMode, weekDates]);
+        if (selectedDateKey === null) return [];
+        return videos.filter((v) => toDateKey(v.capturedAt) === selectedDateKey);
+    }, [selectedDateKey, videos]);
 
     // --- 週表示のタイトル情報 ---
 
@@ -161,6 +201,7 @@ export function useCalendarEnhanced() {
         toggleViewMode,
         weekStartDay: typedWeekStartDay,
         dayInfoMap,
+        selectedDateKey,
         selectedDateVideos,
         isLoading,
         // 月表示

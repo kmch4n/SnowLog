@@ -113,6 +113,11 @@ export function CalendarDayCell({
                         {dayInfo.resortNames[0]}
                     </Text>
                 )}
+
+                {/* 日記インジケーター */}
+                {dayInfo?.hasDiary && (
+                    <Text style={styles.weekDiaryBadge}>📝</Text>
+                )}
             </TouchableOpacity>
         );
     }
@@ -158,8 +163,8 @@ export function CalendarDayCell({
                 </View>
             )}
 
-            {/* スキー場カラードット */}
-            {dayInfo && dayInfo.resortNames.length > 0 && (
+            {/* スキー場カラードット + 日記インジケーター */}
+            {dayInfo && (dayInfo.resortNames.length > 0 || dayInfo.hasDiary) && (
                 <View style={styles.dotRow}>
                     {dayInfo.resortNames.slice(0, 3).map((_, i) => (
                         <View
@@ -173,6 +178,18 @@ export function CalendarDayCell({
                             ]}
                         />
                     ))}
+                    {dayInfo.hasDiary && (
+                        <View
+                            style={[
+                                styles.resortDot,
+                                {
+                                    backgroundColor: isSelected
+                                        ? Colors.headerText
+                                        : Colors.morningGold,
+                                },
+                            ]}
+                        />
+                    )}
                 </View>
             )}
         </TouchableOpacity>
@@ -293,5 +310,9 @@ const styles = StyleSheet.create({
         color: Colors.textTertiary,
         marginTop: 2,
         maxWidth: "100%",
+    },
+    weekDiaryBadge: {
+        fontSize: 10,
+        marginTop: 2,
     },
 });
