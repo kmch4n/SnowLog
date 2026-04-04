@@ -118,6 +118,14 @@ export async function getAllVideos() {
     return db.select().from(videos).orderBy(desc(videos.capturedAt));
 }
 
+/** capturedAt が明らかに不正な動画のみ取得する（高速修復パス用） */
+export async function getVideosWithSuspiciousCapturedAt(minValidTimestamp: number) {
+    return db
+        .select()
+        .from(videos)
+        .where(lte(videos.capturedAt, minValidTimestamp));
+}
+
 /** capturedAt を更新する（NaN修復用） */
 export async function updateVideoCapturedAt(id: string, capturedAt: number): Promise<void> {
     await db

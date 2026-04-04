@@ -2,15 +2,23 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { ActivityIndicator, InteractionManager, StyleSheet, Text, useColorScheme, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
 import { db } from "@/database";
 import {
+    getPreference,
+    setPreference,
+} from "@/database/repositories/appPreferenceRepository";
+import {
     getAllTechniqueOptions,
     insertTechniqueOption,
 } from "@/database/repositories/techniqueOptionRepository";
-import { getAllVideos, updateVideoCapturedAt } from "@/database/repositories/videoRepository";
+import {
+    getAllVideos,
+    getVideosWithSuspiciousCapturedAt,
+    updateVideoCapturedAt,
+} from "@/database/repositories/videoRepository";
 import { getAssetInfo, isSyntheticAssetId } from "@/services/mediaService";
 import { DEFAULT_TECHNIQUE_OPTIONS } from "@/constants/techniques";
 import migrations from "../../drizzle/migrations";
@@ -28,15 +36,41 @@ async function seedTechniqueOptions() {
 
 /**
  * capturedAt が不正なレコードを修復する
- * NaN/0/null だけでなく、Date.now()（インポート時刻）で保存されたレコードも対象。
- * MediaLibrary の creationTime と比較し、1時間以上乖離していれば修復する。
- * 冪等: 修復済みレコードは correctAt と一致するためスキップされる。
+ *
+ * Repair strategy:
+ *   - First launch (no stored version): full scan over all videos, comparing
+ *     capturedAt against MediaLibrary creationTime. Fixes NaN/0/null and
+ *     Date.now()-based values (> 1 hour drift). Stores REPAIR_VERSION afterward.
+ *   - Subsequent launches (version matches): fast path — only queries rows
+ *     with capturedAt <= MIN_VALID_TIMESTAMP (obviously invalid). Already-
+ *     repaired datasets skip the scan entirely.
+ *
+ * Bump REPAIR_VERSION whenever the repair logic changes materially so that
+ * existing users get one fresh full scan.
  */
-const MIN_VALID_TIMESTAMP = 946684800; // 2000-01-01 UTC（秒）
+const MIN_VALID_TIMESTAMP = 946684800; // 2000-01-01 UTC (seconds)
+const REPAIR_VERSION = "1";
+const REPAIR_VERSION_KEY = "capturedAt_repair_version";
+
 async function repairInvalidCapturedAt() {
     try {
-        const allVideos = await getAllVideos();
-        for (const video of allVideos) {
+        const storedVersion = await getPreference(REPAIR_VERSION_KEY);
+        const needsFullScan = storedVersion !== REPAIR_VERSION;
+
+        // Fast path: only fetch obviously-invalid rows when full scan is done
+        const targets = needsFullScan
+            ? await getAllVideos()
+            : await getVideosWithSuspiciousCapturedAt(MIN_VALID_TIMESTAMP);
+
+        // Nothing to repair — record version and bail out
+        if (targets.length === 0) {
+            if (needsFullScan) {
+                await setPreference(REPAIR_VERSION_KEY, REPAIR_VERSION);
+            }
+            return;
+        }
+
+        for (const video of targets) {
             try {
                 if (isSyntheticAssetId(video.assetId)) continue;
                 const info = await getAssetInfo(video.assetId, { shouldDownloadFromNetwork: false });
@@ -53,11 +87,15 @@ async function repairInvalidCapturedAt() {
                     await updateVideoCapturedAt(video.id, correctAt);
                 }
             } catch {
-                // iCloud 専用アセット等でメタデータ取得に失敗した場合はスキップ
+                // iCloud-only assets or metadata failures — skip silently
             }
         }
+
+        if (needsFullScan) {
+            await setPreference(REPAIR_VERSION_KEY, REPAIR_VERSION);
+        }
     } catch {
-        // DB アクセス失敗等は無視して起動を妨げない
+        // DB access failures must not block app startup
     }
 }
 
@@ -70,10 +108,13 @@ export default function RootLayout() {
     const { success, error } = useMigrations(db, migrations);
 
     useEffect(() => {
-        if (success) {
-            seedTechniqueOptions().catch(() => {});
+        if (!success) return;
+        seedTechniqueOptions().catch(() => {});
+        // Run repair lazily after first render to avoid blocking startup
+        const task = InteractionManager.runAfterInteractions(() => {
             repairInvalidCapturedAt().catch(() => {});
-        }
+        });
+        return () => task.cancel();
     }, [success]);
 
     if (error) {
