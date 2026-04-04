@@ -1,15 +1,11 @@
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-    ScrollView,
     SectionList,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
-    useWindowDimensions,
 } from "react-native";
 
 import { VideoCardCompact } from "@/components/VideoCardCompact";
@@ -42,12 +38,10 @@ const TABS = [
 
 /**
  * ホーム画面
- * 横スワイプで「全動画」と「お気に入り」を切り替え可能
+ * セグメントコントロールで「全動画」と「お気に入り」を切り替え
  */
 export default function HomeScreen() {
     const router = useRouter();
-    const { width: screenWidth } = useWindowDimensions();
-    const scrollRef = useRef<ScrollView>(null);
     const [activeTab, setActiveTab] = useState(0);
 
     const { videos: allVideos, isLoading: allLoading, refresh: refreshAll } = useVideos();
@@ -66,24 +60,6 @@ export default function HomeScreen() {
 
     const allSections = useMemo(() => buildSections(allVideos), [allVideos]);
     const favSections = useMemo(() => buildSections(favVideos), [favVideos]);
-
-    /** スクロール位置からアクティブタブを同期 */
-    const handleScroll = useCallback(
-        (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-            const page = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
-            setActiveTab(page);
-        },
-        [screenWidth]
-    );
-
-    /** タブタップでページを切り替え */
-    const handleTabPress = useCallback(
-        (index: number) => {
-            scrollRef.current?.scrollTo({ x: index * screenWidth, animated: true });
-            setActiveTab(index);
-        },
-        [screenWidth]
-    );
 
     const renderItem = useCallback(
         ({ item }: { item: VideoWithTags }) => (
@@ -115,7 +91,7 @@ export default function HomeScreen() {
                     <TouchableOpacity
                         key={tab.key}
                         style={[styles.segmentTab, activeTab === i && styles.segmentTabActive]}
-                        onPress={() => handleTabPress(i)}
+                        onPress={() => setActiveTab(i)}
                         activeOpacity={0.7}
                     >
                         <Text style={[styles.segmentText, activeTab === i && styles.segmentTextActive]}>
@@ -125,66 +101,52 @@ export default function HomeScreen() {
                 ))}
             </View>
 
-            {/* 横スワイプページャー */}
-            <ScrollView
-                ref={scrollRef}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onMomentumScrollEnd={handleScroll}
-                scrollEventThrottle={16}
-                style={styles.pager}
-            >
-                {/* ページ 1: 全動画 */}
-                <View style={{ width: screenWidth }}>
-                    <SectionList
-                        sections={allSections}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderItem}
-                        renderSectionHeader={renderSectionHeader}
-                        renderSectionFooter={() => <View style={styles.sectionFooter} />}
-                        ItemSeparatorComponent={() => <View style={styles.separator} />}
-                        onRefresh={refreshAll}
-                        refreshing={allLoading && allVideos.length > 0}
-                        contentContainerStyle={styles.listContent}
-                        ListEmptyComponent={
-                            allLoading ? null : (
-                                <View style={styles.empty}>
-                                    <Text style={styles.emptyTitle}>動画がありません</Text>
-                                    <Text style={styles.emptySubtitle}>
-                                        下のボタンからスキー動画をインポートしてください
-                                    </Text>
-                                </View>
-                            )
-                        }
-                    />
-                </View>
-
-                {/* ページ 2: お気に入り */}
-                <View style={{ width: screenWidth }}>
-                    <SectionList
-                        sections={favSections}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderItem}
-                        renderSectionHeader={renderSectionHeader}
-                        renderSectionFooter={() => <View style={styles.sectionFooter} />}
-                        ItemSeparatorComponent={() => <View style={styles.separator} />}
-                        onRefresh={refreshFav}
-                        refreshing={favLoading && favVideos.length > 0}
-                        contentContainerStyle={styles.listContent}
-                        ListEmptyComponent={
-                            favLoading ? null : (
-                                <View style={styles.empty}>
-                                    <Text style={styles.emptyTitle}>お気に入りがありません</Text>
-                                    <Text style={styles.emptySubtitle}>
-                                        動画詳細画面の ★ ボタンでお気に入りに追加しましょう
-                                    </Text>
-                                </View>
-                            )
-                        }
-                    />
-                </View>
-            </ScrollView>
+            {/* タブコンテンツ */}
+            {activeTab === 0 ? (
+                <SectionList
+                    sections={allSections}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderItem}
+                    renderSectionHeader={renderSectionHeader}
+                    renderSectionFooter={() => <View style={styles.sectionFooter} />}
+                    ItemSeparatorComponent={() => <View style={styles.separator} />}
+                    onRefresh={refreshAll}
+                    refreshing={allLoading && allVideos.length > 0}
+                    contentContainerStyle={styles.listContent}
+                    ListEmptyComponent={
+                        allLoading ? null : (
+                            <View style={styles.empty}>
+                                <Text style={styles.emptyTitle}>動画がありません</Text>
+                                <Text style={styles.emptySubtitle}>
+                                    下のボタンからスキー動画をインポートしてください
+                                </Text>
+                            </View>
+                        )
+                    }
+                />
+            ) : (
+                <SectionList
+                    sections={favSections}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderItem}
+                    renderSectionHeader={renderSectionHeader}
+                    renderSectionFooter={() => <View style={styles.sectionFooter} />}
+                    ItemSeparatorComponent={() => <View style={styles.separator} />}
+                    onRefresh={refreshFav}
+                    refreshing={favLoading && favVideos.length > 0}
+                    contentContainerStyle={styles.listContent}
+                    ListEmptyComponent={
+                        favLoading ? null : (
+                            <View style={styles.empty}>
+                                <Text style={styles.emptyTitle}>お気に入りがありません</Text>
+                                <Text style={styles.emptySubtitle}>
+                                    動画詳細画面の ★ ボタンでお気に入りに追加しましょう
+                                </Text>
+                            </View>
+                        )
+                    }
+                />
+            )}
 
             {/* インポートFAB */}
             <TouchableOpacity style={styles.fab} onPress={handleImportPress}>
@@ -225,9 +187,6 @@ const styles = StyleSheet.create({
     },
     segmentTextActive: {
         color: Colors.headerText,
-    },
-    pager: {
-        flex: 1,
     },
     listContent: {
         paddingBottom: 100,

@@ -6,7 +6,6 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
 } from "react-native";
 
 import { Colors } from "@/constants/colors";
@@ -34,106 +33,99 @@ export default function DashboardScreen() {
         [router]
     );
 
-    if (isLoading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={Colors.alpineBlue} />
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View style={styles.emptyContainer}>
-                <Text style={styles.emptyIcon}>⚠️</Text>
-                <Text style={styles.emptyTitle}>読み込みに失敗しました</Text>
-                <Text style={styles.emptyText}>{error}</Text>
-            </View>
-        );
-    }
-
-    if (!stats || stats.summary.totalVideoCount === 0) {
-        return (
-            <View style={styles.emptyContainer}>
-                <Text style={styles.emptyIcon}>📊</Text>
-                <Text style={styles.emptyTitle}>データがありません</Text>
-                <Text style={styles.emptyText}>
-                    {season.label} シーズンの動画をインポートすると{"\n"}
-                    統計が表示されます
-                </Text>
-            </View>
-        );
-    }
+    const isEmpty = !stats || stats.summary.totalVideoCount === 0;
+    const showCentered = isLoading || !!error || isEmpty;
 
     return (
         <ScrollView
             style={styles.container}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={showCentered ? styles.centeredContent : styles.content}
             showsVerticalScrollIndicator={false}
         >
-            {/* シーズン切替 */}
-            <SeasonSelector
-                seasons={availableSeasons}
-                selected={season}
-                onSelect={setSeason}
-            />
+            {isLoading ? (
+                <ActivityIndicator size="large" color={Colors.alpineBlue} />
+            ) : error ? (
+                <>
+                    <Text style={styles.emptyIcon}>⚠️</Text>
+                    <Text style={styles.emptyTitle}>読み込みに失敗しました</Text>
+                    <Text style={styles.emptyText}>{error}</Text>
+                </>
+            ) : isEmpty ? (
+                <>
+                    <Text style={styles.emptyIcon}>📊</Text>
+                    <Text style={styles.emptyTitle}>データがありません</Text>
+                    <Text style={styles.emptyText}>
+                        {season.label} シーズンの動画をインポートすると{"\n"}
+                        統計が表示されます
+                    </Text>
+                </>
+            ) : (
+                <>
+                    {/* シーズン切替 */}
+                    <SeasonSelector
+                        seasons={availableSeasons}
+                        selected={season}
+                        onSelect={setSeason}
+                    />
 
-            {/* サマリーカード */}
-            <SummaryCards summary={stats.summary} />
+                    {/* サマリーカード */}
+                    <SummaryCards summary={stats.summary} />
 
-            {/* スキー場ランキング */}
-            <DashboardSection title="スキー場ランキング">
-                <HorizontalBarChart
-                    data={stats.resortRanking.map((r) => ({
-                        label: r.skiResortName,
-                        value: r.visitDays,
-                        subLabel: `${r.videoCount}本`,
-                    }))}
-                    maxItems={5}
-                    barColor={Colors.alpineBlue}
-                />
-            </DashboardSection>
-
-            {/* テクニック分布 */}
-            <DashboardSection title="テクニック分布">
-                <HorizontalBarChart
-                    data={stats.techniqueDistribution.map((t) => ({
-                        label: t.name,
-                        value: t.count,
-                    }))}
-                    maxItems={7}
-                    barColor={Colors.morningGold}
-                />
-            </DashboardSection>
-
-            {/* 月別トレンド */}
-            <DashboardSection title="月別トレンド">
-                <MonthlyBarChart data={stats.monthlyTrend} />
-            </DashboardSection>
-
-            {/* アクティビティヒートマップ */}
-            <DashboardSection title="アクティビティ">
-                <ActivityHeatmap days={stats.heatmapDays} season={season} />
-            </DashboardSection>
-
-            {/* 最近の動画 */}
-            {stats.recentVideos.length > 0 && (
-                <DashboardSection
-                    title="最近の動画"
-                    rightAction={{
-                        label: "もっと見る →",
-                        onPress: () => router.push("/(tabs)/search"),
-                    }}
-                >
-                    {stats.recentVideos.map((video) => (
-                        <VideoCardCompact
-                            key={video.id}
-                            video={video}
-                            onPress={() => handleVideoPress(video.id)}
-                            showResort
+                    {/* スキー場ランキング */}
+                    <DashboardSection title="スキー場ランキング">
+                        <HorizontalBarChart
+                            data={stats.resortRanking.map((r) => ({
+                                label: r.skiResortName,
+                                value: r.visitDays,
+                                subLabel: `${r.videoCount}本`,
+                            }))}
+                            maxItems={5}
+                            barColor={Colors.alpineBlue}
                         />
-                    ))}
-                </DashboardSection>
+                    </DashboardSection>
+
+                    {/* テクニック分布 */}
+                    <DashboardSection title="テクニック分布">
+                        <HorizontalBarChart
+                            data={stats.techniqueDistribution.map((t) => ({
+                                label: t.name,
+                                value: t.count,
+                            }))}
+                            maxItems={7}
+                            barColor={Colors.morningGold}
+                        />
+                    </DashboardSection>
+
+                    {/* 月別トレンド */}
+                    <DashboardSection title="月別トレンド">
+                        <MonthlyBarChart data={stats.monthlyTrend} />
+                    </DashboardSection>
+
+                    {/* アクティビティヒートマップ */}
+                    <DashboardSection title="アクティビティ">
+                        <ActivityHeatmap days={stats.heatmapDays} season={season} />
+                    </DashboardSection>
+
+                    {/* 最近の動画 */}
+                    {stats.recentVideos.length > 0 && (
+                        <DashboardSection
+                            title="最近の動画"
+                            rightAction={{
+                                label: "もっと見る →",
+                                onPress: () => router.push("/(tabs)/search"),
+                            }}
+                        >
+                            {stats.recentVideos.map((video) => (
+                                <VideoCardCompact
+                                    key={video.id}
+                                    video={video}
+                                    onPress={() => handleVideoPress(video.id)}
+                                    showResort
+                                />
+                            ))}
+                        </DashboardSection>
+                    )}
+                </>
             )}
         </ScrollView>
     );
@@ -189,17 +181,10 @@ const styles = StyleSheet.create({
         paddingTop: 12,
         paddingBottom: 32,
     },
-    loadingContainer: {
-        flex: 1,
+    centeredContent: {
+        flexGrow: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: Colors.glacierWhite,
-    },
-    emptyContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: Colors.glacierWhite,
         paddingHorizontal: 32,
     },
     emptyIcon: {
