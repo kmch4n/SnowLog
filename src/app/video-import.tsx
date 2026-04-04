@@ -29,7 +29,7 @@ import {
 import { importVideo } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
-import { formatDate, formatDuration, parseExifDateTime } from "@/utils/dateUtils";
+import { formatDate, formatDateTime, formatDuration, parseExifDateTime } from "@/utils/dateUtils";
 import { findNearbySkiResorts } from "@/utils/geoUtils";
 import * as FileSystem from "expo-file-system/legacy";
 
@@ -660,7 +660,7 @@ export default function VideoImportScreen() {
                         style={styles.titleInput}
                         value={title}
                         onChangeText={setTitle}
-                        placeholder={selectedAsset?.fileName ?? "タイトルを入力..."}
+                        placeholder={capturedAt != null ? formatDateTime(capturedAt) : "タイトルを入力..."}
                         placeholderTextColor={Colors.textTertiary}
                         returnKeyType="done"
                         numberOfLines={1}

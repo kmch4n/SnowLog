@@ -5,6 +5,7 @@ import { insertVideo } from "../database/repositories/videoRepository";
 import { setTagsForVideo } from "../database/repositories/tagRepository";
 import { deleteThumbnail, generateAndSaveThumbnail } from "./thumbnailService";
 import type { ImportMetadata } from "../types";
+import { formatDateTime } from "../utils/dateUtils";
 
 interface ImportOptions {
     /** iCloud ダウンロード後の実ファイルURI */
@@ -60,7 +61,7 @@ export async function importVideo(
             thumbnailUri,
             duration: Math.round(asset.duration),
             capturedAt,
-            title: metadata.title || null,
+            title: metadata.title || formatDateTime(capturedAt),
             skiResortName: metadata.skiResortName,
             memo: metadata.memo,
             techniques: metadata.techniques.length > 0 ? JSON.stringify(metadata.techniques) : null,
