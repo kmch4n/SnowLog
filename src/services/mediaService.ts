@@ -99,6 +99,11 @@ export async function getAssetInfoWithDownload(
     }
 }
 
+/** Check whether an assetId is a synthetic placeholder (no MediaLibrary entry) */
+export function isSyntheticAssetId(assetId: string): boolean {
+    return assetId.startsWith("synthetic:");
+}
+
 /**
  * アセットIDの動画が今もフォトライブラリに存在するか確認する
  * 元ファイルが削除されていた場合 false を返す

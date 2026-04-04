@@ -132,7 +132,7 @@ export function DiaryEditModal({
         expenses !== "" ||
         numberOfRuns !== "";
 
-    // Auto-save on close: save if any field has content, skip if completely empty
+    // Auto-save on close: save if any field has content, confirm delete if editing an empty entry
     const handleClose = useCallback(async () => {
         if (hasContent) {
             await onSave({
@@ -147,10 +147,26 @@ export function DiaryEditModal({
                 expenses: parseIntOrNull(expenses),
                 numberOfRuns: parseIntOrNull(numberOfRuns),
             });
+            onClose();
+        } else if (isEditing) {
+            // Existing entry was cleared — confirm deletion
+            Alert.alert("日記を削除", "全ての内容が削除されます。よろしいですか？", [
+                { text: "キャンセル", style: "cancel" },
+                {
+                    text: "削除",
+                    style: "destructive",
+                    onPress: async () => {
+                        await onDelete();
+                        onClose();
+                    },
+                },
+            ]);
+        } else {
+            onClose();
         }
-        onClose();
     }, [
         hasContent,
+        isEditing,
         dateKey,
         skiResortName,
         weather,
@@ -162,6 +178,7 @@ export function DiaryEditModal({
         expenses,
         numberOfRuns,
         onSave,
+        onDelete,
         onClose,
     ]);
 

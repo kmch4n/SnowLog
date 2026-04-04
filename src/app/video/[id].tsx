@@ -2,7 +2,7 @@ import { VideoView, useVideoPlayer } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { getAssetInfoWithDownload, requestMediaPermissions } from "@/services/mediaService";
+import { getAssetInfoWithDownload, isSyntheticAssetId, requestMediaPermissions } from "@/services/mediaService";
 import { updateFileAvailability } from "@/database/repositories/videoRepository";
 import {
     Alert,
@@ -151,6 +151,12 @@ export default function VideoDetailScreen() {
                                 { text: "設定を開く", onPress: () => Linking.openSettings() },
                             ]
                         );
+                        return;
+                    }
+                    // Synthetic assets have no MediaLibrary entry — mark unavailable
+                    if (isSyntheticAssetId(video.assetId)) {
+                        await updateFileAvailability(video.id, false);
+                        refresh();
                         return;
                     }
                     // iCloud 専用アセットの場合は自動ダウンロードでリトライする

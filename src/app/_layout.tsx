@@ -11,7 +11,7 @@ import {
     insertTechniqueOption,
 } from "@/database/repositories/techniqueOptionRepository";
 import { getAllVideos, updateVideoCapturedAt } from "@/database/repositories/videoRepository";
-import { getAssetInfo } from "@/services/mediaService";
+import { getAssetInfo, isSyntheticAssetId } from "@/services/mediaService";
 import { DEFAULT_TECHNIQUE_OPTIONS } from "@/constants/techniques";
 import migrations from "../../drizzle/migrations";
 
@@ -38,6 +38,7 @@ async function repairInvalidCapturedAt() {
         const allVideos = await getAllVideos();
         for (const video of allVideos) {
             try {
+                if (isSyntheticAssetId(video.assetId)) continue;
                 const info = await getAssetInfo(video.assetId, { shouldDownloadFromNetwork: false });
                 if (!info?.creationTime || !Number.isFinite(info.creationTime)) continue;
 

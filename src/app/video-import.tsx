@@ -28,6 +28,7 @@ import {
 } from "@/database/repositories/videoRepository";
 import { importVideo } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
+import { randomUUID } from "expo-crypto";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
 import { formatDate, formatDateTime, formatDuration, parseExifDateTime } from "@/utils/dateUtils";
 import { findNearbySkiResorts } from "@/utils/geoUtils";
@@ -247,10 +248,6 @@ export default function VideoImportScreen() {
             Alert.alert("動画を選択してください");
             return;
         }
-        if (!selectedAsset.assetId) {
-            Alert.alert("エラー", "動画のアセットIDを取得できませんでした。");
-            return;
-        }
         if (!resolvedAssetUri) {
             Alert.alert(
                 "動画を取得しています",
@@ -261,9 +258,12 @@ export default function VideoImportScreen() {
 
         setIsSaving(true);
         try {
+            // Generate a synthetic assetId when the picker did not return one
+            const effectiveAssetId = selectedAsset.assetId ?? `synthetic:${randomUUID()}`;
+
             // expo-image-picker の Asset を expo-media-library の Asset 形式に合わせる
             const mediaAsset = {
-                id: selectedAsset.assetId,
+                id: effectiveAssetId,
                 filename: selectedAsset.fileName ?? "video.mp4",
                 creationTime: (selectedAsset.exif?.DateTimeOriginal
                     ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
@@ -356,11 +356,17 @@ export default function VideoImportScreen() {
                 .filter((id): id is string => id != null);
             const existingIds = await getExistingAssetIds(assetIds);
 
-            const items: BulkImportItem[] = assets.map((a) => ({
-                assetId: a.assetId ?? "",
-                filename: a.fileName ?? "video.mp4",
-                status: (a.assetId && existingIds.has(a.assetId)) ? "skipped" as const : "pending" as const,
-            }));
+            // Map each item's resolved assetId back to its index in the assets array
+            const assetIndexMap = new Map<string, number>();
+            const items: BulkImportItem[] = assets.map((a, index) => {
+                const id = a.assetId ?? `synthetic:${randomUUID()}`;
+                assetIndexMap.set(id, index);
+                return {
+                    assetId: id,
+                    filename: a.fileName ?? "video.mp4",
+                    status: (a.assetId && existingIds.has(a.assetId)) ? "skipped" as const : "pending" as const,
+                };
+            });
 
             const skipped = items.filter((i) => i.status === "skipped").length;
             setBulkSkippedCount(skipped);
@@ -372,7 +378,7 @@ export default function VideoImportScreen() {
 
             for (let idx = 0; idx < pendingItems.length; idx++) {
                 const item = pendingItems[idx];
-                const asset = assets.find((a) => (a.assetId ?? "") === item.assetId)!;
+                const asset = assets[assetIndexMap.get(item.assetId)!];
                 item.status = "importing";
                 setBulkCurrentFilename(item.filename);
 
@@ -404,7 +410,7 @@ export default function VideoImportScreen() {
                             Date.now();
 
                         const mediaAsset = {
-                            id: asset.assetId ?? "",
+                            id: item.assetId,
                             filename: asset.fileName ?? "video.mp4",
                             creationTime,
                             duration: (asset.duration ?? 0) / 1000,

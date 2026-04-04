@@ -7,7 +7,7 @@ import {
     toggleFavorite as toggleFavoriteInDb,
     updateVideoMeta,
 } from "../database/repositories/videoRepository";
-import { checkAssetExists } from "../services/mediaService";
+import { checkAssetExists, isSyntheticAssetId } from "../services/mediaService";
 import { deleteThumbnail } from "../services/thumbnailService";
 import type { VideoWithTags } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
@@ -99,6 +99,7 @@ export function useVideoDetail(videoId: string) {
     /** 元ファイルの存在を確認する */
     const checkFileExists = useCallback(async (): Promise<boolean> => {
         if (!video) return false;
+        if (isSyntheticAssetId(video.assetId)) return true;
         return checkAssetExists(video.assetId);
     }, [video]);
 
