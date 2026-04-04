@@ -6,6 +6,7 @@ import { and, desc, gte, lte } from "drizzle-orm";
 
 import { db, videos } from "../index";
 import { toDateKey } from "../../utils/dateUtils";
+import { parseTechniques } from "../../utils/parseTechniques";
 import type {
     DashboardStats,
     DashboardSummary,
@@ -63,7 +64,7 @@ export async function getDashboardStats(season: Season): Promise<DashboardStats>
         if (v.skiResortName) resortNames.add(v.skiResortName);
         totalDuration += v.duration;
         if (v.isFavorite === 1) favoriteCount++;
-        const parsedTechniques = parseTechniqueNames(v.techniques as string | null);
+        const parsedTechniques = parseTechniques(v.techniques as string | null) ?? [];
         for (const name of parsedTechniques) {
             techniqueCountMap.set(name, (techniqueCountMap.get(name) ?? 0) + 1);
         }
@@ -149,10 +150,10 @@ export async function getDashboardStats(season: Season): Promise<DashboardStats>
 
     // recentVideos は techniques のパースが必要（hook側でタグ付与）
     const recentVideos = recentRaw.map((v) => {
-        const parsed = parseTechniqueNames(v.techniques as string | null);
+        const parsed = parseTechniques(v.techniques as string | null);
         return {
             ...v,
-            techniques: parsed.length > 0 ? parsed : null,
+            techniques: parsed,
             tags: [], // hook側でタグを付与
         };
     });
@@ -165,19 +166,6 @@ export async function getDashboardStats(season: Season): Promise<DashboardStats>
         heatmapDays,
         recentVideos,
     };
-}
-
-function parseTechniqueNames(raw: string | null): string[] {
-    if (!raw) return [];
-    try {
-        const parsed = JSON.parse(raw) as unknown;
-        if (Array.isArray(parsed)) {
-            return parsed.filter((item): item is string => typeof item === "string");
-        }
-        return [];
-    } catch {
-        return [];
-    }
 }
 
 /** 最も古い動画の capturedAt を返す（シーズン一覧構築用） */

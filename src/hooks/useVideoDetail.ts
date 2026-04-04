@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getTagsForVideo } from "../database/repositories/tagRepository";
+import { getTagsForVideo, setTagsForVideo } from "../database/repositories/tagRepository";
 import {
     deleteVideo as deleteVideoFromDb,
     getVideoById,
     toggleFavorite as toggleFavoriteInDb,
     updateVideoMeta,
 } from "../database/repositories/videoRepository";
-import { setTagsForVideo } from "../database/repositories/tagRepository";
 import { checkAssetExists } from "../services/mediaService";
 import { deleteThumbnail } from "../services/thumbnailService";
-import type { Tag, VideoWithTags } from "../types";
+import type { VideoWithTags } from "../types";
+import { parseTechniques } from "../utils/parseTechniques";
 
 /**
  * 動画1件の詳細情報を取得・更新するカスタムフック
@@ -30,10 +30,7 @@ export function useVideoDetail(videoId: string) {
                 return;
             }
             const tags = await getTagsForVideo(videoId);
-            // DB上のtechniquesはJSON文字列なのでパースする
-            const techniques: string[] | null = raw.techniques
-                ? (JSON.parse(raw.techniques) as string[])
-                : null;
+            const techniques = parseTechniques(raw.techniques as string | null);
             setVideo({ ...raw, tags, techniques });
         } catch (e) {
             setError(e instanceof Error ? e.message : "動画の取得に失敗しました。");

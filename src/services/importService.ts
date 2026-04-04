@@ -3,7 +3,7 @@ import { randomUUID } from "expo-crypto";
 
 import { insertVideo } from "../database/repositories/videoRepository";
 import { setTagsForVideo } from "../database/repositories/tagRepository";
-import { generateAndSaveThumbnail } from "./thumbnailService";
+import { deleteThumbnail, generateAndSaveThumbnail } from "./thumbnailService";
 import type { ImportMetadata } from "../types";
 
 interface ImportOptions {
@@ -49,28 +49,32 @@ export async function importVideo(
     const capturedAt = Number.isFinite(assetCreationTime)
         ? Math.floor(assetCreationTime / 1000)
         : Math.floor(Date.now() / 1000);
-    const now = Date.now();
+    const now = Math.floor(Date.now() / 1000);
 
-    // DBに動画レコードを挿入
-    await insertVideo({
-        id: videoId,
-        assetId: asset.id,
-        filename: asset.filename,
-        thumbnailUri,
-        duration: Math.round(asset.duration),
-        capturedAt,
-        title: metadata.title || null,
-        skiResortName: metadata.skiResortName,
-        memo: metadata.memo,
-        techniques: metadata.techniques.length > 0 ? JSON.stringify(metadata.techniques) : null,
-        isFileAvailable: 1,
-        createdAt: now,
-        updatedAt: now,
-    });
+    // DB insert + tag assignment (rollback thumbnail on failure)
+    try {
+        await insertVideo({
+            id: videoId,
+            assetId: asset.id,
+            filename: asset.filename,
+            thumbnailUri,
+            duration: Math.round(asset.duration),
+            capturedAt,
+            title: metadata.title || null,
+            skiResortName: metadata.skiResortName,
+            memo: metadata.memo,
+            techniques: metadata.techniques.length > 0 ? JSON.stringify(metadata.techniques) : null,
+            isFileAvailable: 1,
+            createdAt: now,
+            updatedAt: now,
+        });
 
-    // タグを紐付け
-    if (metadata.tagIds.length > 0) {
-        await setTagsForVideo(videoId, metadata.tagIds);
+        if (metadata.tagIds.length > 0) {
+            await setTagsForVideo(videoId, metadata.tagIds);
+        }
+    } catch (e) {
+        await deleteThumbnail(thumbnailUri).catch(() => {});
+        throw e;
     }
 
     return videoId;

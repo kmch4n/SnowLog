@@ -4,6 +4,11 @@ import { db, videoTags, videos } from "../index";
 import type { FilterOptions } from "../../types";
 import type { VideoInsert } from "../schema";
 
+/** Escape SQL LIKE special characters */
+function escapeLike(text: string): string {
+    return text.replace(/[%_]/g, "\\$&");
+}
+
 /**
  * 動画に関するDB操作をまとめたリポジトリ
  */
@@ -39,7 +44,7 @@ export async function getVideosByFilter(options: FilterOptions = {}) {
         conditions.push(lte(videos.capturedAt, options.dateTo));
     }
     if (options.searchText) {
-        const pattern = `%${options.searchText}%`;
+        const pattern = `%${escapeLike(options.searchText)}%`;
         conditions.push(
             or(
                 like(videos.filename, pattern),
@@ -83,7 +88,7 @@ export async function updateVideoMeta(
 ): Promise<void> {
     await db
         .update(videos)
-        .set({ ...data, updatedAt: Date.now() })
+        .set({ ...data, updatedAt: Math.floor(Date.now() / 1000) })
         .where(eq(videos.id, id));
 }
 
@@ -91,7 +96,7 @@ export async function updateVideoMeta(
 export async function toggleFavorite(id: string, isFavorite: boolean): Promise<void> {
     await db
         .update(videos)
-        .set({ isFavorite: isFavorite ? 1 : 0, updatedAt: Date.now() })
+        .set({ isFavorite: isFavorite ? 1 : 0, updatedAt: Math.floor(Date.now() / 1000) })
         .where(eq(videos.id, id));
 }
 
@@ -99,7 +104,7 @@ export async function toggleFavorite(id: string, isFavorite: boolean): Promise<v
 export async function updateFileAvailability(id: string, isAvailable: boolean): Promise<void> {
     await db
         .update(videos)
-        .set({ isFileAvailable: isAvailable ? 1 : 0, updatedAt: Date.now() })
+        .set({ isFileAvailable: isAvailable ? 1 : 0, updatedAt: Math.floor(Date.now() / 1000) })
         .where(eq(videos.id, id));
 }
 
@@ -117,7 +122,7 @@ export async function getAllVideos() {
 export async function updateVideoCapturedAt(id: string, capturedAt: number): Promise<void> {
     await db
         .update(videos)
-        .set({ capturedAt, updatedAt: Date.now() })
+        .set({ capturedAt, updatedAt: Math.floor(Date.now() / 1000) })
         .where(eq(videos.id, id));
 }
 
@@ -129,7 +134,7 @@ export async function updateSkiResortForVideos(
     if (videoIds.length === 0) return;
     await db
         .update(videos)
-        .set({ skiResortName, updatedAt: Date.now() })
+        .set({ skiResortName, updatedAt: Math.floor(Date.now() / 1000) })
         .where(inArray(videos.id, videoIds));
 }
 

@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { getTagsForVideo } from "../database/repositories/tagRepository";
 import { getVideosByFilter } from "../database/repositories/videoRepository";
 import type { FilterOptions, VideoWithTags } from "../types";
+import { parseTechniques } from "../utils/parseTechniques";
 
 /**
  * 動画一覧を取得・管理するカスタムフック
@@ -24,13 +25,10 @@ export function useVideos(filter?: FilterOptions) {
             // タグ情報を付加し、techniques を JSON 文字列からパース
             const videosWithTags = await Promise.all(
                 rawVideos.map(async (video) => {
-                    const rawTechniques = video.techniques as string | null;
                     return {
                         ...video,
                         tags: await getTagsForVideo(video.id),
-                        techniques: rawTechniques
-                            ? (JSON.parse(rawTechniques) as string[])
-                            : null,
+                        techniques: parseTechniques(video.techniques as string | null),
                     };
                 })
             );

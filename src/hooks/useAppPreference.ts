@@ -19,11 +19,15 @@ export function useAppPreference(
     // 画面フォーカス時に DB から最新値を読み取る
     useFocusEffect(
         useCallback(() => {
+            let cancelled = false;
             getPreference(key).then((stored) => {
-                if (stored !== null) {
+                if (!cancelled && stored !== null) {
                     setValue(stored);
                 }
             });
+            return () => {
+                cancelled = true;
+            };
         }, [key])
     );
 

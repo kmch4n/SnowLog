@@ -42,13 +42,18 @@ export async function exportAllToJSON(): Promise<void> {
         encoding: FileSystem.EncodingType.UTF8,
     });
 
-    const isSharingAvailable = await Sharing.isAvailableAsync();
-    if (!isSharingAvailable) {
-        throw new Error("この端末では共有機能が使用できません。");
-    }
+    try {
+        const isSharingAvailable = await Sharing.isAvailableAsync();
+        if (!isSharingAvailable) {
+            throw new Error("この端末では共有機能が使用できません。");
+        }
 
-    await Sharing.shareAsync(fileUri, {
-        mimeType: "application/json",
-        dialogTitle: "SnowLogデータをエクスポート",
-    });
+        await Sharing.shareAsync(fileUri, {
+            mimeType: "application/json",
+            dialogTitle: "SnowLogデータをエクスポート",
+        });
+    } finally {
+        // Clean up temp file regardless of outcome
+        await FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => {});
+    }
 }
