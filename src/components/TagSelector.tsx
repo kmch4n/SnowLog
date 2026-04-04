@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import {
     StyleSheet,
     Text,
@@ -27,9 +28,11 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
     const [allTags, setAllTags] = useState<Tag[]>([]);
     const [customInput, setCustomInput] = useState("");
 
-    useEffect(() => {
-        loadTags();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            loadTags();
+        }, [])
+    );
 
     async function loadTags() {
         const tags = await getAllTags();

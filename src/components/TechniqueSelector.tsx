@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useFocusEffect } from "expo-router";
 
 import { Colors } from "../constants/colors";
 import { getAllTechniqueOptions } from "../database/repositories/techniqueOptionRepository";
@@ -17,9 +18,11 @@ interface TechniqueSelectorProps {
 export function TechniqueSelector({ selected, onChange }: TechniqueSelectorProps) {
     const [options, setOptions] = useState<TechniqueOptionSelect[]>([]);
 
-    useEffect(() => {
-        getAllTechniqueOptions().then(setOptions);
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            getAllTechniqueOptions().then(setOptions);
+        }, [])
+    );
 
     function toggle(name: string) {
         if (selected.includes(name)) {

@@ -1,5 +1,5 @@
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { getTagsForVideo } from "../database/repositories/tagRepository";
 import {
@@ -18,28 +18,31 @@ export function useDashboard() {
     const [availableSeasons, setAvailableSeasons] = useState<Season[]>([]);
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     // 利用可能シーズン一覧の構築
-    useEffect(() => {
-        (async () => {
-            const oldest = await getOldestCapturedAt();
-            if (oldest === null) {
-                setAvailableSeasons([getCurrentSeason()]);
-                return;
-            }
-            const oldDate = new Date(oldest * 1000);
-            const oldMonth = oldDate.getMonth() + 1;
-            const oldYear = oldDate.getFullYear();
-            // 最も古い動画が属するシーズンの開始年
-            const firstSeasonStart = oldMonth >= 11 ? oldYear : oldYear - 1;
-            const current = getCurrentSeason();
-            const seasons: Season[] = [];
-            for (let y = current.startYear; y >= firstSeasonStart; y--) {
-                seasons.push(buildSeason(y));
-            }
-            setAvailableSeasons(seasons);
-        })();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            (async () => {
+                const oldest = await getOldestCapturedAt();
+                if (oldest === null) {
+                    setAvailableSeasons([getCurrentSeason()]);
+                    return;
+                }
+                const oldDate = new Date(oldest * 1000);
+                const oldMonth = oldDate.getMonth() + 1;
+                const oldYear = oldDate.getFullYear();
+                // 最も古い動画が属するシーズンの開始年
+                const firstSeasonStart = oldMonth >= 11 ? oldYear : oldYear - 1;
+                const current = getCurrentSeason();
+                const seasons: Season[] = [];
+                for (let y = current.startYear; y >= firstSeasonStart; y--) {
+                    seasons.push(buildSeason(y));
+                }
+                setAvailableSeasons(seasons);
+            })();
+        }, [])
+    );
 
     // データ取得
     useFocusEffect(
@@ -48,6 +51,7 @@ export function useDashboard() {
 
             (async () => {
                 setIsLoading(true);
+                setError(null);
                 try {
                     const data = await getDashboardStats(season);
 
@@ -64,6 +68,10 @@ export function useDashboard() {
                     if (!cancelled) {
                         setStats({ ...data, recentVideos: enrichedRecent });
                     }
+                } catch (e) {
+                    if (!cancelled) {
+                        setError(e instanceof Error ? e.message : "データの取得に失敗しました");
+                    }
                 } finally {
                     if (!cancelled) {
                         setIsLoading(false);
@@ -77,5 +85,5 @@ export function useDashboard() {
         }, [season])
     );
 
-    return { stats, isLoading, season, setSeason, availableSeasons };
+    return { stats, isLoading, error, season, setSeason, availableSeasons };
 }

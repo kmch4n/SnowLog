@@ -25,7 +25,7 @@ import type { Season } from "@/types/dashboard";
  */
 export default function DashboardScreen() {
     const router = useRouter();
-    const { stats, isLoading, season, setSeason, availableSeasons } = useDashboard();
+    const { stats, isLoading, error, season, setSeason, availableSeasons } = useDashboard();
 
     const handleVideoPress = useCallback(
         (id: string) => {
@@ -38,6 +38,16 @@ export default function DashboardScreen() {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={Colors.alpineBlue} />
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyIcon}>⚠️</Text>
+                <Text style={styles.emptyTitle}>読み込みに失敗しました</Text>
+                <Text style={styles.emptyText}>{error}</Text>
             </View>
         );
     }

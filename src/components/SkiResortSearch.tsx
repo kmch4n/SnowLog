@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import {
     ScrollView,
     StyleSheet,
@@ -36,9 +37,11 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
     }, [value]);
 
     // お気に入りスキー場をロード
-    useEffect(() => {
-        getFavoriteResorts().then(setFavorites);
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            getFavoriteResorts().then(setFavorites);
+        }, [])
+    );
 
     const suggestions = useMemo<SkiResort[]>(() => {
         if (!query.trim()) return [];
