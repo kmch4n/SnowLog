@@ -116,6 +116,12 @@ export function DiaryEditModal({
         }
     }, [visible, diary]);
 
+    const handleTemperatureChange = (text: string) => {
+        if (/^-?\d*$/.test(text)) {
+            setTemperature(text);
+        }
+    };
+
     const parseIntOrNull = (text: string): number | null => {
         const n = parseInt(text, 10);
         return Number.isNaN(n) ? null : n;
@@ -307,12 +313,12 @@ export function DiaryEditModal({
                                     <TextInput
                                         style={styles.numberInput}
                                         value={temperature}
-                                        onChangeText={setTemperature}
+                                        onChangeText={handleTemperatureChange}
                                         placeholder="-5"
                                         placeholderTextColor={
                                             Colors.textTertiary
                                         }
-                                        keyboardType="number-pad"
+                                        keyboardType="numbers-and-punctuation"
                                     />
                                     <Text style={styles.unit}>°C</Text>
                                 </View>
