@@ -36,7 +36,7 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
                         <Text style={styles.favBadgeText}>★</Text>
                     </View>
                 )}
-                {/* フ���イル削除済みの警告 */}
+                {/* ファイル削除済みの警告 */}
                 {isUnavailable && (
                     <View style={styles.unavailableOverlay}>
                         <Text style={styles.unavailableText}>ファイルなし</Text>

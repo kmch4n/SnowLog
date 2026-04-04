@@ -483,10 +483,7 @@ export default function VideoImportScreen() {
     const handlePickBulk = useCallback(async () => {
         const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permResult.granted) {
-            Alert.alert(
-                "権限が必要��す",
-                "フォトライブラリへ��アクセスを許可してください。"
-            );
+            Alert.alert("権限が必要です", "フォトライブラリへのアクセスを許可してください。");
             return;
         }
 
@@ -504,7 +501,7 @@ export default function VideoImportScreen() {
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : "不明なエラーが発生しました。";
-            Alert.alert("動画の選択に失敗しまし��", message);
+            Alert.alert("動画の選択に失敗しました", message);
             return;
         }
 

@@ -26,7 +26,7 @@ interface VideoSection {
 function buildSections(videos: VideoWithTags[]): VideoSection[] {
     const map = new Map<string, VideoWithTags[]>();
     for (const video of videos) {
-        const key = video.skiResortName ?? "スキー場未設��";
+        const key = video.skiResortName ?? "スキー場未設定";
         if (!map.has(key)) map.set(key, []);
         map.get(key)!.push(video);
     }
@@ -152,7 +152,7 @@ export default function HomeScreen() {
                                 <View style={styles.empty}>
                                     <Text style={styles.emptyTitle}>動画がありません</Text>
                                     <Text style={styles.emptySubtitle}>
-                                        下のボタンからスキー動画をインポートして���ださい
+                                        下のボタンからスキー動画をインポートしてください
                                     </Text>
                                 </View>
                             )
