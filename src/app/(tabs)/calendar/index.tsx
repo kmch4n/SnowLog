@@ -46,6 +46,7 @@ export default function CalendarScreen() {
         nextWeek,
         selectedDateVideos,
         selectedDateKey,
+        refreshDiaryKeys,
     } = useCalendarEnhanced();
 
     const { diary, save: saveDiary, remove: removeDiary, refresh: refreshDiary } = useDiaryEntry(selectedDateKey);
@@ -61,7 +62,8 @@ export default function CalendarScreen() {
     const handleDiaryClose = useCallback(() => {
         setDiaryModalVisible(false);
         refreshDiary();
-    }, [refreshDiary]);
+        refreshDiaryKeys();
+    }, [refreshDiary, refreshDiaryKeys]);
 
     const isMonthView = viewMode === "month";
 

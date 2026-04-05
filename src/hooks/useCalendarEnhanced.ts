@@ -70,6 +70,11 @@ export function useCalendarEnhanced() {
     }, [activeFilter]);
 
     const [diaryDateKeys, setDiaryDateKeys] = useState<Set<string>>(new Set());
+    const [diaryRefreshKey, setDiaryRefreshKey] = useState(0);
+
+    const refreshDiaryKeys = useCallback(() => {
+        setDiaryRefreshKey((k) => k + 1);
+    }, []);
 
     useEffect(() => {
         if (dateKeyRange == null) {
@@ -79,7 +84,7 @@ export function useCalendarEnhanced() {
         getDiaryDateKeysInRange(dateKeyRange.from, dateKeyRange.to).then(
             (keys) => setDiaryDateKeys(new Set(keys))
         );
-    }, [dateKeyRange]);
+    }, [dateKeyRange, diaryRefreshKey]);
 
     // --- DayInfo マップ ---
 
@@ -212,5 +217,6 @@ export function useCalendarEnhanced() {
         weekTitle,
         prevWeek,
         nextWeek,
+        refreshDiaryKeys,
     };
 }
