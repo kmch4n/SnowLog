@@ -2,17 +2,32 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 
 import { getAllVideos } from "../database/repositories/videoRepository";
-import { getTagsForVideo } from "../database/repositories/tagRepository";
+import { getAllTags, getTagsForVideo } from "../database/repositories/tagRepository";
+import { getAllTechniqueOptions } from "../database/repositories/techniqueOptionRepository";
+import { getFavoriteResorts } from "../database/repositories/favoriteResortRepository";
+import { getAllDiaryEntries } from "../database/repositories/diaryEntryRepository";
+import { getAllPreferences } from "../database/repositories/appPreferenceRepository";
 import type { VideoWithTags } from "../types";
-import { formatDate } from "../utils/dateUtils";
+
+/** Bump when the export payload shape changes */
+const SCHEMA_VERSION = 1;
+const APP_VERSION = "1.0.0";
 
 /**
- * 全動画データをJSON形式でエクスポートし、システム共有UIを起動する
+ * Export all user data as a full-backup JSON and open the system share sheet.
  */
 export async function exportAllToJSON(): Promise<void> {
-    const videos = await getAllVideos();
+    const [videos, allTags, techniqueOptions, favoriteResorts, diaryEntries, preferences] =
+        await Promise.all([
+            getAllVideos(),
+            getAllTags(),
+            getAllTechniqueOptions(),
+            getFavoriteResorts(),
+            getAllDiaryEntries(),
+            getAllPreferences(),
+        ]);
 
-    // タグ情報を付加
+    // Attach per-video tags
     const videosWithTags: VideoWithTags[] = await Promise.all(
         videos.map(async (video) => ({
             ...video,
@@ -21,23 +36,51 @@ export async function exportAllToJSON(): Promise<void> {
     );
 
     const exportData = {
+        schemaVersion: SCHEMA_VERSION,
+        appVersion: APP_VERSION,
         exportedAt: new Date().toISOString(),
-        totalCount: videosWithTags.length,
         videos: videosWithTags.map((v) => ({
             id: v.id,
+            assetId: v.assetId,
             filename: v.filename,
-            capturedAt: formatDate(v.capturedAt),
+            thumbnailUri: v.thumbnailUri,
             duration: v.duration,
+            capturedAt: v.capturedAt,
             skiResortName: v.skiResortName,
             memo: v.memo,
-            tags: v.tags.map((t) => ({ name: t.name, type: t.type })),
-            thumbnailUri: v.thumbnailUri,
+            title: v.title,
+            techniques: v.techniques,
             isFileAvailable: v.isFileAvailable === 1,
+            isFavorite: v.isFavorite === 1,
+            createdAt: v.createdAt,
+            updatedAt: v.updatedAt,
+            tags: v.tags.map((t) => ({ id: t.id, name: t.name, type: t.type })),
         })),
+        tags: allTags.map((t) => ({ id: t.id, name: t.name, type: t.type })),
+        techniqueOptions: techniqueOptions.map((o) => ({
+            name: o.name,
+            sortOrder: o.sortOrder,
+        })),
+        favoriteResorts,
+        diaryEntries: diaryEntries.map((d) => ({
+            dateKey: d.dateKey,
+            skiResortName: d.skiResortName,
+            weather: d.weather,
+            snowCondition: d.snowCondition,
+            impressions: d.impressions,
+            temperature: d.temperature,
+            companions: d.companions,
+            fatigueLevel: d.fatigueLevel,
+            expenses: d.expenses,
+            numberOfRuns: d.numberOfRuns,
+            createdAt: d.createdAt,
+            updatedAt: d.updatedAt,
+        })),
+        preferences: preferences.map((p) => ({ key: p.key, value: p.value })),
     };
 
     const json = JSON.stringify(exportData, null, 4);
-    const fileUri = `${FileSystem.documentDirectory}snowlog_export_${Date.now()}.json`;
+    const fileUri = `${FileSystem.documentDirectory}snowlog_backup_${Date.now()}.json`;
     await FileSystem.writeAsStringAsync(fileUri, json, {
         encoding: FileSystem.EncodingType.UTF8,
     });

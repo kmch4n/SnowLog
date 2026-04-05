@@ -7,6 +7,11 @@ import type { DiaryEntryInsert, DiaryEntrySelect } from "../schema";
  * 日記エントリーに関するDB操作
  */
 
+/** 全日記エントリーを取得する */
+export async function getAllDiaryEntries(): Promise<DiaryEntrySelect[]> {
+    return db.select().from(diaryEntries);
+}
+
 /** 指定日の日記エントリーを取得する */
 export async function getDiaryEntryByDateKey(
     dateKey: string

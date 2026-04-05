@@ -1,10 +1,16 @@
 import { eq } from "drizzle-orm";
 
 import { db, appPreferences } from "../index";
+import type { AppPreferenceSelect } from "../schema";
 
 /**
  * アプリ設定に関するDB操作をまとめたリポジトリ
  */
+
+/** 全設定値を取得する */
+export async function getAllPreferences(): Promise<AppPreferenceSelect[]> {
+    return db.select().from(appPreferences);
+}
 
 /** 設定値を取得する（未設定の場合は null） */
 export async function getPreference(key: string): Promise<string | null> {
