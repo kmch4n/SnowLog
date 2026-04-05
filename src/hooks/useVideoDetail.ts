@@ -7,6 +7,10 @@ import {
     toggleFavorite as toggleFavoriteInDb,
     updateVideoMeta,
 } from "../database/repositories/videoRepository";
+import {
+    deleteManagedVideoFile,
+    managedVideoFileExists,
+} from "../services/managedVideoFileService";
 import { checkAssetExists, isSyntheticAssetId } from "../services/mediaService";
 import { deleteThumbnail } from "../services/thumbnailService";
 import type { VideoWithTags } from "../types";
@@ -99,7 +103,9 @@ export function useVideoDetail(videoId: string) {
     /** 元ファイルの存在を確認する */
     const checkFileExists = useCallback(async (): Promise<boolean> => {
         if (!video) return false;
-        if (isSyntheticAssetId(video.assetId)) return true;
+        if (isSyntheticAssetId(video.assetId)) {
+            return managedVideoFileExists(video.id, video.filename);
+        }
         return checkAssetExists(video.assetId);
     }, [video]);
 
@@ -107,6 +113,9 @@ export function useVideoDetail(videoId: string) {
     const removeVideo = useCallback(async () => {
         if (video?.thumbnailUri) {
             await deleteThumbnail(video.thumbnailUri);
+        }
+        if (video && isSyntheticAssetId(video.assetId)) {
+            await deleteManagedVideoFile(video.id, video.filename);
         }
         await deleteVideoFromDb(videoId);
     }, [videoId, video]);

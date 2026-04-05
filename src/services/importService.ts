@@ -3,47 +3,49 @@ import { randomUUID } from "expo-crypto";
 
 import { insertVideo } from "../database/repositories/videoRepository";
 import { setTagsForVideo } from "../database/repositories/tagRepository";
+import {
+    deleteManagedVideoFile,
+    persistManagedVideoFile,
+} from "./managedVideoFileService";
+import { isSyntheticAssetId } from "./mediaService";
 import { deleteThumbnail, generateAndSaveThumbnail } from "./thumbnailService";
 import type { ImportMetadata } from "../types";
 import { formatDateTime } from "../utils/dateUtils";
 
 interface ImportOptions {
-    /** iCloud ダウンロード後の実ファイルURI */
     sourceUri: string;
 }
 
-/**
- * 動画インポートのオーケストレーター
- *
- * 処理の流れ:
- * 1. アセット詳細情報（localUri・撮影日時）を取得
- * 2. サムネイルを生成してDocumentDirectoryに保存
- * 3. 動画レコードをDBに挿入
- * 4. タグを紐付け
- */
+type ImportableAsset = Asset & {
+    localUri?: string | null;
+};
+
 export async function importVideo(
-    asset: Asset,
+    asset: ImportableAsset,
     metadata: ImportMetadata,
     options: ImportOptions
 ): Promise<string> {
-    const videoUri = asset.localUri ?? asset.uri ?? options.sourceUri;
+    let videoUri = asset.localUri ?? asset.uri ?? options.sourceUri;
     if (!videoUri) {
-        throw new Error("動画ファイルのURIを解決できませんでした。");
+        throw new Error("動画ファイルのURIを取得できませんでした。");
     }
-    const assetCreationTime = asset.creationTime;
 
-    // 一意IDを生成
+    const assetCreationTime = asset.creationTime;
+    const isSyntheticImport = isSyntheticAssetId(asset.id);
     const videoId = randomUUID();
 
-    // サムネイルを生成・保存（ローカルURIで失敗した場合は sourceUri でリトライ）
+    if (isSyntheticImport) {
+        videoUri = await persistManagedVideoFile(videoUri, videoId, asset.filename);
+    }
+
     let thumbnailUri: string;
     try {
         thumbnailUri = await generateAndSaveThumbnail(videoUri, videoId);
-    } catch (e) {
+    } catch (error) {
         if (videoUri !== options.sourceUri) {
             thumbnailUri = await generateAndSaveThumbnail(options.sourceUri, videoId);
         } else {
-            throw e;
+            throw error;
         }
     }
 
@@ -52,7 +54,6 @@ export async function importVideo(
         : Math.floor(Date.now() / 1000);
     const now = Math.floor(Date.now() / 1000);
 
-    // DB insert + tag assignment (rollback thumbnail on failure)
     try {
         await insertVideo({
             id: videoId,
@@ -73,9 +74,12 @@ export async function importVideo(
         if (metadata.tagIds.length > 0) {
             await setTagsForVideo(videoId, metadata.tagIds);
         }
-    } catch (e) {
+    } catch (error) {
         await deleteThumbnail(thumbnailUri).catch(() => {});
-        throw e;
+        if (isSyntheticImport) {
+            await deleteManagedVideoFile(videoId, asset.filename).catch(() => {});
+        }
+        throw error;
     }
 
     return videoId;

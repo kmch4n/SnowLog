@@ -2,8 +2,9 @@ import { VideoView, useVideoPlayer } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { getAssetInfoWithDownload, isSyntheticAssetId, requestMediaPermissions } from "@/services/mediaService";
 import { updateFileAvailability } from "@/database/repositories/videoRepository";
+import { resolveManagedVideoFileUri } from "@/services/managedVideoFileService";
+import { getAssetInfoWithDownload, isSyntheticAssetId, requestMediaPermissions } from "@/services/mediaService";
 import {
     Alert,
     KeyboardAvoidingView,
@@ -142,6 +143,8 @@ export default function VideoDetailScreen() {
         setTitleInput(video.title ?? "");
         isInitialMemoLoad.current = true;
         setMemoInput(video.memo);
+        setVideoUri(null);
+        setAssetInfoMeta(null);
         // technique タグは TechniqueSelector で管理するため除外する
         setTagIds(video.tags.filter((t) => t.type !== "technique").map((t) => t.id));
 
@@ -149,6 +152,23 @@ export default function VideoDetailScreen() {
         if (video.isFileAvailable === 1) {
             (async () => {
                 try {
+                    if (isSyntheticAssetId(video.assetId)) {
+                        const managedUri = await resolveManagedVideoFileUri(
+                            video.id,
+                            video.filename
+                        );
+                        if (managedUri) {
+                            LayoutAnimation.configureNext(
+                                LayoutAnimation.Presets.easeInEaseOut
+                            );
+                            setVideoUri(managedUri);
+                        } else {
+                            await updateFileAvailability(video.id, false);
+                            refreshRef.current();
+                        }
+                        return;
+                    }
+
                     const granted = await requestMediaPermissions();
                     if (!granted) {
                         // 権限拒否は一時的な状態であり、ファイル欠損ではない
@@ -162,13 +182,6 @@ export default function VideoDetailScreen() {
                         );
                         return;
                     }
-                    // Synthetic assets have no MediaLibrary entry — mark unavailable
-                    if (isSyntheticAssetId(video.assetId)) {
-                        await updateFileAvailability(video.id, false);
-                        refreshRef.current();
-                        return;
-                    }
-                    // iCloud 専用アセットの場合は自動ダウンロードでリトライする
                     const info = await getAssetInfoWithDownload(video.assetId);
                     if (info?.uri || info?.localUri) {
                         // 高さ変更をアニメーションで滑らかに遷移
@@ -252,6 +265,9 @@ export default function VideoDetailScreen() {
         );
     }
 
+
+    const canOpenPhotosApp =
+        video.isFileAvailable === 1 && !isSyntheticAssetId(video.assetId);
     return (
         <KeyboardAvoidingView
             style={styles.container}
@@ -306,7 +322,7 @@ export default function VideoDetailScreen() {
                         <Text style={styles.metaText} numberOfLines={1}>
                             {metaLine}
                         </Text>
-                        {video.isFileAvailable === 1 && (
+                        {canOpenPhotosApp && (
                             <TouchableOpacity
                                 onPress={async () => {
                                     try {
@@ -541,3 +557,4 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
 });
+
