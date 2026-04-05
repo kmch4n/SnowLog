@@ -21,13 +21,21 @@ export async function insertTag(data: TagInsert): Promise<void> {
     await db.insert(tags).values(data).onConflictDoNothing();
 }
 
-/** 名前でタグを取得する（存在しなければ作成して返す） */
+/** 名前と種別でタグを取得する（存在しなければ作成して返す） */
 export async function getOrCreateTag(name: string, type: TagType): Promise<Tag> {
-    const existing = await db.select().from(tags).where(eq(tags.name, name)).limit(1);
+    const existing = await db
+        .select()
+        .from(tags)
+        .where(and(eq(tags.name, name), eq(tags.type, type)))
+        .limit(1);
     if (existing[0]) return asTag(existing[0]);
 
     await db.insert(tags).values({ name, type });
-    const created = await db.select().from(tags).where(eq(tags.name, name)).limit(1);
+    const created = await db
+        .select()
+        .from(tags)
+        .where(and(eq(tags.name, name), eq(tags.type, type)))
+        .limit(1);
     return asTag(created[0]!);
 }
 

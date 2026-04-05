@@ -21,7 +21,7 @@ export async function insertTag(_data: TagInsert): Promise<void> {
 }
 
 export async function getOrCreateTag(name: string, type: TagType): Promise<Tag> {
-    const existing = MOCK_TAGS.find((t) => t.name === name);
+    const existing = MOCK_TAGS.find((t) => t.name === name && t.type === type);
     if (existing) return existing;
     return { id: MOCK_TAGS.length + 1, name, type };
 }

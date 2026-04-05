@@ -1,4 +1,4 @@
-import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { int, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /**
  * 動画テーブル
@@ -30,10 +30,12 @@ export const videos = sqliteTable("videos", {
  */
 export const tags = sqliteTable("tags", {
     id: int("id").primaryKey({ autoIncrement: true }),
-    name: text("name").notNull().unique(),
+    name: text("name").notNull(),
     // 'technique' | 'skier' | 'custom'
     type: text("type").notNull(),
-});
+}, (table) => [
+    uniqueIndex("tags_name_type_unique").on(table.name, table.type),
+]);
 
 /**
  * 動画↔タグ 中間テーブル
