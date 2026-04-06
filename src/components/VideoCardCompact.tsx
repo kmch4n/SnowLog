@@ -7,6 +7,9 @@ import { formatDate, formatDuration } from "../utils/dateUtils";
 interface VideoCardCompactProps {
     video: VideoWithTags;
     onPress: () => void;
+    onLongPress?: () => void;
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
     showResort?: boolean;
 }
 
@@ -15,11 +18,30 @@ interface VideoCardCompactProps {
  * ホームのスキー場別グループ表示・カレンダー画面で使用する
  * スキー場名は親のセクションヘッダーに表示されるため省略
  */
-export function VideoCardCompact({ video, onPress, showResort = false }: VideoCardCompactProps) {
+export function VideoCardCompact({
+    video,
+    onPress,
+    onLongPress,
+    isSelectionMode = false,
+    isSelected = false,
+    showResort = false,
+}: VideoCardCompactProps) {
     const isUnavailable = video.isFileAvailable === 0;
 
     return (
-        <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
+        <TouchableOpacity
+            style={[styles.container, isSelected && styles.containerSelected]}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            activeOpacity={0.8}
+        >
+            {/* Selection checkbox */}
+            {isSelectionMode && (
+                <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+            )}
+
             {/* サムネイル */}
             <View style={styles.thumbnailContainer}>
                 <Image
@@ -103,6 +125,28 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         alignItems: "center",
         gap: 12,
+    },
+    containerSelected: {
+        backgroundColor: Colors.alpineBlueLight,
+    },
+    checkbox: {
+        width: 24,
+        height: 24,
+        borderRadius: 6,
+        borderWidth: 2,
+        borderColor: Colors.border,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: Colors.freshSnow,
+    },
+    checkboxSelected: {
+        backgroundColor: Colors.alpineBlue,
+        borderColor: Colors.alpineBlue,
+    },
+    checkmark: {
+        color: Colors.headerText,
+        fontSize: 14,
+        fontWeight: "700",
     },
     thumbnailContainer: {
         width: 72,

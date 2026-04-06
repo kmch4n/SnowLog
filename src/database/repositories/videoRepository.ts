@@ -146,6 +146,24 @@ export async function updateSkiResortForVideos(
         .where(inArray(videos.id, videoIds));
 }
 
+/** 複数動画のお気に入り状態を一括設定する */
+export async function bulkSetFavorite(
+    videoIds: string[],
+    isFavorite: boolean
+): Promise<void> {
+    if (videoIds.length === 0) return;
+    await db
+        .update(videos)
+        .set({ isFavorite: isFavorite ? 1 : 0, updatedAt: Math.floor(Date.now() / 1000) })
+        .where(inArray(videos.id, videoIds));
+}
+
+/** 複数動画を一括削除する（関連する video_tags も cascade で削除される） */
+export async function deleteVideos(videoIds: string[]): Promise<void> {
+    if (videoIds.length === 0) return;
+    await db.delete(videos).where(inArray(videos.id, videoIds));
+}
+
 /** 既にインポート済みの assetId を一括チェックする（重複検出用） */
 export async function getExistingAssetIds(
     assetIds: string[]

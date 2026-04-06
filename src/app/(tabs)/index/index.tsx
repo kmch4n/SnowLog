@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
+    Alert,
     SectionList,
     StyleSheet,
     Text,
@@ -8,9 +9,19 @@ import {
     View,
 } from "react-native";
 
+import { BulkActionToolbar } from "@/components/BulkActionToolbar";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { Colors } from "@/constants/colors";
+import {
+    bulkSetFavorite,
+    deleteVideos,
+    getVideoById,
+} from "@/database/repositories/videoRepository";
+import { useSelectionMode } from "@/hooks/useSelectionMode";
 import { useVideos } from "@/hooks/useVideos";
+import { deleteManagedVideoFile } from "@/services/managedVideoFileService";
+import { isSyntheticAssetId } from "@/services/mediaService";
+import { deleteThumbnail } from "@/services/thumbnailService";
 import type { VideoWithTags } from "@/types";
 
 interface VideoSection {
@@ -47,16 +58,102 @@ export default function HomeScreen() {
     const { videos: allVideos, isLoading: allLoading, refresh: refreshAll } = useVideos();
     const { videos: favVideos, isLoading: favLoading, refresh: refreshFav } = useVideos({ favoritesOnly: true });
 
+    const {
+        isSelectionMode,
+        selectedIds,
+        selectedCount,
+        enterSelectionMode,
+        exitSelectionMode,
+        toggleSelection,
+    } = useSelectionMode();
+    const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
+    const currentVideos = activeTab === 0 ? allVideos : favVideos;
+
     const handleVideoPress = useCallback(
         (id: string) => {
-            router.push(`/video/${id}`);
+            if (isSelectionMode) {
+                toggleSelection(id);
+            } else {
+                router.push(`/video/${id}`);
+            }
         },
-        [router]
+        [router, isSelectionMode, toggleSelection]
+    );
+
+    const handleVideoLongPress = useCallback(
+        (id: string) => {
+            if (!isSelectionMode) {
+                enterSelectionMode(id);
+            }
+        },
+        [isSelectionMode, enterSelectionMode]
     );
 
     const handleImportPress = useCallback(() => {
         router.push("/video-import");
     }, [router]);
+
+    const handleBulkFavorite = useCallback(async () => {
+        setIsBulkProcessing(true);
+        try {
+            const selectedVideos = currentVideos.filter((v) => selectedIds.has(v.id));
+            const allFavorited = selectedVideos.every((v) => v.isFavorite === 1);
+            await bulkSetFavorite(Array.from(selectedIds), !allFavorited);
+            exitSelectionMode();
+            refreshAll();
+            refreshFav();
+        } finally {
+            setIsBulkProcessing(false);
+        }
+    }, [selectedIds, currentVideos, exitSelectionMode, refreshAll, refreshFav]);
+
+    const handleBulkDelete = useCallback(() => {
+        Alert.alert(
+            "動画を一括削除",
+            `${selectedCount}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）`,
+            [
+                { text: "キャンセル", style: "cancel" },
+                {
+                    text: "削除",
+                    style: "destructive",
+                    onPress: async () => {
+                        setIsBulkProcessing(true);
+                        try {
+                            const ids = Array.from(selectedIds);
+                            const targets = await Promise.all(
+                                ids.map((id) => getVideoById(id))
+                            );
+                            await Promise.allSettled(
+                                targets
+                                    .filter(
+                                        (v): v is NonNullable<typeof v> => v !== null
+                                    )
+                                    .flatMap((v) => {
+                                        const tasks: Promise<void>[] = [];
+                                        if (v.thumbnailUri) {
+                                            tasks.push(deleteThumbnail(v.thumbnailUri));
+                                        }
+                                        if (isSyntheticAssetId(v.assetId)) {
+                                            tasks.push(
+                                                deleteManagedVideoFile(v.id, v.filename)
+                                            );
+                                        }
+                                        return tasks;
+                                    })
+                            );
+                            await deleteVideos(ids);
+                            exitSelectionMode();
+                            refreshAll();
+                            refreshFav();
+                        } finally {
+                            setIsBulkProcessing(false);
+                        }
+                    },
+                },
+            ]
+        );
+    }, [selectedIds, selectedCount, exitSelectionMode, refreshAll, refreshFav]);
 
     const allSections = useMemo(() => buildSections(allVideos), [allVideos]);
     const favSections = useMemo(() => buildSections(favVideos), [favVideos]);
@@ -66,9 +163,12 @@ export default function HomeScreen() {
             <VideoCardCompact
                 video={item}
                 onPress={() => handleVideoPress(item.id)}
+                onLongPress={() => handleVideoLongPress(item.id)}
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedIds.has(item.id)}
             />
         ),
-        [handleVideoPress]
+        [handleVideoPress, handleVideoLongPress, isSelectionMode, selectedIds]
     );
 
     const renderSectionHeader = useCallback(
@@ -86,13 +186,14 @@ export default function HomeScreen() {
     return (
         <View style={styles.container}>
             {/* セグメントコントロール */}
-            <View style={styles.segmentBar}>
+            <View style={[styles.segmentBar, isSelectionMode && styles.segmentBarDisabled]}>
                 {TABS.map((tab, i) => (
                     <TouchableOpacity
                         key={tab.key}
                         style={[styles.segmentTab, activeTab === i && styles.segmentTabActive]}
                         onPress={() => setActiveTab(i)}
                         activeOpacity={0.7}
+                        disabled={isSelectionMode}
                     >
                         <Text style={[styles.segmentText, activeTab === i && styles.segmentTextActive]}>
                             {tab.label}
@@ -148,10 +249,23 @@ export default function HomeScreen() {
                 />
             )}
 
-            {/* インポートFAB */}
-            <TouchableOpacity style={styles.fab} onPress={handleImportPress}>
-                <Text style={styles.fabText}>＋ インポート</Text>
-            </TouchableOpacity>
+            {/* インポートFAB (hidden during selection mode) */}
+            {!isSelectionMode && (
+                <TouchableOpacity style={styles.fab} onPress={handleImportPress}>
+                    <Text style={styles.fabText}>＋ インポート</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* Bulk action toolbar */}
+            {isSelectionMode && (
+                <BulkActionToolbar
+                    selectedCount={selectedCount}
+                    onToggleFavorite={handleBulkFavorite}
+                    onDelete={handleBulkDelete}
+                    onCancel={exitSelectionMode}
+                    isProcessing={isBulkProcessing}
+                />
+            )}
         </View>
     );
 }
@@ -169,6 +283,9 @@ const styles = StyleSheet.create({
         gap: 8,
         borderBottomWidth: 1,
         borderBottomColor: Colors.borderLight,
+    },
+    segmentBarDisabled: {
+        opacity: 0.5,
     },
     segmentTab: {
         flex: 1,
