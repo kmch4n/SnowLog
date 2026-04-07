@@ -1,6 +1,6 @@
 import type { FilterOptions } from "@/types";
 
-export interface SearchRouteParams {
+export interface SearchRouteParams extends Record<string, string | undefined> {
     skiResortName?: string;
     dateFrom?: string;
     dateTo?: string;
@@ -8,6 +8,11 @@ export interface SearchRouteParams {
     tagIds?: string;
     favoritesOnly?: string;
     requestKey?: string;
+}
+
+export interface SearchHref {
+    pathname: "/search";
+    params: SearchRouteParams;
 }
 
 type ParamValue = string | string[] | undefined;
@@ -58,6 +63,13 @@ export function buildSearchRouteParams(filter: FilterOptions): SearchRouteParams
             : undefined,
         favoritesOnly: filter.favoritesOnly != null ? String(filter.favoritesOnly) : undefined,
         requestKey: String(Date.now()),
+    };
+}
+
+export function buildSearchHref(filter: FilterOptions): SearchHref {
+    return {
+        pathname: "/search",
+        params: buildSearchRouteParams(filter),
     };
 }
 

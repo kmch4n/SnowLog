@@ -19,7 +19,7 @@ import { useDashboard } from "@/hooks/useDashboard";
 import type { FilterOptions } from "@/types";
 import type { Season } from "@/types/dashboard";
 import { endOfMonth, startOfMonth } from "@/utils/dateUtils";
-import { buildSearchRouteParams } from "@/utils/searchRouteParams";
+import { buildSearchHref } from "@/utils/searchRouteParams";
 
 /**
  * ダッシュボード画面
@@ -31,10 +31,7 @@ export default function DashboardScreen() {
 
     const openSearch = useCallback(
         (filter: FilterOptions) => {
-            router.push({
-                pathname: "/search",
-                params: buildSearchRouteParams(filter) as Record<string, string | undefined>,
-            });
+            router.push(buildSearchHref(filter));
         },
         [router]
     );
