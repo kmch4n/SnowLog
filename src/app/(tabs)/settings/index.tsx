@@ -12,30 +12,31 @@ interface SettingsItem {
 const SETTINGS_ITEMS: SettingsItem[] = [
     {
         label: "カレンダー設定",
-        description: "週の開始曜日の変更",
+        description: "週の開始曜日を変更",
         route: "/settings/calendar",
     },
     {
-        label: "滑走種別の管理",
-        description: "種別の追加・削除",
+        label: "テクニック候補",
+        description: "選択候補の追加と削除",
         route: "/settings/techniques",
     },
     {
-        label: "お気に入りスキー場",
-        description: "よく行くスキー場を登録",
+        label: "よく使うスキー場",
+        description: "入力候補に出すスキー場を管理",
         route: "/settings/favorite-resorts",
     },
     {
-        label: "タグの管理",
-        description: "カスタムタグの追加・削除",
+        label: "タグ管理",
+        description: "カスタムタグの追加と削除",
         route: "/settings/tags",
+    },
+    {
+        label: "重複候補の確認",
+        description: "似ている動画をまとめて確認",
+        route: "/settings/duplicate-candidates",
     },
 ];
 
-/**
- * 設定トップ画面
- * 各設定項目へのナビゲーションメニュー
- */
 export default function SettingsScreen() {
     const router = useRouter();
 
@@ -57,7 +58,7 @@ export default function SettingsScreen() {
                             <Text style={styles.rowLabel}>{item.label}</Text>
                             <Text style={styles.rowDescription}>{item.description}</Text>
                         </View>
-                        <Text style={styles.chevron}>›</Text>
+                        <Text style={styles.chevron}>{">"}</Text>
                     </TouchableOpacity>
                 ))}
             </View>

@@ -43,6 +43,15 @@ export default function RootLayout() {
                         headerTitleStyle: { fontWeight: "700" },
                     }}
                 />
+                <Stack.Screen
+                    name="settings/duplicate-candidates"
+                    options={{
+                        title: "重複候補の確認",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
+                        headerTitleStyle: { fontWeight: "700" },
+                    }}
+                />
             </Stack>
         </ThemeProvider>
     );
