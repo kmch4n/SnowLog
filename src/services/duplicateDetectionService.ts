@@ -245,17 +245,62 @@ function buildGroups(
     });
 }
 
+function compareAndCollectMatch(
+    left: VideoWithTags,
+    right: VideoWithTags,
+    matches: PairMatch[],
+    comparedPairKeys: Set<string>
+): void {
+    const pairKey = [left.id, right.id].sort().join(":");
+    if (comparedPairKeys.has(pairKey)) {
+        return;
+    }
+
+    comparedPairKeys.add(pairKey);
+
+    const match = buildPairMatch(left, right);
+    if (match != null) {
+        matches.push(match);
+    }
+}
+
 export function detectDuplicateCandidates(
     videos: VideoWithTags[]
 ): DuplicateCandidateGroup[] {
+    const sortedVideos = [...videos].sort((left, right) => left.capturedAt - right.capturedAt);
     const matches: PairMatch[] = [];
+    const comparedPairKeys = new Set<string>();
+    const exactFilenameBuckets = new Map<string, VideoWithTags[]>();
+    let windowStartIndex = 0;
 
-    for (let index = 0; index < videos.length; index += 1) {
-        for (let nextIndex = index + 1; nextIndex < videos.length; nextIndex += 1) {
-            const match = buildPairMatch(videos[index], videos[nextIndex]);
-            if (match != null) {
-                matches.push(match);
+    for (let index = 0; index < sortedVideos.length; index += 1) {
+        const currentVideo = sortedVideos[index];
+
+        while (
+            windowStartIndex < index
+            && currentVideo.capturedAt - sortedVideos[windowStartIndex].capturedAt > 60
+        ) {
+            windowStartIndex += 1;
+        }
+
+        for (let candidateIndex = windowStartIndex; candidateIndex < index; candidateIndex += 1) {
+            compareAndCollectMatch(
+                sortedVideos[candidateIndex],
+                currentVideo,
+                matches,
+                comparedPairKeys
+            );
+        }
+
+        const normalizedFilename = normalizeFilename(currentVideo.filename);
+        if (normalizedFilename.length > 0) {
+            for (const candidate of exactFilenameBuckets.get(normalizedFilename) ?? []) {
+                compareAndCollectMatch(candidate, currentVideo, matches, comparedPairKeys);
             }
+
+            const bucket = exactFilenameBuckets.get(normalizedFilename) ?? [];
+            bucket.push(currentVideo);
+            exactFilenameBuckets.set(normalizedFilename, bucket);
         }
     }
 

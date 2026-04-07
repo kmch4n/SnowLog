@@ -1,8 +1,9 @@
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    InteractionManager,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -191,8 +192,32 @@ export default function DuplicateCandidatesScreen() {
     const router = useRouter();
     const { videos, isLoading, refresh } = useVideos();
     const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
+    const [groups, setGroups] = useState<DuplicateCandidateGroup[]>([]);
+    const [isComputing, setIsComputing] = useState(false);
 
-    const groups = useMemo(() => detectDuplicateCandidates(videos), [videos]);
+    useEffect(() => {
+        if (isLoading) {
+            return;
+        }
+
+        let isCancelled = false;
+        setIsComputing(true);
+
+        const task = InteractionManager.runAfterInteractions(() => {
+            const nextGroups = detectDuplicateCandidates(videos);
+            if (isCancelled) {
+                return;
+            }
+
+            setGroups(nextGroups);
+            setIsComputing(false);
+        });
+
+        return () => {
+            isCancelled = true;
+            task.cancel();
+        };
+    }, [videos, isLoading]);
 
     const handleDeleteSelected = useCallback(
         async (groupId: string, videoIds: string[]) => {
@@ -228,13 +253,23 @@ export default function DuplicateCandidatesScreen() {
                     撮影時刻、長さ、ファイル名、スキー場名が近い動画を候補として表示します。
                 </Text>
                 <Text style={styles.summaryCount}>
-                    {videos.length}件中 {groups.length}グループ
+                    {isComputing
+                        ? `${videos.length}件をスキャン中...`
+                        : `${videos.length}件中 ${groups.length}グループ`}
                 </Text>
             </View>
 
-            {isLoading ? (
+            {isLoading || isComputing ? (
                 <View style={styles.centerState}>
                     <ActivityIndicator size="large" color={Colors.alpineBlue} />
+                    <Text style={styles.computingTitle}>
+                        {isLoading ? "動画を読み込んでいます" : "重複候補を計算しています"}
+                    </Text>
+                    <Text style={styles.computingText}>
+                        {isLoading
+                            ? "ライブラリの内容を取得しています。"
+                            : "ライブラリが大きい場合は数秒かかることがあります。"}
+                    </Text>
                 </View>
             ) : groups.length === 0 ? (
                 <View style={styles.emptyState}>
@@ -299,6 +334,18 @@ const styles = StyleSheet.create({
     centerState: {
         paddingVertical: 48,
         alignItems: "center",
+        gap: 10,
+    },
+    computingTitle: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: Colors.textPrimary,
+    },
+    computingText: {
+        fontSize: 13,
+        lineHeight: 20,
+        textAlign: "center",
+        color: Colors.textSecondary,
     },
     emptyState: {
         backgroundColor: Colors.freshSnow,
