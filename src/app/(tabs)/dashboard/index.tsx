@@ -16,7 +16,10 @@ import { MonthlyBarChart } from "@/components/dashboard/MonthlyBarChart";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useDashboard } from "@/hooks/useDashboard";
+import type { FilterOptions } from "@/types";
 import type { Season } from "@/types/dashboard";
+import { endOfMonth, startOfMonth } from "@/utils/dateUtils";
+import { buildSearchRouteParams } from "@/utils/searchRouteParams";
 
 /**
  * ダッシュボード画面
@@ -26,11 +29,67 @@ export default function DashboardScreen() {
     const router = useRouter();
     const { stats, isLoading, error, season, setSeason, availableSeasons } = useDashboard();
 
+    const openSearch = useCallback(
+        (filter: FilterOptions) => {
+            router.push({
+                pathname: "/search",
+                params: buildSearchRouteParams(filter) as Record<string, string | undefined>,
+            });
+        },
+        [router]
+    );
+
     const handleVideoPress = useCallback(
         (id: string) => {
             router.push(`/video/${id}`);
         },
         [router]
+    );
+
+    const handleResortPress = useCallback(
+        (skiResortName: string) => {
+            openSearch({
+                skiResortName,
+                dateFrom: season.dateFrom,
+                dateTo: season.dateTo,
+            });
+        },
+        [openSearch, season.dateFrom, season.dateTo]
+    );
+
+    const handleMonthPress = useCallback(
+        (yearMonth: string) => {
+            const [yearText, monthText] = yearMonth.split("-");
+            const year = Number(yearText);
+            const month = Number(monthText);
+            if (!Number.isFinite(year) || !Number.isFinite(month)) {
+                return;
+            }
+
+            openSearch({
+                dateFrom: startOfMonth(year, month),
+                dateTo: endOfMonth(year, month),
+            });
+        },
+        [openSearch]
+    );
+
+    const handleDayPress = useCallback(
+        (dateKey: string) => {
+            const [yearText, monthText, dayText] = dateKey.split("-");
+            const year = Number(yearText);
+            const month = Number(monthText);
+            const day = Number(dayText);
+            if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+                return;
+            }
+
+            const dateFrom = Math.floor(new Date(year, month - 1, day, 0, 0, 0, 0).getTime() / 1000);
+            const dateTo = Math.floor(new Date(year, month - 1, day, 23, 59, 59, 999).getTime() / 1000);
+
+            openSearch({ dateFrom, dateTo });
+        },
+        [openSearch]
     );
 
     const isEmpty = !stats || stats.summary.totalVideoCount === 0;
@@ -81,6 +140,7 @@ export default function DashboardScreen() {
                             }))}
                             maxItems={5}
                             barColor={Colors.alpineBlue}
+                            onItemPress={(item) => handleResortPress(item.label)}
                         />
                     </DashboardSection>
 
@@ -98,12 +158,19 @@ export default function DashboardScreen() {
 
                     {/* 月別トレンド */}
                     <DashboardSection title="月別トレンド">
-                        <MonthlyBarChart data={stats.monthlyTrend} />
+                        <MonthlyBarChart
+                            data={stats.monthlyTrend}
+                            onBarPress={(item) => handleMonthPress(item.yearMonth)}
+                        />
                     </DashboardSection>
 
                     {/* アクティビティヒートマップ */}
                     <DashboardSection title="アクティビティ">
-                        <ActivityHeatmap days={stats.heatmapDays} season={season} />
+                        <ActivityHeatmap
+                            days={stats.heatmapDays}
+                            season={season}
+                            onDayPress={(day) => handleDayPress(day.dateKey)}
+                        />
                     </DashboardSection>
 
                     {/* 最近の動画 */}

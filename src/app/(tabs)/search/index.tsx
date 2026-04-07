@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
@@ -7,6 +7,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useVideos } from "@/hooks/useVideos";
 import type { FilterOptions } from "@/types";
+import { parseSearchRouteParams } from "@/utils/searchRouteParams";
 
 /**
  * 検索・フィルタ画面
@@ -14,8 +15,43 @@ import type { FilterOptions } from "@/types";
  */
 export default function SearchScreen() {
     const router = useRouter();
+    const searchParams = useLocalSearchParams();
     const [filter, setFilter] = useState<FilterOptions>({});
     const { videos, isLoading, refresh } = useVideos(filter);
+    const routeDateFrom = searchParams.dateFrom;
+    const routeDateTo = searchParams.dateTo;
+    const routeFavoritesOnly = searchParams.favoritesOnly;
+    const routeRequestKey = searchParams.requestKey;
+    const routeSearchText = searchParams.searchText;
+    const routeSkiResortName = searchParams.skiResortName;
+    const routeTagIds = searchParams.tagIds;
+
+    const routeFilter = useMemo(
+        () => parseSearchRouteParams({
+            dateFrom: routeDateFrom,
+            dateTo: routeDateTo,
+            favoritesOnly: routeFavoritesOnly,
+            requestKey: routeRequestKey,
+            searchText: routeSearchText,
+            skiResortName: routeSkiResortName,
+            tagIds: routeTagIds,
+        }),
+        [
+            routeDateFrom,
+            routeDateTo,
+            routeFavoritesOnly,
+            routeRequestKey,
+            routeSearchText,
+            routeSkiResortName,
+            routeTagIds,
+        ]
+    );
+
+    useEffect(() => {
+        if (routeFilter != null) {
+            setFilter(routeFilter);
+        }
+    }, [routeFilter]);
 
     const handleVideoPress = useCallback(
         (id: string) => {

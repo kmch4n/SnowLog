@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 
 import { Colors } from "../../constants/colors";
 import type { HeatmapDay, Season } from "../../types/dashboard";
@@ -6,6 +6,7 @@ import type { HeatmapDay, Season } from "../../types/dashboard";
 interface ActivityHeatmapProps {
     days: HeatmapDay[];
     season: Season;
+    onDayPress?: (day: HeatmapDay) => void;
 }
 
 const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
@@ -21,7 +22,7 @@ function getColor(count: number): string {
 }
 
 /** GitHub風アクティビティヒートマップ */
-export function ActivityHeatmap({ days, season }: ActivityHeatmapProps) {
+export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapProps) {
     const { width: screenWidth } = useWindowDimensions();
     const availableWidth = screenWidth - 32 - 32 - LABEL_WIDTH; // padding + card padding + labels
 
@@ -57,7 +58,7 @@ export function ActivityHeatmap({ days, season }: ActivityHeatmapProps) {
     let lastMonth = -1;
 
     // セルデータを生成
-    const cells: { x: number; y: number; count: number }[] = [];
+    const cells: { x: number; y: number; count: number; dateKey: string }[] = [];
     const cursor = new Date(gridStart);
     for (let week = 0; week < totalWeeks; week++) {
         for (let dow = 0; dow < 7; dow++) {
@@ -69,6 +70,7 @@ export function ActivityHeatmap({ days, season }: ActivityHeatmapProps) {
                     x: week * (cellSize + CELL_GAP),
                     y: dow * (cellSize + CELL_GAP),
                     count: dayMap.get(dk) ?? 0,
+                    dateKey: dk,
                 });
 
                 // 月境界ラベル
@@ -122,8 +124,11 @@ export function ActivityHeatmap({ days, season }: ActivityHeatmapProps) {
                     ]}
                 >
                     {cells.map((cell) => (
-                        <View
+                        <TouchableOpacity
                             key={`${cell.x}-${cell.y}`}
+                            activeOpacity={0.8}
+                            disabled={onDayPress == null || cell.count === 0}
+                            onPress={() => onDayPress?.({ dateKey: cell.dateKey, count: cell.count })}
                             style={[
                                 styles.cell,
                                 {

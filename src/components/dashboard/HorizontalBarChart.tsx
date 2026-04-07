@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "../../constants/colors";
 
@@ -13,6 +13,7 @@ interface HorizontalBarChartProps {
     maxItems?: number;
     barColor?: string;
     barHeight?: number;
+    onItemPress?: (item: BarItem) => void;
 }
 
 /** 横棒グラフ: スキー場ランキング・テクニック分布に使用 */
@@ -21,6 +22,7 @@ export function HorizontalBarChart({
     maxItems = 5,
     barColor = Colors.alpineBlue,
     barHeight = 20,
+    onItemPress,
 }: HorizontalBarChartProps) {
     const items = data.slice(0, maxItems);
     const maxValue = Math.max(...items.map((d) => d.value), 1);
@@ -36,7 +38,13 @@ export function HorizontalBarChart({
             {items.map((item) => {
                 const ratio = item.value / maxValue;
                 return (
-                    <View key={item.label} style={styles.row}>
+                    <TouchableOpacity
+                        key={item.label}
+                        style={styles.row}
+                        disabled={onItemPress == null}
+                        activeOpacity={0.7}
+                        onPress={() => onItemPress?.(item)}
+                    >
                         <View style={styles.labelWrap}>
                             <Text style={styles.label} numberOfLines={2}>
                                 {item.label}
@@ -65,7 +73,7 @@ export function HorizontalBarChart({
                         {item.subLabel && (
                             <Text style={styles.subLabel}>{item.subLabel}</Text>
                         )}
-                    </View>
+                    </TouchableOpacity>
                 );
             })}
         </View>

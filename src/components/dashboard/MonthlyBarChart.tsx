@@ -6,6 +6,7 @@ import type { MonthlyTrend } from "../../types/dashboard";
 
 interface MonthlyBarChartProps {
     data: MonthlyTrend[];
+    onBarPress?: (item: MonthlyTrend) => void;
 }
 
 type Metric = "videoCount" | "skiDays";
@@ -14,7 +15,7 @@ const CHART_HEIGHT = 120;
 const BAR_BOTTOM_MARGIN = 20; // X軸ラベル分のスペース
 
 /** 月別縦棒グラフ（11月〜5月） */
-export function MonthlyBarChart({ data }: MonthlyBarChartProps) {
+export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
     const [metric, setMetric] = useState<Metric>("videoCount");
 
     const maxValue = Math.max(...data.map((d) => d[metric]), 1);
@@ -66,7 +67,13 @@ export function MonthlyBarChart({ data }: MonthlyBarChartProps) {
                     const barHeight = Math.max(ratio * barMaxHeight, value > 0 ? 4 : 0);
 
                     return (
-                        <View key={item.yearMonth} style={styles.barWrapper}>
+                        <TouchableOpacity
+                            key={item.yearMonth}
+                            style={styles.barWrapper}
+                            disabled={onBarPress == null}
+                            activeOpacity={0.7}
+                            onPress={() => onBarPress?.(item)}
+                        >
                             <View
                                 style={[
                                     styles.bar,
@@ -80,7 +87,7 @@ export function MonthlyBarChart({ data }: MonthlyBarChartProps) {
                                     },
                                 ]}
                             />
-                        </View>
+                        </TouchableOpacity>
                     );
                 })}
             </View>
@@ -88,12 +95,18 @@ export function MonthlyBarChart({ data }: MonthlyBarChartProps) {
             {/* X軸ラベル + 値ラベル（RN Text で描画） */}
             <View style={styles.labelsRow}>
                 {data.map((item) => (
-                    <View key={item.yearMonth} style={styles.labelCell}>
+                    <TouchableOpacity
+                        key={item.yearMonth}
+                        style={styles.labelCell}
+                        disabled={onBarPress == null}
+                        activeOpacity={0.7}
+                        onPress={() => onBarPress?.(item)}
+                    >
                         <Text style={styles.valueLabel}>
                             {item[metric] > 0 ? item[metric] : ""}
                         </Text>
                         <Text style={styles.monthLabel}>{item.label}</Text>
-                    </View>
+                    </TouchableOpacity>
                 ))}
             </View>
         </View>
