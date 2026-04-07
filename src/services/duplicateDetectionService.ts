@@ -15,13 +15,69 @@ interface PairMatch {
     reasons: string[];
 }
 
+function stripTrailingCopyMarkers(filename: string): string {
+    let current = filename;
+
+    while (true) {
+        const next = current.replace(/(?:[\s_.-]+copy|\(copy\))$/i, "").trimEnd();
+        if (next === current) {
+            return current;
+        }
+        current = next;
+    }
+}
+
+function getCommonPrefixLength(left: string, right: string): number {
+    const maxLength = Math.min(left.length, right.length);
+
+    for (let index = 0; index < maxLength; index += 1) {
+        if (left[index] !== right[index]) {
+            return index;
+        }
+    }
+
+    return maxLength;
+}
+
+function hasStrictPartialFilenameMatch(left: string, right: string): boolean {
+    if (left.length < 8 || right.length < 8) {
+        return false;
+    }
+
+    const minLength = Math.min(left.length, right.length);
+    const maxLength = Math.max(left.length, right.length);
+    const commonPrefixLength = getCommonPrefixLength(left, right);
+
+    return commonPrefixLength >= 8
+        && commonPrefixLength >= Math.ceil(minLength * 0.8)
+        && maxLength - minLength <= 2
+        && commonPrefixLength < maxLength;
+}
+
+function intersectReasons(matches: PairMatch[]): string[] {
+    if (matches.length === 0) {
+        return [];
+    }
+
+    let sharedReasons = [...matches[0].reasons];
+
+    for (const match of matches.slice(1)) {
+        sharedReasons = sharedReasons.filter((reason) => match.reasons.includes(reason));
+    }
+
+    return sharedReasons;
+}
+
 function normalizeFilename(filename: string): string {
-    return filename
+    const normalized = stripTrailingCopyMarkers(
+        filename
         .toLowerCase()
         .replace(/\.[a-z0-9]+$/i, "")
         .replace(/\(\d+\)$/g, "")
-        .replace(/copy/gi, "")
-        .replace(/[^a-z0-9]/g, "");
+        .replace(/\s+$/g, "")
+    );
+
+    return normalized.replace(/[^a-z0-9]/g, "");
 }
 
 function buildPairMatch(left: VideoWithTags, right: VideoWithTags): PairMatch | null {
@@ -33,10 +89,7 @@ function buildPairMatch(left: VideoWithTags, right: VideoWithTags): PairMatch | 
     const leftFilename = normalizeFilename(left.filename);
     const rightFilename = normalizeFilename(right.filename);
     const exactFilenameMatch = leftFilename.length > 0 && leftFilename === rightFilename;
-    const partialFilenameMatch =
-        leftFilename.length >= 6
-        && rightFilename.length >= 6
-        && (leftFilename.includes(rightFilename) || rightFilename.includes(leftFilename));
+    const partialFilenameMatch = hasStrictPartialFilenameMatch(leftFilename, rightFilename);
     const sameResort =
         left.skiResortName != null
         && right.skiResortName != null
@@ -153,7 +206,7 @@ function buildGroups(
             .sort((left, right) => right.capturedAt - left.capturedAt);
 
         let highestScore = 0;
-        const reasonSet = new Set<string>();
+        const groupMatches: PairMatch[] = [];
 
         for (let index = 0; index < groupIds.length; index += 1) {
             for (let nextIndex = index + 1; nextIndex < groupIds.length; nextIndex += 1) {
@@ -164,17 +217,19 @@ function buildGroups(
                 }
 
                 highestScore = Math.max(highestScore, match.score);
-                for (const reason of match.reasons) {
-                    reasonSet.add(reason);
-                }
+                groupMatches.push(match);
             }
         }
+
+        const sharedReasons = intersectReasons(groupMatches);
 
         groups.push({
             id: groupVideos.map((candidate) => candidate.id).join("-"),
             confidence: highestScore >= 7 ? "high" : "medium",
             similarityScore: highestScore,
-            reasons: Array.from(reasonSet).slice(0, 4),
+            reasons: sharedReasons.length > 0
+                ? sharedReasons.slice(0, 4)
+                : ["一致条件は動画ごとに異なります"],
             videos: groupVideos,
         });
     }
