@@ -14,14 +14,10 @@ import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { Colors } from "@/constants/colors";
 import {
     bulkSetFavorite,
-    deleteVideos,
-    getVideoById,
 } from "@/database/repositories/videoRepository";
 import { useSelectionMode } from "@/hooks/useSelectionMode";
 import { useVideos } from "@/hooks/useVideos";
-import { deleteManagedVideoFile } from "@/services/managedVideoFileService";
-import { isSyntheticAssetId } from "@/services/mediaService";
-import { deleteThumbnail } from "@/services/thumbnailService";
+import { deleteVideosWithCleanup } from "@/services/videoDeletionService";
 import type { VideoWithTags } from "@/types";
 
 interface VideoSection {
@@ -120,29 +116,7 @@ export default function HomeScreen() {
                     onPress: async () => {
                         setIsBulkProcessing(true);
                         try {
-                            const ids = Array.from(selectedIds);
-                            const targets = await Promise.all(
-                                ids.map((id) => getVideoById(id))
-                            );
-                            await Promise.allSettled(
-                                targets
-                                    .filter(
-                                        (v): v is NonNullable<typeof v> => v !== null
-                                    )
-                                    .flatMap((v) => {
-                                        const tasks: Promise<void>[] = [];
-                                        if (v.thumbnailUri) {
-                                            tasks.push(deleteThumbnail(v.thumbnailUri));
-                                        }
-                                        if (isSyntheticAssetId(v.assetId)) {
-                                            tasks.push(
-                                                deleteManagedVideoFile(v.id, v.filename)
-                                            );
-                                        }
-                                        return tasks;
-                                    })
-                            );
-                            await deleteVideos(ids);
+                            await deleteVideosWithCleanup(Array.from(selectedIds));
                             exitSelectionMode();
                             refreshAll();
                             refreshFav();
