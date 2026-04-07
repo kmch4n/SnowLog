@@ -16,17 +16,17 @@ const SETTINGS_ITEMS: SettingsItem[] = [
         route: "/settings/calendar",
     },
     {
-        label: "テクニック候補",
+        label: "滑走種別の管理",
         description: "選択候補の追加と削除",
         route: "/settings/techniques",
     },
     {
-        label: "よく使うスキー場",
+        label: "お気に入りスキー場",
         description: "入力候補に出すスキー場を管理",
         route: "/settings/favorite-resorts",
     },
     {
-        label: "タグ管理",
+        label: "タグの管理",
         description: "カスタムタグの追加と削除",
         route: "/settings/tags",
     },
@@ -58,7 +58,7 @@ export default function SettingsScreen() {
                             <Text style={styles.rowLabel}>{item.label}</Text>
                             <Text style={styles.rowDescription}>{item.description}</Text>
                         </View>
-                        <Text style={styles.chevron}>{">"}</Text>
+                        <Text style={styles.chevron}>›</Text>
                     </TouchableOpacity>
                 ))}
             </View>
