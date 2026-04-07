@@ -50,8 +50,17 @@ export default function SearchScreen() {
     useEffect(() => {
         if (routeFilter != null) {
             setFilter(routeFilter);
+            router.setParams({
+                dateFrom: undefined,
+                dateTo: undefined,
+                favoritesOnly: undefined,
+                requestKey: undefined,
+                searchText: undefined,
+                skiResortName: undefined,
+                tagIds: undefined,
+            });
         }
-    }, [routeFilter]);
+    }, [routeFilter, router]);
 
     const handleVideoPress = useCallback(
         (id: string) => {
