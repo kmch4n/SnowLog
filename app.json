@@ -17,6 +17,9 @@
       },
       "bundleIdentifier": "com.kmch4n.snowlog"
     },
+    "android": {
+      "package": "com.kmch4n.snowlog"
+    },
     "plugins": [
       "expo-router",
       [

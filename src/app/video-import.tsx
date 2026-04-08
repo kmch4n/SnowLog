@@ -39,6 +39,10 @@ const BULK_SELECTION_LIMIT = 20;
 
 type BulkPhase = "idle" | "importing" | "gps-confirm";
 
+function isSupportedImportUri(sourceUri: string): boolean {
+    return sourceUri.startsWith("file://") || sourceUri.startsWith("content://");
+}
+
 async function ensureImportCacheDir(): Promise<void> {
     if (!IMPORT_CACHE_DIR) return;
     const info = await FileSystem.getInfoAsync(IMPORT_CACHE_DIR);
@@ -54,7 +58,7 @@ function inferExtension(filename?: string | null, uri?: string | null): string {
 }
 
 async function stageAssetFile(sourceUri: string, filename?: string | null): Promise<string> {
-    if (!sourceUri.startsWith("file://") || !IMPORT_CACHE_DIR) {
+    if (!isSupportedImportUri(sourceUri) || !IMPORT_CACHE_DIR) {
         throw new Error("ファイルを読み込めませんでした。");
     }
     await ensureImportCacheDir();
@@ -123,7 +127,7 @@ export default function VideoImportScreen() {
     const stageForImport = useCallback(
         async (sourceUri: string | null, filename?: string | null): Promise<string | null> => {
             if (!sourceUri) return null;
-            if (!sourceUri.startsWith("file://")) return null;
+            if (!isSupportedImportUri(sourceUri)) return null;
             const staged = await stageAssetFile(sourceUri, filename);
             stagedFileUriRef.current = staged;
             return staged;
@@ -232,7 +236,7 @@ export default function VideoImportScreen() {
         if (!stagedUri) {
             Alert.alert(
                 "動画を読み込めませんでした",
-                "iCloud からの取得に失敗しました。もう一度お試しください。"
+                "動画ファイルの取得に失敗しました。クラウドまたは端末ストレージから再度お試しください。"
             );
             setSelectedAsset(null);
             setResolvedAssetUri(null);
@@ -251,7 +255,7 @@ export default function VideoImportScreen() {
         if (!resolvedAssetUri) {
             Alert.alert(
                 "動画を取得しています",
-                "iCloud からのダウンロードが完了してから保存してください。"
+                "動画ファイルの準備が完了してから保存してください。"
             );
             return;
         }
@@ -395,7 +399,7 @@ export default function VideoImportScreen() {
 
                     // ファイルをステージング
                     const sourceUri = assetInfo?.localUri ?? asset.uri ?? null;
-                    if (!sourceUri || !sourceUri.startsWith("file://")) {
+                    if (!sourceUri || !isSupportedImportUri(sourceUri)) {
                         throw new Error("ファイルを読み込めませんでした。");
                     }
                     const stagedUri = await stageAssetFile(sourceUri, asset.fileName);
@@ -651,7 +655,7 @@ export default function VideoImportScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* iCloud ダウンロード中のメタデータ取得インジケーター */}
+                {/* Metadata loading indicator */}
                 {isLoadingMeta && (
                     <View style={styles.metaLoading}>
                         <ActivityIndicator size="small" color={Colors.alpineBlue} />

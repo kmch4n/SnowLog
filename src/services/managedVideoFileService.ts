@@ -2,6 +2,10 @@ import * as FileSystem from "expo-file-system/legacy";
 
 const MANAGED_VIDEO_DIR = `${FileSystem.documentDirectory}videos/`;
 
+function isSupportedManagedVideoUri(sourceUri: string): boolean {
+    return sourceUri.startsWith("file://") || sourceUri.startsWith("content://");
+}
+
 function inferExtension(filename?: string | null, uri?: string | null): string {
     const target = filename ?? uri ?? "";
     const match = target.match(/\.([a-zA-Z0-9]+)(?:$|\?)/);
@@ -31,7 +35,7 @@ export async function persistManagedVideoFile(
     videoId: string,
     filename?: string | null
 ): Promise<string> {
-    if (!sourceUri.startsWith("file://")) {
+    if (!isSupportedManagedVideoUri(sourceUri)) {
         throw new Error("Could not access the imported video file.");
     }
 

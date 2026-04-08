@@ -267,7 +267,7 @@ export default function VideoDetailScreen() {
 
 
     const canOpenPhotosApp =
-        video.isFileAvailable === 1 && !isSyntheticAssetId(video.assetId);
+        Platform.OS === "ios" && video.isFileAvailable === 1 && !isSyntheticAssetId(video.assetId);
     return (
         <KeyboardAvoidingView
             style={styles.container}
