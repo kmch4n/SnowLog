@@ -5,7 +5,6 @@ import { Colors } from "@/constants/colors";
 export default function HomeLayout() {
     return (
         <Stack
-            id="home-stack"
             screenOptions={{
                 headerStyle: { backgroundColor: Colors.headerBg },
                 headerTintColor: Colors.headerText,

@@ -5,7 +5,6 @@ import { Colors } from "@/constants/colors";
 export default function DashboardLayout() {
     return (
         <Stack
-            id="dashboard-stack"
             screenOptions={{
                 headerStyle: { backgroundColor: Colors.headerBg },
                 headerTintColor: Colors.headerText,

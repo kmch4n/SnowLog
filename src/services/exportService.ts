@@ -8,6 +8,7 @@ import { getFavoriteResorts } from "../database/repositories/favoriteResortRepos
 import { getAllDiaryEntries } from "../database/repositories/diaryEntryRepository";
 import { getAllPreferences } from "../database/repositories/appPreferenceRepository";
 import type { VideoWithTags } from "../types";
+import { parseTechniques } from "../utils/parseTechniques";
 
 /** Bump when the export payload shape changes */
 const SCHEMA_VERSION = 1;
@@ -31,6 +32,7 @@ export async function exportAllToJSON(): Promise<void> {
     const videosWithTags: VideoWithTags[] = await Promise.all(
         videos.map(async (video) => ({
             ...video,
+            techniques: parseTechniques(video.techniques),
             tags: await getTagsForVideo(video.id),
         }))
     );

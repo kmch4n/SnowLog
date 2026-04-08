@@ -5,7 +5,6 @@ import { Colors } from "@/constants/colors";
 export default function CalendarLayout() {
     return (
         <Stack
-            id="calendar-stack"
             screenOptions={{
                 headerStyle: { backgroundColor: Colors.headerBg },
                 headerTintColor: Colors.headerText,

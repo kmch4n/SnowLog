@@ -1,6 +1,5 @@
 /**
- * Web用モックリポジトリ
- * expo-sqlite を使用せず、ブラウザでのUIプレビュー用にモックデータを返す
+ * Web mock repository used for UI previews when SQLite is unavailable.
  */
 import type { FilterOptions, VideoWithTags } from "../../types";
 import type { VideoInsert } from "../schema";
@@ -13,15 +12,17 @@ const MOCK_VIDEOS: VideoWithTags[] = [
         thumbnailUri: "",
         duration: 45,
         capturedAt: 1706774400,
-        skiResortName: "白馬八方尾根スキー場",
-        memo: "カービングの練習。外足荷重を意識してターンの弧を大きくした。次回は上体の先行動作を改善したい。",
+        skiResortName: "Hakuba Happo-One",
+        memo: "Focused on edge control and smoother transitions.",
+        title: null,
+        techniques: ["large-turns", "carving"],
         isFileAvailable: 1,
         isFavorite: 1,
         createdAt: 1706800000,
         updatedAt: 1706800000,
         tags: [
-            { id: 1, name: "大回り", type: "technique" },
-            { id: 3, name: "カービング", type: "technique" },
+            { id: 1, name: "Large Turns", type: "technique" },
+            { id: 3, name: "Carving", type: "technique" },
         ],
     },
     {
@@ -31,15 +32,17 @@ const MOCK_VIDEOS: VideoWithTags[] = [
         thumbnailUri: "",
         duration: 28,
         capturedAt: 1707638400,
-        skiResortName: "蔵王温泉スキー場",
-        memo: "コブに入ったが吸収が追いつかなかった。ストックワークを見直す必要がある。",
+        skiResortName: "Zao Onsen",
+        memo: "Practiced rhythm and absorption on the mogul line.",
+        title: null,
+        techniques: ["short-turns", "moguls"],
         isFileAvailable: 1,
         isFavorite: 0,
         createdAt: 1707660000,
         updatedAt: 1707660000,
         tags: [
-            { id: 2, name: "小回り", type: "technique" },
-            { id: 4, name: "コブ", type: "technique" },
+            { id: 2, name: "Short Turns", type: "technique" },
+            { id: 4, name: "Moguls", type: "technique" },
         ],
     },
     {
@@ -49,22 +52,24 @@ const MOCK_VIDEOS: VideoWithTags[] = [
         thumbnailUri: "",
         duration: 62,
         capturedAt: 1708848000,
-        skiResortName: "ニセコグランヒラフ",
-        memo: "50cmのパウダー。重心を少し後ろに引いて浮力を確保。最高のコンディションだった。",
+        skiResortName: "Niseko Grand Hirafu",
+        memo: "Deep powder run with a stable forward stance.",
+        title: null,
+        techniques: ["powder"],
         isFileAvailable: 1,
         isFavorite: 0,
         createdAt: 1708870000,
         updatedAt: 1708870000,
-        tags: [{ id: 5, name: "パウダー", type: "technique" }],
+        tags: [{ id: 5, name: "Powder", type: "technique" }],
     },
 ];
 
 export async function insertVideo(_data: VideoInsert): Promise<void> {
-    // Web では保存しない
+    return;
 }
 
 export async function getVideoById(id: string): Promise<VideoWithTags | null> {
-    return MOCK_VIDEOS.find((v) => v.id === id) ?? null;
+    return MOCK_VIDEOS.find((video) => video.id === id) ?? null;
 }
 
 export async function getVideoByAssetId(_assetId: string): Promise<null> {
@@ -75,28 +80,30 @@ export async function getVideosByFilter(options: FilterOptions = {}): Promise<Vi
     let result = [...MOCK_VIDEOS];
 
     if (options.skiResortName) {
-        result = result.filter((v) => v.skiResortName === options.skiResortName);
+        result = result.filter((video) => video.skiResortName === options.skiResortName);
     }
     if (options.dateFrom) {
-        result = result.filter((v) => v.capturedAt >= options.dateFrom!);
+        result = result.filter((video) => video.capturedAt >= options.dateFrom!);
     }
     if (options.dateTo) {
-        result = result.filter((v) => v.capturedAt <= options.dateTo!);
+        result = result.filter((video) => video.capturedAt <= options.dateTo!);
     }
     if (options.searchText) {
-        const q = options.searchText.toLowerCase();
+        const query = options.searchText.toLowerCase();
         result = result.filter(
-            (v) =>
-                v.filename.toLowerCase().includes(q) ||
-                (v.title?.toLowerCase().includes(q) ?? false) ||
-                (v.memo?.toLowerCase().includes(q) ?? false)
+            (video) =>
+                video.filename.toLowerCase().includes(query) ||
+                (video.title?.toLowerCase().includes(query) ?? false) ||
+                video.memo.toLowerCase().includes(query)
         );
     }
     if (options.tagIds && options.tagIds.length > 0) {
-        result = result.filter((v) => v.tags.some((t) => options.tagIds!.includes(t.id)));
+        result = result.filter((video) =>
+            video.tags.some((tag) => options.tagIds!.includes(tag.id))
+        );
     }
     if (options.favoritesOnly) {
-        result = result.filter((v) => v.isFavorite === 1);
+        result = result.filter((video) => video.isFavorite === 1);
     }
 
     return result.sort((a, b) => b.capturedAt - a.capturedAt);
@@ -104,21 +111,26 @@ export async function getVideosByFilter(options: FilterOptions = {}): Promise<Vi
 
 export async function updateVideoMeta(
     _id: string,
-    _data: { memo?: string; skiResortName?: string | null }
+    _data: {
+        memo?: string;
+        skiResortName?: string | null;
+        title?: string | null;
+        techniques?: string | null;
+    }
 ): Promise<void> {
-    // Web では保存しない
+    return;
 }
 
 export async function toggleFavorite(_id: string, _isFavorite: boolean): Promise<void> {
-    // Web では保存しない
+    return;
 }
 
 export async function updateFileAvailability(_id: string, _isAvailable: boolean): Promise<void> {
-    // Web では保存しない
+    return;
 }
 
 export async function deleteVideo(_id: string): Promise<void> {
-    // Web では保存しない
+    return;
 }
 
 export async function getAllVideos(): Promise<VideoWithTags[]> {
@@ -126,5 +138,5 @@ export async function getAllVideos(): Promise<VideoWithTags[]> {
 }
 
 export async function updateVideoCapturedAt(_id: string, _capturedAt: number): Promise<void> {
-    // Web stub
+    return;
 }
