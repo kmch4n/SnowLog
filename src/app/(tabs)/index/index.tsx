@@ -18,7 +18,7 @@ import {
 import { useSelectionMode } from "@/hooks/useSelectionMode";
 import { useVideos } from "@/hooks/useVideos";
 import { deleteVideosWithCleanup } from "@/services/videoDeletionService";
-import type { VideoWithTags } from "@/types";
+import type { FilterOptions, VideoWithTags } from "@/types";
 
 interface VideoSection {
     title: string;
@@ -50,9 +50,10 @@ const TABS = [
 export default function HomeScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState(0);
+    const favoritesFilter = useMemo<FilterOptions>(() => ({ favoritesOnly: true }), []);
 
     const { videos: allVideos, isLoading: allLoading, refresh: refreshAll } = useVideos();
-    const { videos: favVideos, isLoading: favLoading, refresh: refreshFav } = useVideos({ favoritesOnly: true });
+    const { videos: favVideos, isLoading: favLoading, refresh: refreshFav } = useVideos(favoritesFilter);
 
     const {
         isSelectionMode,

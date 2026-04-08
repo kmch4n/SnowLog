@@ -1,5 +1,5 @@
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { getTagsForVideo } from "../database/repositories/tagRepository";
 import { getVideosByFilter } from "../database/repositories/videoRepository";
@@ -15,12 +15,40 @@ export function useVideos(filter?: FilterOptions) {
     const [videos, setVideos] = useState<VideoWithTags[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const hasFilter = filter != null;
+    const skiResortName = filter?.skiResortName;
+    const tagIds = filter?.tagIds;
+    const dateFrom = filter?.dateFrom;
+    const dateTo = filter?.dateTo;
+    const searchText = filter?.searchText;
+    const favoritesOnly = filter?.favoritesOnly;
+    const tagIdsKey = JSON.stringify(tagIds ?? null);
+    const stableTagIds = useMemo<number[] | undefined>(() => {
+        const parsed = JSON.parse(tagIdsKey) as number[] | null;
+
+        return parsed == null ? undefined : parsed;
+    }, [tagIdsKey]);
+
+    const stableFilter = useMemo<FilterOptions | undefined>(() => {
+        if (!hasFilter) {
+            return undefined;
+        }
+
+        return {
+            skiResortName,
+            tagIds: stableTagIds,
+            dateFrom,
+            dateTo,
+            searchText,
+            favoritesOnly,
+        };
+    }, [hasFilter, skiResortName, stableTagIds, dateFrom, dateTo, searchText, favoritesOnly]);
 
     const fetchVideos = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const rawVideos = await getVideosByFilter(filter);
+            const rawVideos = await getVideosByFilter(stableFilter);
 
             // タグ情報を付加し、techniques を JSON 文字列からパース
             const videosWithTags = await Promise.all(
@@ -39,7 +67,7 @@ export function useVideos(filter?: FilterOptions) {
         } finally {
             setIsLoading(false);
         }
-    }, [filter]);
+    }, [stableFilter]);
 
     // 画面にフォーカスが戻るたびにリロード（削除・編集の反映）
     useFocusEffect(
