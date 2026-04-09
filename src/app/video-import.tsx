@@ -26,7 +26,7 @@ import {
     getVideoByAssetId,
     updateSkiResortForVideos,
 } from "@/database/repositories/videoRepository";
-import { importVideo } from "@/services/importService";
+import { importVideo, type ImportableAsset } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
 import { randomUUID } from "expo-crypto";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
@@ -190,7 +190,7 @@ export default function VideoImportScreen() {
                         { text: "キャンセル", style: "cancel" },
                         {
                             text: "編集する",
-                            onPress: () => router.replace(`/video/${existing.id}` as any),
+                            onPress: () => router.replace({ pathname: "/video/[id]", params: { id: existing.id } }),
                         },
                     ]
                 );
@@ -265,8 +265,7 @@ export default function VideoImportScreen() {
             // Generate a synthetic assetId when the picker did not return one
             const effectiveAssetId = selectedAsset.assetId ?? `synthetic:${randomUUID()}`;
 
-            // expo-image-picker の Asset を expo-media-library の Asset 形式に合わせる
-            const mediaAsset = {
+            const mediaAsset: ImportableAsset = {
                 id: effectiveAssetId,
                 filename: selectedAsset.fileName ?? "video.mp4",
                 creationTime: (selectedAsset.exif?.DateTimeOriginal
@@ -275,14 +274,10 @@ export default function VideoImportScreen() {
                 duration: (selectedAsset.duration ?? 0) / 1000,
                 uri: resolvedAssetUri,
                 localUri: resolvedAssetUri,
-                width: selectedAsset.width,
-                height: selectedAsset.height,
-                mediaType: "video" as const,
-                albumId: undefined,
             };
 
             await importVideo(
-                mediaAsset as any,
+                mediaAsset,
                 { title: title.trim() || null, skiResortName, memo, tagIds, techniques },
                 { sourceUri: resolvedAssetUri }
             );
@@ -413,21 +408,17 @@ export default function VideoImportScreen() {
                             assetInfo?.creationTime ??
                             Date.now();
 
-                        const mediaAsset = {
+                        const mediaAsset: ImportableAsset = {
                             id: item.assetId,
                             filename: asset.fileName ?? "video.mp4",
                             creationTime,
                             duration: (asset.duration ?? 0) / 1000,
                             uri: stagedUri,
                             localUri: stagedUri,
-                            width: asset.width,
-                            height: asset.height,
-                            mediaType: "video" as const,
-                            albumId: undefined,
                         };
 
                         const videoId = await importVideo(
-                            mediaAsset as any,
+                            mediaAsset,
                             {
                                 title: null,
                                 skiResortName: null,

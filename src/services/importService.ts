@@ -1,4 +1,3 @@
-import type { Asset } from "expo-media-library";
 import { randomUUID } from "expo-crypto";
 
 import { insertVideo } from "../database/repositories/videoRepository";
@@ -16,9 +15,14 @@ interface ImportOptions {
     sourceUri: string;
 }
 
-type ImportableAsset = Asset & {
+export interface ImportableAsset {
+    id: string;
+    filename: string;
+    uri: string;
+    creationTime: number;
+    duration: number;
     localUri?: string | null;
-};
+}
 
 export async function importVideo(
     asset: ImportableAsset,

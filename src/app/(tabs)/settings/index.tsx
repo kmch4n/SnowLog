@@ -3,10 +3,17 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
 
+type SettingsRoute =
+    | "/settings/calendar"
+    | "/settings/techniques"
+    | "/settings/favorite-resorts"
+    | "/settings/tags"
+    | "/settings/duplicate-candidates";
+
 interface SettingsItem {
     label: string;
     description: string;
-    route: string;
+    route: SettingsRoute;
 }
 
 const SETTINGS_ITEMS: SettingsItem[] = [
@@ -51,7 +58,7 @@ export default function SettingsScreen() {
                             index === 0 && styles.rowFirst,
                             index === SETTINGS_ITEMS.length - 1 && styles.rowLast,
                         ]}
-                        onPress={() => router.push(item.route as any)}
+                        onPress={() => router.push(item.route)}
                         activeOpacity={0.7}
                     >
                         <View style={styles.rowContent}>
