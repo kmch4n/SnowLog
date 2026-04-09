@@ -35,6 +35,33 @@ export default function RootLayout() {
                     }}
                 />
                 <Stack.Screen
+                    name="settings/techniques"
+                    options={{
+                        title: "滑走種別の管理",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
+                        headerTitleStyle: { fontWeight: "700" },
+                    }}
+                />
+                <Stack.Screen
+                    name="settings/favorite-resorts"
+                    options={{
+                        title: "お気に入りスキー場",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
+                        headerTitleStyle: { fontWeight: "700" },
+                    }}
+                />
+                <Stack.Screen
+                    name="settings/tags"
+                    options={{
+                        title: "タグの管理",
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
+                        headerTitleStyle: { fontWeight: "700" },
+                    }}
+                />
+                <Stack.Screen
                     name="settings/calendar"
                     options={{
                         title: "カレンダー設定",
