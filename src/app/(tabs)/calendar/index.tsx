@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     FlatList,
     StyleSheet,
@@ -77,8 +77,8 @@ export default function CalendarScreen() {
             })()
         : "";
 
-    return (
-        <View style={styles.container}>
+    const listHeader = useMemo(() => (
+        <>
             {/* ナビゲーションバー */}
             <View style={styles.navRow}>
                 <TouchableOpacity
@@ -141,44 +141,54 @@ export default function CalendarScreen() {
                 )}
             </View>
 
-            {/* 選択日の日記 + 動画一覧 */}
+            {/* 選択日のヘッダー + 日記カード */}
             {selectedDay !== null && (
-                <View style={styles.panelContainer}>
+                <>
                     <View style={styles.panelHeader}>
                         <Text style={styles.panelTitle}>{panelTitle}</Text>
                         <Text style={styles.panelCount}>
                             {selectedDateVideos.length}件
                         </Text>
                     </View>
-
-                    <FlatList
-                        data={selectedDateVideos}
-                        keyExtractor={(item) => item.id}
-                        ListHeaderComponent={
-                            <DiaryCard
-                                diary={diary}
-                                onPress={() => setDiaryModalVisible(true)}
-                            />
-                        }
-                        renderItem={({ item }) => (
-                            <VideoCardCompact
-                                video={item}
-                                onPress={() => handleVideoPress(item.id)}
-                            />
-                        )}
-                        ItemSeparatorComponent={() => (
-                            <View style={styles.separator} />
-                        )}
-                        ListEmptyComponent={
-                            <View style={styles.panelEmpty}>
-                                <Text style={styles.panelEmptyText}>
-                                    この日の動画はありません
-                                </Text>
-                            </View>
-                        }
+                    <DiaryCard
+                        diary={diary}
+                        onPress={() => setDiaryModalVisible(true)}
                     />
-                </View>
+                </>
             )}
+        </>
+    ), [
+        isMonthView, year, month, selectedDay, dayInfoMap, weekStartDay,
+        weekDates, weekTitle, panelTitle, selectedDateVideos.length, diary,
+        prevMonth, nextMonth, prevWeek, nextWeek, toggleViewMode, setSelectedDay,
+    ]);
+
+    return (
+        <View style={styles.container}>
+            <FlatList
+                data={selectedDay !== null ? selectedDateVideos : []}
+                keyExtractor={(item) => item.id}
+                ListHeaderComponent={listHeader}
+                renderItem={({ item }) => (
+                    <VideoCardCompact
+                        video={item}
+                        onPress={() => handleVideoPress(item.id)}
+                    />
+                )}
+                ItemSeparatorComponent={() => (
+                    <View style={styles.separator} />
+                )}
+                ListEmptyComponent={
+                    selectedDay !== null ? (
+                        <View style={styles.panelEmpty}>
+                            <Text style={styles.panelEmptyText}>
+                                この日の動画はありません
+                            </Text>
+                        </View>
+                    ) : null
+                }
+                contentContainerStyle={styles.listContent}
+            />
 
             {/* Diary edit modal */}
             {selectedDateKey != null && (
@@ -237,9 +247,8 @@ const styles = StyleSheet.create({
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: Colors.border,
     },
-    panelContainer: {
-        flex: 1,
-        backgroundColor: Colors.glacierWhite,
+    listContent: {
+        flexGrow: 1,
     },
     panelHeader: {
         flexDirection: "row",
