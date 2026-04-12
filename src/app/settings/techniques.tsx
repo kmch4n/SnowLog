@@ -16,6 +16,7 @@ import {
     deleteTechniqueOption,
     getAllTechniqueOptions,
     insertTechniqueOption,
+    reorderTechniqueOptions,
 } from "@/database/repositories/techniqueOptionRepository";
 import { Colors } from "@/constants/colors";
 import type { TechniqueOptionSelect } from "@/database/schema";
@@ -52,6 +53,19 @@ export default function TechniquesSettingsScreen() {
         await loadOptions();
     }, [input, options, loadOptions]);
 
+    const handleMove = useCallback(
+        async (index: number, direction: "up" | "down") => {
+            const swapIndex = direction === "up" ? index - 1 : index + 1;
+            if (swapIndex < 0 || swapIndex >= options.length) return;
+
+            const reordered = [...options];
+            [reordered[index], reordered[swapIndex]] = [reordered[swapIndex], reordered[index]];
+            setOptions(reordered);
+            await reorderTechniqueOptions(reordered.map((o) => o.id));
+        },
+        [options]
+    );
+
     const handleDelete = useCallback(
         (option: TechniqueOptionSelect) => {
             Alert.alert(
@@ -85,8 +99,24 @@ export default function TechniquesSettingsScreen() {
                 ListEmptyComponent={
                     <Text style={styles.empty}>種別がありません。下のフォームから追加してください。</Text>
                 }
-                renderItem={({ item }) => (
+                renderItem={({ item, index }) => (
                     <View style={styles.row}>
+                        <View style={styles.reorderButtons}>
+                            <TouchableOpacity
+                                onPress={() => handleMove(index, "up")}
+                                disabled={index === 0}
+                                hitSlop={8}
+                            >
+                                <Text style={[styles.arrowText, index === 0 && styles.arrowDisabled]}>▲</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => handleMove(index, "down")}
+                                disabled={index === options.length - 1}
+                                hitSlop={8}
+                            >
+                                <Text style={[styles.arrowText, index === options.length - 1 && styles.arrowDisabled]}>▼</Text>
+                            </TouchableOpacity>
+                        </View>
                         <Text style={styles.rowText}>{item.name}</Text>
                         <TouchableOpacity
                             style={styles.deleteButton}
@@ -137,6 +167,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 14,
         borderRadius: 8,
+    },
+    reorderButtons: {
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 2,
+        marginRight: 12,
+    },
+    arrowText: {
+        fontSize: 12,
+        color: Colors.alpineBlue,
+        fontWeight: "700",
+    },
+    arrowDisabled: {
+        color: Colors.border,
     },
     rowText: {
         flex: 1,

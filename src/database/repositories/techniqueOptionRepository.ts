@@ -22,3 +22,13 @@ export async function insertTechniqueOption(name: string): Promise<void> {
 export async function deleteTechniqueOption(id: number): Promise<void> {
     await db.delete(techniqueOptions).where(eq(techniqueOptions.id, id));
 }
+
+/** Persist a new sort order for all technique options */
+export async function reorderTechniqueOptions(orderedIds: number[]): Promise<void> {
+    for (let i = 0; i < orderedIds.length; i++) {
+        await db
+            .update(techniqueOptions)
+            .set({ sortOrder: i })
+            .where(eq(techniqueOptions.id, orderedIds[i]));
+    }
+}
