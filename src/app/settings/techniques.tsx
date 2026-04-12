@@ -10,6 +10,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useHeaderHeight } from "@react-navigation/elements";
 
 import {
     deleteTechniqueOption,
@@ -24,6 +25,7 @@ import type { TechniqueOptionSelect } from "@/database/schema";
  * 種別の追加・削除を行う
  */
 export default function TechniquesSettingsScreen() {
+    const headerHeight = useHeaderHeight();
     const [options, setOptions] = useState<TechniqueOptionSelect[]>([]);
     const [input, setInput] = useState("");
 
@@ -75,6 +77,7 @@ export default function TechniquesSettingsScreen() {
         <KeyboardAvoidingView
             style={styles.container}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={headerHeight}
         >
             <FlatList
                 data={options}
