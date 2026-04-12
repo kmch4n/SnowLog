@@ -1,3 +1,4 @@
+import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -81,6 +82,7 @@ async function stageAssetFile(sourceUri: string, filename?: string | null): Prom
  */
 export default function VideoImportScreen() {
     const router = useRouter();
+    const navigation = useNavigation();
 
     const [selectedAsset, setSelectedAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
     const [title, setTitle] = useState("");
@@ -123,6 +125,34 @@ export default function VideoImportScreen() {
             cleanupStagedFile();
         };
     }, [cleanupStagedFile]);
+
+    // Block navigation while importing
+    const isImportBlocked = bulkPhase === "importing" || isSaving;
+
+    useEffect(() => {
+        if (!isImportBlocked) return;
+        const unsubscribe = navigation.addListener("beforeRemove", (e: { preventDefault: () => void }) => {
+            e.preventDefault();
+            Alert.alert("インポート中", "処理が完了するまでお待ちください。");
+        });
+        return unsubscribe;
+    }, [isImportBlocked, navigation]);
+
+    useEffect(() => {
+        if (isImportBlocked) {
+            navigation.setOptions({
+                title: "インポート中...",
+                headerLeft: () => null,
+                gestureEnabled: false,
+            });
+        } else {
+            navigation.setOptions({
+                title: "動画をインポート",
+                headerLeft: undefined,
+                gestureEnabled: true,
+            });
+        }
+    }, [isImportBlocked, navigation]);
 
     const stageForImport = useCallback(
         async (sourceUri: string | null, filename?: string | null): Promise<string | null> => {
