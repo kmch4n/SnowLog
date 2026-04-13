@@ -1,4 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
@@ -135,6 +136,7 @@ export default function RootLayout() {
     }
 
     return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "戻る" }} />
@@ -204,6 +206,7 @@ export default function RootLayout() {
                 />
             </Stack>
         </ThemeProvider>
+        </GestureHandlerRootView>
     );
 }
 

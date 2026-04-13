@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
     Alert,
-    FlatList,
     KeyboardAvoidingView,
     Platform,
     StyleSheet,
@@ -11,6 +10,7 @@ import {
     View,
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
+import DraggableFlatList, { type RenderItemParams } from "react-native-draggable-flatlist";
 
 import {
     deleteTechniqueOption,
@@ -23,7 +23,7 @@ import type { TechniqueOptionSelect } from "@/database/schema";
 
 /**
  * 滑走種別管理画面
- * 種別の追加・削除を行う
+ * 種別の追加・削除・ドラッグ並べ替えを行う
  */
 export default function TechniquesSettingsScreen() {
     const headerHeight = useHeaderHeight();
@@ -53,17 +53,12 @@ export default function TechniquesSettingsScreen() {
         await loadOptions();
     }, [input, options, loadOptions]);
 
-    const handleMove = useCallback(
-        async (index: number, direction: "up" | "down") => {
-            const swapIndex = direction === "up" ? index - 1 : index + 1;
-            if (swapIndex < 0 || swapIndex >= options.length) return;
-
-            const reordered = [...options];
-            [reordered[index], reordered[swapIndex]] = [reordered[swapIndex], reordered[index]];
-            setOptions(reordered);
-            await reorderTechniqueOptions(reordered.map((o) => o.id));
+    const handleDragEnd = useCallback(
+        async ({ data }: { data: TechniqueOptionSelect[] }) => {
+            setOptions(data);
+            await reorderTechniqueOptions(data.map((o) => o.id));
         },
-        [options]
+        []
     );
 
     const handleDelete = useCallback(
@@ -87,45 +82,42 @@ export default function TechniquesSettingsScreen() {
         [loadOptions]
     );
 
+    const renderItem = useCallback(
+        ({ item, drag, isActive }: RenderItemParams<TechniqueOptionSelect>) => (
+            <View style={[styles.row, isActive && styles.rowActive]}>
+                <TouchableOpacity
+                    onLongPress={drag}
+                    delayLongPress={100}
+                    style={styles.dragHandle}
+                >
+                    <Text style={styles.dragHandleText}>☰</Text>
+                </TouchableOpacity>
+                <Text style={styles.rowText}>{item.name}</Text>
+                <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => handleDelete(item)}
+                >
+                    <Text style={styles.deleteButtonText}>削除</Text>
+                </TouchableOpacity>
+            </View>
+        ),
+        [handleDelete]
+    );
+
     return (
         <KeyboardAvoidingView
             style={styles.container}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={headerHeight}
         >
-            <FlatList
+            <DraggableFlatList
                 data={options}
                 keyExtractor={(item) => String(item.id)}
+                renderItem={renderItem}
+                onDragEnd={handleDragEnd}
                 ListEmptyComponent={
                     <Text style={styles.empty}>種別がありません。下のフォームから追加してください。</Text>
                 }
-                renderItem={({ item, index }) => (
-                    <View style={styles.row}>
-                        <View style={styles.reorderButtons}>
-                            <TouchableOpacity
-                                onPress={() => handleMove(index, "up")}
-                                disabled={index === 0}
-                                hitSlop={8}
-                            >
-                                <Text style={[styles.arrowText, index === 0 && styles.arrowDisabled]}>▲</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => handleMove(index, "down")}
-                                disabled={index === options.length - 1}
-                                hitSlop={8}
-                            >
-                                <Text style={[styles.arrowText, index === options.length - 1 && styles.arrowDisabled]}>▼</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <Text style={styles.rowText}>{item.name}</Text>
-                        <TouchableOpacity
-                            style={styles.deleteButton}
-                            onPress={() => handleDelete(item)}
-                        >
-                            <Text style={styles.deleteButtonText}>削除</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
                 contentContainerStyle={styles.list}
             />
@@ -168,19 +160,21 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderRadius: 8,
     },
-    reorderButtons: {
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 2,
-        marginRight: 12,
+    rowActive: {
+        backgroundColor: Colors.frostGray,
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
     },
-    arrowText: {
-        fontSize: 12,
-        color: Colors.alpineBlue,
-        fontWeight: "700",
+    dragHandle: {
+        paddingRight: 12,
+        paddingVertical: 4,
     },
-    arrowDisabled: {
-        color: Colors.border,
+    dragHandleText: {
+        fontSize: 18,
+        color: Colors.textTertiary,
     },
     rowText: {
         flex: 1,
