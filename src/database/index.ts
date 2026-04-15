@@ -4,6 +4,8 @@ import { openDatabaseSync } from "expo-sqlite";
 import * as schema from "./schema";
 
 const expo = openDatabaseSync("snowlog.db", { enableChangeListener: true });
+expo.execSync("PRAGMA foreign_keys = ON");
+expo.execSync("PRAGMA journal_mode = WAL");
 
 /**
  * Drizzle ORM インスタンス
