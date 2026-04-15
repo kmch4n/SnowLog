@@ -77,14 +77,14 @@ export async function removeTagFromVideo(videoId: string, tagId: number): Promis
         .where(and(eq(videoTags.videoId, videoId), eq(videoTags.tagId, tagId)));
 }
 
-/** 動画に紐付いているタグをすべて入れ替える */
-export async function setTagsForVideo(videoId: string, tagIds: number[]): Promise<void> {
-    // 既存のタグを全削除してから再設定
-    await db.delete(videoTags).where(eq(videoTags.videoId, videoId));
-
-    if (tagIds.length === 0) return;
-    const rows: VideoTagInsert[] = tagIds.map((tagId) => ({ videoId, tagId }));
-    await db.insert(videoTags).values(rows);
+/** 動画に紐付いているタグをすべて入れ替える（トランザクションで原子的に実行） */
+export function setTagsForVideo(videoId: string, tagIds: number[]): void {
+    db.transaction((tx) => {
+        tx.delete(videoTags).where(eq(videoTags.videoId, videoId)).run();
+        if (tagIds.length === 0) return;
+        const rows: VideoTagInsert[] = tagIds.map((tagId) => ({ videoId, tagId }));
+        tx.insert(videoTags).values(rows).run();
+    });
 }
 
 /**
