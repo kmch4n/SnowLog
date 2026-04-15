@@ -7,7 +7,7 @@ import { getAllTechniqueOptions } from "../database/repositories/techniqueOption
 import { getFavoriteResorts } from "../database/repositories/favoriteResortRepository";
 import { getAllDiaryEntries } from "../database/repositories/diaryEntryRepository";
 import { getAllPreferences } from "../database/repositories/appPreferenceRepository";
-import type { VideoWithTags } from "../types";
+import type { Tag, VideoWithTags } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
 
 /** Bump when the export payload shape changes */
@@ -28,13 +28,21 @@ export async function exportAllToJSON(): Promise<void> {
             getAllPreferences(),
         ]);
 
-    // Attach per-video tags
+    // Attach per-video tags (individual failures fall back to empty array)
     const videosWithTags: VideoWithTags[] = await Promise.all(
-        videos.map(async (video) => ({
-            ...video,
-            techniques: parseTechniques(video.techniques),
-            tags: await getTagsForVideo(video.id),
-        }))
+        videos.map(async (video) => {
+            let videoTags: Tag[] = [];
+            try {
+                videoTags = await getTagsForVideo(video.id);
+            } catch {
+                // Tag lookup failure should not block the entire export
+            }
+            return {
+                ...video,
+                techniques: parseTechniques(video.techniques),
+                tags: videoTags,
+            };
+        })
     );
 
     const exportData = {
