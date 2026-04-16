@@ -36,6 +36,14 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
         setQuery(value ?? "");
     }, [value]);
 
+    // blur タイマーが残ったまま unmount するとゾンビ setState が走るので
+    // クリーンアップで必ずクリアする
+    useEffect(() => {
+        return () => {
+            if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+        };
+    }, []);
+
     // お気に入りスキー場をロード
     useFocusEffect(
         useCallback(() => {
