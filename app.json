@@ -13,7 +13,9 @@
         "NSPhotoLibraryUsageDescription": "スキー動画のインポートとサムネイル生成のため、フォトライブラリへのアクセスが必要です。",
         "NSPhotoLibraryAddUsageDescription": "サムネイル画像の保存のため、フォトライブラリへの書き込みが必要です。",
         "ITSAppUsesNonExemptEncryption": false,
-        "LSApplicationQueriesSchemes": ["photos-redirect"]
+        "LSApplicationQueriesSchemes": [
+          "photos-redirect"
+        ]
       },
       "bundleIdentifier": "com.kmch4n.snowlog"
     },
@@ -43,7 +45,8 @@
       "expo-sqlite",
       "expo-video",
       "expo-sharing",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,
