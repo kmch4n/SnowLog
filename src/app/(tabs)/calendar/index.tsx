@@ -8,6 +8,7 @@ import {
     View,
 } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CalendarMonthGrid } from "@/components/CalendarMonthGrid";
 import { CalendarWeekStrip } from "@/components/CalendarWeekStrip";
@@ -27,8 +28,11 @@ const MONTH_NAMES = [
  * カレンダー画面
  * 月次/週次カレンダーで動画の撮影日を確認し、日付タップで当日の動画一覧を表示する
  */
+const NATIVE_TAB_BAR_HEIGHT = 50;
+
 export default function CalendarScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const {
         year,
         month,
@@ -187,7 +191,10 @@ export default function CalendarScreen() {
                         </View>
                     ) : null
                 }
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={[
+                    styles.listContent,
+                    { paddingBottom: insets.bottom + NATIVE_TAB_BAR_HEIGHT },
+                ]}
             />
 
             {/* Diary edit modal */}
