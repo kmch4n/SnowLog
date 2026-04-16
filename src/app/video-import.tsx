@@ -38,7 +38,7 @@ import * as FileSystem from "expo-file-system/legacy";
 const IMPORT_CACHE_DIR = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory}video-import/`;
 const BULK_SELECTION_LIMIT = 20;
 
-type BulkPhase = "idle" | "importing" | "gps-confirm";
+type BulkPhase = "idle" | "preparing" | "importing" | "gps-confirm";
 
 function isSupportedImportUri(sourceUri: string): boolean {
     return sourceUri.startsWith("file://") || sourceUri.startsWith("content://");
@@ -127,7 +127,8 @@ export default function VideoImportScreen() {
     }, [cleanupStagedFile]);
 
     // Block navigation while importing
-    const isImportBlocked = bulkPhase === "importing" || isSaving;
+    const isImportBlocked =
+        bulkPhase === "preparing" || bulkPhase === "importing" || isSaving;
 
     useEffect(() => {
         if (!isImportBlocked) return;
@@ -518,6 +519,13 @@ export default function VideoImportScreen() {
             return;
         }
 
+        // Enter "preparing" BEFORE launching the picker. On iOS, PHPicker
+        // dismisses immediately on tap-to-confirm, but expo-image-picker then
+        // pulls iCloud-backed assets in the background before the await
+        // resolves. Without this guard, the idle import UI is exposed and
+        // interactable during that download window.
+        setBulkPhase("preparing");
+
         let pickerResult: ImagePicker.ImagePickerResult;
         try {
             pickerResult = await ImagePicker.launchImageLibraryAsync({
@@ -530,13 +538,17 @@ export default function VideoImportScreen() {
                 videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
             });
         } catch (error) {
+            setBulkPhase("idle");
             const message =
                 error instanceof Error ? error.message : "不明なエラーが発生しました。";
             Alert.alert("動画の選択に失敗しました", message);
             return;
         }
 
-        if (pickerResult.canceled || pickerResult.assets.length === 0) return;
+        if (pickerResult.canceled || pickerResult.assets.length === 0) {
+            setBulkPhase("idle");
+            return;
+        }
 
         // 一括モード開始
         setBulkPhase("importing");
@@ -589,6 +601,20 @@ export default function VideoImportScreen() {
         ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
         : null) ?? assetCreationTime;
     const capturedAt = creationMs != null ? Math.floor(creationMs / 1000) : null;
+
+    // 準備中 → ピッカー完了直後のiCloudダウンロード待ち画面
+    if (bulkPhase === "preparing") {
+        return (
+            <View style={styles.preparingContainer}>
+                <ActivityIndicator size="large" color={Colors.alpineBlue} />
+                <Text style={styles.preparingTitle}>動画を準備しています...</Text>
+                <Text style={styles.preparingSubtitle}>
+                    iCloudから動画を取得する場合、{"\n"}
+                    少し時間がかかることがあります。
+                </Text>
+            </View>
+        );
+    }
 
     // 一括インポート中 → プログレス表示
     if (bulkPhase === "importing") {
@@ -956,5 +982,24 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: "600",
         color: Colors.alpineBlue,
+    },
+    preparingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 32,
+        gap: 16,
+        backgroundColor: Colors.glacierWhite,
+    },
+    preparingTitle: {
+        fontSize: 17,
+        fontWeight: "700",
+        color: Colors.textPrimary,
+    },
+    preparingSubtitle: {
+        fontSize: 13,
+        color: Colors.textSecondary,
+        textAlign: "center",
+        lineHeight: 20,
     },
 });
