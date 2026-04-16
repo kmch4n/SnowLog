@@ -70,6 +70,14 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
     const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Clear any pending debounce on unmount so the callback cannot fire
+    // against a stale parent (navigation away mid-typing).
+    useEffect(() => {
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, []);
+
     useFocusEffect(
         useCallback(() => {
             getAllTags().then(setAllTags);
