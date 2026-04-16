@@ -86,6 +86,9 @@ export interface BulkImportGpsGroup {
     confirmed: boolean;
 }
 
+// ホーム画面: 動画一覧の並び順
+export type VideoSortOrder = "newest" | "oldest" | "resort";
+
 // カレンダー: 週の開始曜日
 export type WeekStartDay = "monday" | "sunday";
 

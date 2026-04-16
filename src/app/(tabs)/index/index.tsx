@@ -15,27 +15,80 @@ import { Colors } from "@/constants/colors";
 import {
     bulkSetFavorite,
 } from "@/database/repositories/videoRepository";
+import { useAppPreference } from "@/hooks/useAppPreference";
 import { useSelectionMode } from "@/hooks/useSelectionMode";
 import { useVideos } from "@/hooks/useVideos";
 import { deleteVideosWithCleanup } from "@/services/videoDeletionService";
-import type { FilterOptions, VideoWithTags } from "@/types";
+import type { FilterOptions, VideoSortOrder, VideoWithTags } from "@/types";
 
 interface VideoSection {
     title: string;
     data: VideoWithTags[];
 }
 
-/** スキー場別にグループ化し、最新動画が新しい順にセクションを並べる */
-function buildSections(videos: VideoWithTags[]): VideoSection[] {
+const UNSET_RESORT_LABEL = "スキー場未設定";
+
+const SORT_ORDER_KEY = "home_sort_order";
+const DEFAULT_SORT_ORDER: VideoSortOrder = "newest";
+
+const SORT_LABELS: Record<VideoSortOrder, string> = {
+    newest: "新しい順",
+    oldest: "古い順",
+    resort: "スキー場別",
+};
+
+const SORT_ORDERS: VideoSortOrder[] = ["newest", "oldest", "resort"];
+
+function isVideoSortOrder(value: string): value is VideoSortOrder {
+    return (SORT_ORDERS as string[]).includes(value);
+}
+
+/**
+ * 動画をスキー場別にセクション化する。
+ *
+ * 3 種の並び順を同じデータ構造に適用する:
+ *   - "newest": セクション内 capturedAt desc、セクション順はセクション最新 capturedAt desc
+ *   - "oldest": セクション内 capturedAt asc、セクション順はセクション最古 capturedAt asc
+ *   - "resort": セクション名の localeCompare 昇順（「スキー場未設定」は末尾）、
+ *               セクション内は capturedAt desc を維持
+ */
+function buildSections(
+    videos: VideoWithTags[],
+    sortOrder: VideoSortOrder
+): VideoSection[] {
     const map = new Map<string, VideoWithTags[]>();
     for (const video of videos) {
-        const key = video.skiResortName ?? "スキー場未設定";
+        const key = video.skiResortName ?? UNSET_RESORT_LABEL;
         if (!map.has(key)) map.set(key, []);
         map.get(key)!.push(video);
     }
-    return Array.from(map.entries())
-        .sort((a, b) => (b[1][0]?.capturedAt ?? 0) - (a[1][0]?.capturedAt ?? 0))
-        .map(([title, data]) => ({ title, data }));
+
+    // useVideos は常に capturedAt desc の順でレコードを返す想定
+    if (sortOrder === "oldest") {
+        for (const list of map.values()) {
+            list.reverse();
+        }
+    }
+
+    const entries = Array.from(map.entries());
+    if (sortOrder === "newest") {
+        entries.sort(
+            (a, b) => (b[1][0]?.capturedAt ?? 0) - (a[1][0]?.capturedAt ?? 0)
+        );
+    } else if (sortOrder === "oldest") {
+        entries.sort(
+            (a, b) => (a[1][0]?.capturedAt ?? 0) - (b[1][0]?.capturedAt ?? 0)
+        );
+    } else {
+        entries.sort(([a], [b]) => {
+            // 「スキー場未設定」は常に末尾
+            if (a === UNSET_RESORT_LABEL) return 1;
+            if (b === UNSET_RESORT_LABEL) return -1;
+            return a.localeCompare(b, "ja");
+        });
+    }
+
+    return entries.map(([title, data]) => ({ title, data }));
 }
 
 const TABS = [
@@ -51,6 +104,14 @@ export default function HomeScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState(0);
     const favoritesFilter = useMemo<FilterOptions>(() => ({ favoritesOnly: true }), []);
+
+    const [sortOrderRaw, setSortOrderRaw] = useAppPreference(
+        SORT_ORDER_KEY,
+        DEFAULT_SORT_ORDER
+    );
+    const sortOrder: VideoSortOrder = isVideoSortOrder(sortOrderRaw)
+        ? sortOrderRaw
+        : DEFAULT_SORT_ORDER;
 
     const { videos: allVideos, isLoading: allLoading, refresh: refreshAll } = useVideos();
     const { videos: favVideos, isLoading: favLoading, refresh: refreshFav } = useVideos(favoritesFilter);
@@ -130,8 +191,29 @@ export default function HomeScreen() {
         );
     }, [selectedIds, selectedCount, exitSelectionMode, refreshAll, refreshFav]);
 
-    const allSections = useMemo(() => buildSections(allVideos), [allVideos]);
-    const favSections = useMemo(() => buildSections(favVideos), [favVideos]);
+    const allSections = useMemo(
+        () => buildSections(allVideos, sortOrder),
+        [allVideos, sortOrder]
+    );
+    const favSections = useMemo(
+        () => buildSections(favVideos, sortOrder),
+        [favVideos, sortOrder]
+    );
+
+    const handleOpenSortPicker = useCallback(() => {
+        Alert.alert("並び順", undefined, [
+            ...SORT_ORDERS.map((order) => ({
+                text:
+                    order === sortOrder
+                        ? `✓ ${SORT_LABELS[order]}`
+                        : SORT_LABELS[order],
+                onPress: () => {
+                    if (order !== sortOrder) setSortOrderRaw(order);
+                },
+            })),
+            { text: "キャンセル", style: "cancel" as const },
+        ]);
+    }, [sortOrder, setSortOrderRaw]);
 
     const renderItem = useCallback(
         ({ item }: { item: VideoWithTags }) => (
@@ -175,6 +257,20 @@ export default function HomeScreen() {
                         </Text>
                     </TouchableOpacity>
                 ))}
+            </View>
+
+            {/* ソートピッカー */}
+            <View style={styles.sortBar}>
+                <TouchableOpacity
+                    style={styles.sortChip}
+                    onPress={handleOpenSortPicker}
+                    activeOpacity={0.7}
+                    disabled={isSelectionMode}
+                >
+                    <Text style={styles.sortChipText}>
+                        並び順: {SORT_LABELS[sortOrder]} ▾
+                    </Text>
+                </TouchableOpacity>
             </View>
 
             {/* タブコンテンツ */}
@@ -279,6 +375,24 @@ const styles = StyleSheet.create({
     },
     segmentTextActive: {
         color: Colors.headerText,
+    },
+    sortBar: {
+        flexDirection: "row",
+        justifyContent: "flex-end",
+        backgroundColor: Colors.freshSnow,
+        paddingHorizontal: 16,
+        paddingBottom: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.borderLight,
+    },
+    sortChip: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+    },
+    sortChipText: {
+        fontSize: 12,
+        color: Colors.alpineBlue,
+        fontWeight: "600",
     },
     listContent: {
         paddingBottom: 100,
