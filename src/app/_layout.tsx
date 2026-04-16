@@ -2,9 +2,10 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, InteractionManager, StyleSheet, Text, useColorScheme, View } from "react-native";
 
+import { ThumbnailMigrationScreen } from "@/components/ThumbnailMigrationScreen";
 import { Colors } from "@/constants/colors";
 import { db } from "@/database";
 import {
@@ -21,6 +22,10 @@ import {
     updateVideoCapturedAt,
 } from "@/database/repositories/videoRepository";
 import { getAssetInfo, isSyntheticAssetId } from "@/services/mediaService";
+import {
+    isThumbnailMigrationNeeded,
+    runThumbnailMigration,
+} from "@/services/thumbnailMigrationService";
 import { DEFAULT_TECHNIQUE_OPTIONS } from "@/constants/techniques";
 import migrations from "../../drizzle/migrations";
 
@@ -100,23 +105,60 @@ async function repairInvalidCapturedAt() {
     }
 }
 
+type ThumbnailMigrationPhase = "pending" | "running" | "done";
+
 /**
  * ルートレイアウト
- * アプリ起動時にDBマイグレーションを実行してから画面を表示する
+ * アプリ起動時にDBマイグレーションとサムネイル修復を実行してから画面を表示する。
+ * サムネイル修復はアップデート後の初回起動時のみ走り、専用ロード画面を表示する。
  */
 export default function RootLayout() {
     const colorScheme = useColorScheme();
     const { success, error } = useMigrations(db, migrations);
+    const [thumbnailPhase, setThumbnailPhase] =
+        useState<ThumbnailMigrationPhase>("pending");
+    const [thumbnailProgress, setThumbnailProgress] = useState({
+        processed: 0,
+        total: 0,
+    });
 
     useEffect(() => {
         if (!success) return;
         seedTechniqueOptions().catch(() => {});
-        // Run repair lazily after first render to avoid blocking startup
+
+        let cancelled = false;
+        (async () => {
+            try {
+                const needed = await isThumbnailMigrationNeeded();
+                if (cancelled) return;
+                if (!needed) {
+                    setThumbnailPhase("done");
+                    return;
+                }
+                setThumbnailPhase("running");
+                await runThumbnailMigration((progress) => {
+                    if (!cancelled) setThumbnailProgress(progress);
+                });
+            } catch {
+                // Never let migration failure hard-block the app — proceed to UI
+            } finally {
+                if (!cancelled) setThumbnailPhase("done");
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [success]);
+
+    useEffect(() => {
+        if (thumbnailPhase !== "done") return;
+        // Defer capturedAt repair until after the app is interactive
         const task = InteractionManager.runAfterInteractions(() => {
             repairInvalidCapturedAt().catch(() => {});
         });
         return () => task.cancel();
-    }, [success]);
+    }, [thumbnailPhase]);
 
     if (error) {
         return (
@@ -128,6 +170,23 @@ export default function RootLayout() {
     }
 
     if (!success) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color={Colors.alpineBlue} />
+            </View>
+        );
+    }
+
+    if (thumbnailPhase === "running") {
+        return (
+            <ThumbnailMigrationScreen
+                processed={thumbnailProgress.processed}
+                total={thumbnailProgress.total}
+            />
+        );
+    }
+
+    if (thumbnailPhase === "pending") {
         return (
             <View style={styles.center}>
                 <ActivityIndicator size="large" color={Colors.alpineBlue} />

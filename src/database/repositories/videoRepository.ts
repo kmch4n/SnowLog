@@ -134,6 +134,14 @@ export async function updateVideoCapturedAt(id: string, capturedAt: number): Pro
         .where(eq(videos.id, id));
 }
 
+/** サムネイルURIを更新する（パス移行・再生成用） */
+export async function updateVideoThumbnailUri(id: string, thumbnailUri: string): Promise<void> {
+    await db
+        .update(videos)
+        .set({ thumbnailUri, updatedAt: Math.floor(Date.now() / 1000) })
+        .where(eq(videos.id, id));
+}
+
 /** 複数動画のスキー場名を一括更新する（一括インポート用） */
 export async function updateSkiResortForVideos(
     videoIds: string[],

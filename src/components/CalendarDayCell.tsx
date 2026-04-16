@@ -1,6 +1,10 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import {
+    THUMBNAIL_MISSING_SENTINEL,
+    resolveThumbnailUri,
+} from "@/services/thumbnailService";
 import type { CalendarViewMode, DayInfo } from "@/types";
 
 interface CalendarDayCellProps {
@@ -78,9 +82,9 @@ export function CalendarDayCell({
                 </View>
 
                 {/* サムネイル */}
-                {dayInfo?.thumbnailUri ? (
+                {dayInfo?.thumbnailUri && dayInfo.thumbnailUri !== THUMBNAIL_MISSING_SENTINEL ? (
                     <Image
-                        source={{ uri: dayInfo.thumbnailUri }}
+                        source={{ uri: resolveThumbnailUri(dayInfo.thumbnailUri) }}
                         style={styles.weekThumb}
                     />
                 ) : (

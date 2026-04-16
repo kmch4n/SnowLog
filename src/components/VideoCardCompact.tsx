@@ -1,6 +1,10 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "../constants/colors";
+import {
+    THUMBNAIL_MISSING_SENTINEL,
+    resolveThumbnailUri,
+} from "../services/thumbnailService";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
 
@@ -27,6 +31,7 @@ export function VideoCardCompact({
     showResort = false,
 }: VideoCardCompactProps) {
     const isUnavailable = video.isFileAvailable === 0;
+    const isThumbnailMissing = video.thumbnailUri === THUMBNAIL_MISSING_SENTINEL;
 
     return (
         <TouchableOpacity
@@ -44,11 +49,17 @@ export function VideoCardCompact({
 
             {/* サムネイル */}
             <View style={styles.thumbnailContainer}>
-                <Image
-                    source={{ uri: video.thumbnailUri }}
-                    style={styles.thumbnail}
-                    resizeMode="cover"
-                />
+                {isThumbnailMissing ? (
+                    <View style={[styles.thumbnail, styles.thumbnailMissing]}>
+                        <Text style={styles.thumbnailMissingIcon}>🖼️</Text>
+                    </View>
+                ) : (
+                    <Image
+                        source={{ uri: resolveThumbnailUri(video.thumbnailUri) }}
+                        style={styles.thumbnail}
+                        resizeMode="cover"
+                    />
+                )}
                 {video.isFavorite === 1 && (
                     <View style={styles.favBadge}>
                         <Text style={styles.favBadgeText}>★</Text>
@@ -159,6 +170,15 @@ const styles = StyleSheet.create({
     thumbnail: {
         width: "100%",
         height: "100%",
+    },
+    thumbnailMissing: {
+        backgroundColor: Colors.frostGray,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    thumbnailMissingIcon: {
+        fontSize: 20,
+        opacity: 0.7,
     },
     favBadge: {
         position: "absolute",

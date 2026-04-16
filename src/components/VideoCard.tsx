@@ -1,6 +1,10 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "../constants/colors";
+import {
+    THUMBNAIL_MISSING_SENTINEL,
+    resolveThumbnailUri,
+} from "../services/thumbnailService";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
 import { TagChip } from "./TagChip";
@@ -16,16 +20,24 @@ interface VideoCardProps {
  */
 export function VideoCard({ video, onPress }: VideoCardProps) {
     const isUnavailable = video.isFileAvailable === 0;
+    const isThumbnailMissing = video.thumbnailUri === THUMBNAIL_MISSING_SENTINEL;
 
     return (
         <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
             {/* サムネイル */}
             <View style={styles.thumbnailContainer}>
-                <Image
-                    source={{ uri: video.thumbnailUri }}
-                    style={styles.thumbnail}
-                    resizeMode="cover"
-                />
+                {isThumbnailMissing ? (
+                    <View style={[styles.thumbnail, styles.thumbnailMissing]}>
+                        <Text style={styles.thumbnailMissingIcon}>🖼️</Text>
+                        <Text style={styles.thumbnailMissingText}>サムネイルなし</Text>
+                    </View>
+                ) : (
+                    <Image
+                        source={{ uri: resolveThumbnailUri(video.thumbnailUri) }}
+                        style={styles.thumbnail}
+                        resizeMode="cover"
+                    />
+                )}
                 {/* 再生時間バッジ */}
                 <View style={styles.durationBadge}>
                     <Text style={styles.durationText}>{formatDuration(video.duration)}</Text>
@@ -107,6 +119,21 @@ const styles = StyleSheet.create({
     thumbnail: {
         width: "100%",
         height: "100%",
+    },
+    thumbnailMissing: {
+        backgroundColor: Colors.frostGray,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 6,
+    },
+    thumbnailMissingIcon: {
+        fontSize: 32,
+        opacity: 0.7,
+    },
+    thumbnailMissingText: {
+        fontSize: 12,
+        color: Colors.textSecondary,
+        fontWeight: "600",
     },
     durationBadge: {
         position: "absolute",
