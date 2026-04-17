@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { SwipeableTabWrapper } from "@/components/SwipeableTabWrapper";
 import { Colors } from "@/constants/colors";
 
 type SettingsRoute =
@@ -48,7 +49,7 @@ export default function SettingsScreen() {
     const router = useRouter();
 
     return (
-        <View style={styles.container}>
+        <SwipeableTabWrapper tabIndex={4} style={styles.container}>
             <View style={styles.section}>
                 {SETTINGS_ITEMS.map((item, index) => (
                     <TouchableOpacity
@@ -69,7 +70,7 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                 ))}
             </View>
-        </View>
+        </SwipeableTabWrapper>
     );
 }
 

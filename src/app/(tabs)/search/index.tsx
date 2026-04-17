@@ -4,6 +4,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
 import { FilterBar } from "@/components/FilterBar";
+import { SwipeableTabWrapper } from "@/components/SwipeableTabWrapper";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useVideos } from "@/hooks/useVideos";
 import type { FilterOptions } from "@/types";
@@ -70,7 +71,7 @@ export default function SearchScreen() {
     );
 
     return (
-        <View style={styles.container}>
+        <SwipeableTabWrapper tabIndex={3} style={styles.container}>
             <FilterBar filter={filter} onChange={setFilter} />
 
             {/* 検索結果件数 */}
@@ -100,7 +101,7 @@ export default function SearchScreen() {
                     )
                 }
             />
-        </View>
+        </SwipeableTabWrapper>
     );
 }
 
