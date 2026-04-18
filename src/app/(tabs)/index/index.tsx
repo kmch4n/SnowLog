@@ -10,7 +10,6 @@ import {
 } from "react-native";
 
 import { BulkActionToolbar } from "@/components/BulkActionToolbar";
-import { SwipeableTabWrapper } from "@/components/SwipeableTabWrapper";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { Colors } from "@/constants/colors";
 import {
@@ -242,7 +241,7 @@ export default function HomeScreen() {
     );
 
     return (
-        <SwipeableTabWrapper tabIndex={0} style={styles.container}>
+        <View style={styles.container}>
             {/* セグメントコントロール */}
             <View style={[styles.segmentBar, isSelectionMode && styles.segmentBarDisabled]}>
                 {TABS.map((tab, i) => (
@@ -338,7 +337,7 @@ export default function HomeScreen() {
                     isProcessing={isBulkProcessing}
                 />
             )}
-        </SwipeableTabWrapper>
+        </View>
     );
 }
 

@@ -9,7 +9,6 @@ import {
 } from "react-native";
 
 import { Colors } from "@/constants/colors";
-import { SwipeableTabWrapper } from "@/components/SwipeableTabWrapper";
 import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
 import { DashboardSection } from "@/components/dashboard/DashboardSection";
 import { HorizontalBarChart } from "@/components/dashboard/HorizontalBarChart";
@@ -94,7 +93,6 @@ export default function DashboardScreen() {
     const showCentered = isLoading || !!error || isEmpty;
 
     return (
-        <SwipeableTabWrapper tabIndex={1}>
         <ScrollView
             style={styles.container}
             contentContainerStyle={showCentered ? styles.centeredContent : styles.content}
@@ -194,7 +192,6 @@ export default function DashboardScreen() {
                 </>
             )}
         </ScrollView>
-        </SwipeableTabWrapper>
     );
 }
 

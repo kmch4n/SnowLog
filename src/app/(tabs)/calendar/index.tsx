@@ -14,7 +14,6 @@ import { CalendarMonthGrid } from "@/components/CalendarMonthGrid";
 import { CalendarWeekStrip } from "@/components/CalendarWeekStrip";
 import { DiaryCard } from "@/components/DiaryCard";
 import { DiaryEditModal } from "@/components/DiaryEditModal";
-import { SwipeableTabWrapper } from "@/components/SwipeableTabWrapper";
 import { Colors } from "@/constants/colors";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useCalendarEnhanced } from "@/hooks/useCalendarEnhanced";
@@ -169,7 +168,7 @@ export default function CalendarScreen() {
     ]);
 
     return (
-        <SwipeableTabWrapper tabIndex={2} style={styles.container}>
+        <View style={styles.container}>
             <FlatList
                 data={selectedDay !== null ? selectedDateVideos : []}
                 keyExtractor={(item) => item.id}
@@ -209,7 +208,7 @@ export default function CalendarScreen() {
                     onClose={handleDiaryClose}
                 />
             )}
-        </SwipeableTabWrapper>
+        </View>
     );
 }
 
