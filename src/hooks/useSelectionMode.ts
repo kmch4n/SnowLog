@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
 
+import { hapticMedium } from "../services/hapticsService";
+
 interface UseSelectionModeReturn {
     isSelectionMode: boolean;
     selectedIds: Set<string>;
@@ -19,6 +21,7 @@ export function useSelectionMode(): UseSelectionModeReturn {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
     const enterSelectionMode = useCallback((initialId: string) => {
+        hapticMedium();
         setIsSelectionMode(true);
         setSelectedIds(new Set([initialId]));
     }, []);

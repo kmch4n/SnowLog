@@ -18,6 +18,11 @@ import {
 import { useAppPreference } from "@/hooks/useAppPreference";
 import { useSelectionMode } from "@/hooks/useSelectionMode";
 import { useVideos } from "@/hooks/useVideos";
+import {
+    hapticLight,
+    hapticSelection,
+    hapticWarning,
+} from "@/services/hapticsService";
 import { deleteVideosWithCleanup } from "@/services/videoDeletionService";
 import type { FilterOptions, VideoSortOrder, VideoWithTags } from "@/types";
 
@@ -153,6 +158,7 @@ export default function HomeScreen() {
     }, [router]);
 
     const handleBulkFavorite = useCallback(async () => {
+        hapticLight();
         setIsBulkProcessing(true);
         try {
             const selectedVideos = currentVideos.filter((v) => selectedIds.has(v.id));
@@ -176,6 +182,7 @@ export default function HomeScreen() {
                     text: "削除",
                     style: "destructive",
                     onPress: async () => {
+                        hapticWarning();
                         setIsBulkProcessing(true);
                         try {
                             await deleteVideosWithCleanup(Array.from(selectedIds));
@@ -190,6 +197,25 @@ export default function HomeScreen() {
             ]
         );
     }, [selectedIds, selectedCount, exitSelectionMode, refreshAll, refreshFav]);
+
+    const handleTabPress = useCallback(
+        (index: number) => {
+            if (index === activeTab) return;
+            hapticSelection();
+            setActiveTab(index);
+        },
+        [activeTab]
+    );
+
+    const handleRefreshAll = useCallback(() => {
+        hapticLight();
+        refreshAll();
+    }, [refreshAll]);
+
+    const handleRefreshFav = useCallback(() => {
+        hapticLight();
+        refreshFav();
+    }, [refreshFav]);
 
     const allSections = useMemo(
         () => buildSections(allVideos, sortOrder),
@@ -248,7 +274,7 @@ export default function HomeScreen() {
                     <TouchableOpacity
                         key={tab.key}
                         style={[styles.segmentTab, activeTab === i && styles.segmentTabActive]}
-                        onPress={() => setActiveTab(i)}
+                        onPress={() => handleTabPress(i)}
                         activeOpacity={0.7}
                         disabled={isSelectionMode}
                     >
@@ -282,7 +308,7 @@ export default function HomeScreen() {
                     renderSectionHeader={renderSectionHeader}
                     renderSectionFooter={() => <View style={styles.sectionFooter} />}
                     ItemSeparatorComponent={() => <View style={styles.separator} />}
-                    onRefresh={refreshAll}
+                    onRefresh={handleRefreshAll}
                     refreshing={allLoading && allVideos.length > 0}
                     contentContainerStyle={styles.listContent}
                     ListEmptyComponent={
@@ -304,7 +330,7 @@ export default function HomeScreen() {
                     renderSectionHeader={renderSectionHeader}
                     renderSectionFooter={() => <View style={styles.sectionFooter} />}
                     ItemSeparatorComponent={() => <View style={styles.separator} />}
-                    onRefresh={refreshFav}
+                    onRefresh={handleRefreshFav}
                     refreshing={favLoading && favVideos.length > 0}
                     contentContainerStyle={styles.listContent}
                     ListEmptyComponent={

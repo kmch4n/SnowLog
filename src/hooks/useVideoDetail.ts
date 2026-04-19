@@ -7,6 +7,7 @@ import {
     toggleFavorite as toggleFavoriteInDb,
     updateVideoMeta,
 } from "../database/repositories/videoRepository";
+import { hapticLight } from "../services/hapticsService";
 import {
     deleteManagedVideoFile,
     managedVideoFileExists,
@@ -96,6 +97,7 @@ export function useVideoDetail(videoId: string) {
     /** お気に入り状態をトグルする */
     const toggleFavorite = useCallback(async () => {
         if (!video) return;
+        hapticLight();
         await toggleFavoriteInDb(videoId, video.isFavorite !== 1);
         await fetchVideo();
     }, [video, videoId, fetchVideo]);

@@ -6,6 +6,7 @@ import { Colors } from "@/constants/colors";
 import { FilterBar } from "@/components/FilterBar";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useVideos } from "@/hooks/useVideos";
+import { hapticLight } from "@/services/hapticsService";
 import type { FilterOptions } from "@/types";
 import { parseSearchRouteParams } from "@/utils/searchRouteParams";
 
@@ -69,6 +70,11 @@ export default function SearchScreen() {
         [router]
     );
 
+    const handleRefresh = useCallback(() => {
+        hapticLight();
+        refresh();
+    }, [refresh]);
+
     return (
         <View style={styles.container}>
             <FilterBar filter={filter} onChange={setFilter} />
@@ -87,7 +93,7 @@ export default function SearchScreen() {
                     <VideoCardCompact video={item} onPress={() => handleVideoPress(item.id)} showResort />
                 )}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
-                onRefresh={refresh}
+                onRefresh={handleRefresh}
                 refreshing={isLoading && videos.length > 0}
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={

@@ -27,6 +27,11 @@ import {
     getVideoByAssetId,
     updateSkiResortForVideos,
 } from "@/database/repositories/videoRepository";
+import {
+    hapticError,
+    hapticSuccess,
+    hapticWarning,
+} from "@/services/hapticsService";
 import { importVideo, type ImportableAsset } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
 import { randomUUID } from "expo-crypto";
@@ -314,8 +319,10 @@ export default function VideoImportScreen() {
             );
 
             await cleanupStagedFile();
+            hapticSuccess();
             router.back();
         } catch (e) {
+            hapticError();
             Alert.alert(
                 "インポートに失敗しました",
                 e instanceof Error ? e.message : "不明なエラーが発生しました。"
@@ -369,6 +376,12 @@ export default function VideoImportScreen() {
             parts.push(`${successCount}本インポートしました`);
             if (skippedCount > 0) parts.push(`スキップ: ${skippedCount}本`);
             if (errorCount > 0) parts.push(`エラー: ${errorCount}本`);
+
+            if (errorCount > 0) {
+                hapticWarning();
+            } else {
+                hapticSuccess();
+            }
 
             Alert.alert("一括インポート完了", parts.join("\n"), [
                 { text: "OK", onPress: () => router.back() },
