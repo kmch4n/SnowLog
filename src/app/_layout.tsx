@@ -21,6 +21,8 @@ import {
     getVideosWithSuspiciousCapturedAt,
     updateVideoCapturedAt,
 } from "@/database/repositories/videoRepository";
+import { loadInitialLocale } from "@/i18n";
+import { useTranslation } from "@/i18n/useTranslation";
 import { getAssetInfo, isSyntheticAssetId } from "@/services/mediaService";
 import {
     isThumbnailMigrationNeeded,
@@ -114,7 +116,9 @@ type ThumbnailMigrationPhase = "pending" | "running" | "done";
  */
 export default function RootLayout() {
     const colorScheme = useColorScheme();
+    const { t } = useTranslation();
     const { success, error } = useMigrations(db, migrations);
+    const [localeReady, setLocaleReady] = useState(false);
     const [thumbnailPhase, setThumbnailPhase] =
         useState<ThumbnailMigrationPhase>("pending");
     const [thumbnailProgress, setThumbnailProgress] = useState({
@@ -129,6 +133,10 @@ export default function RootLayout() {
         let cancelled = false;
         (async () => {
             try {
+                await loadInitialLocale();
+                if (cancelled) return;
+                setLocaleReady(true);
+
                 const needed = await isThumbnailMigrationNeeded();
                 if (cancelled) return;
                 if (!needed) {
@@ -142,6 +150,7 @@ export default function RootLayout() {
             } catch {
                 // Never let migration failure hard-block the app — proceed to UI
             } finally {
+                if (!cancelled) setLocaleReady(true);
                 if (!cancelled) setThumbnailPhase("done");
             }
         })();
@@ -163,13 +172,13 @@ export default function RootLayout() {
     if (error) {
         return (
             <View style={styles.center}>
-                <Text style={styles.errorText}>DBの初期化に失敗しました</Text>
+                <Text style={styles.errorText}>{t("errors.dbInitFailed")}</Text>
                 <Text style={styles.errorDetail}>{error.message}</Text>
             </View>
         );
     }
 
-    if (!success) {
+    if (!success || !localeReady) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator size="large" color={Colors.alpineBlue} />
@@ -196,75 +205,90 @@ export default function RootLayout() {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-            <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "戻る" }} />
-                <Stack.Screen
-                    name="video-import"
-                    options={{
-                        presentation: "modal",
-                        title: "動画をインポート",
-                        headerStyle: { backgroundColor: Colors.headerBg },
-                        headerTintColor: Colors.headerText,
-                        headerTitleStyle: { fontWeight: "700" },
-                    }}
-                />
-                <Stack.Screen
-                    name="video/[id]"
-                    options={{
-                        title: "動画詳細",
-                        headerStyle: { backgroundColor: Colors.headerBg },
-                        headerTintColor: Colors.headerText,
-                        headerTitleStyle: { fontWeight: "700" },
-                    }}
-                />
-                <Stack.Screen
-                    name="settings/techniques"
-                    options={{
-                        title: "滑走種別の管理",
-                        headerStyle: { backgroundColor: Colors.headerBg },
-                        headerTintColor: Colors.headerText,
-                        headerTitleStyle: { fontWeight: "700" },
-                    }}
-                />
-                <Stack.Screen
-                    name="settings/favorite-resorts"
-                    options={{
-                        title: "お気に入りスキー場",
-                        headerStyle: { backgroundColor: Colors.headerBg },
-                        headerTintColor: Colors.headerText,
-                        headerTitleStyle: { fontWeight: "700" },
-                    }}
-                />
-                <Stack.Screen
-                    name="settings/tags"
-                    options={{
-                        title: "タグの管理",
-                        headerStyle: { backgroundColor: Colors.headerBg },
-                        headerTintColor: Colors.headerText,
-                        headerTitleStyle: { fontWeight: "700" },
-                    }}
-                />
-                <Stack.Screen
-                    name="settings/calendar"
-                    options={{
-                        title: "カレンダー設定",
-                        headerStyle: { backgroundColor: Colors.headerBg },
-                        headerTintColor: Colors.headerText,
-                        headerTitleStyle: { fontWeight: "700" },
-                    }}
-                />
-                <Stack.Screen
-                    name="settings/duplicate-candidates"
-                    options={{
-                        title: "重複候補の確認",
-                        headerStyle: { backgroundColor: Colors.headerBg },
-                        headerTintColor: Colors.headerText,
-                        headerTitleStyle: { fontWeight: "700" },
-                    }}
-                />
-            </Stack>
-        </ThemeProvider>
+            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+                <Stack>
+                    <Stack.Screen
+                        name="(tabs)"
+                        options={{
+                            headerShown: false,
+                            title: t("common.back"),
+                        }}
+                    />
+                    <Stack.Screen
+                        name="video-import"
+                        options={{
+                            presentation: "modal",
+                            title: t("import.title"),
+                            headerStyle: { backgroundColor: Colors.headerBg },
+                            headerTintColor: Colors.headerText,
+                            headerTitleStyle: { fontWeight: "700" },
+                        }}
+                    />
+                    <Stack.Screen
+                        name="video/[id]"
+                        options={{
+                            title: t("videoDetail.title"),
+                            headerStyle: { backgroundColor: Colors.headerBg },
+                            headerTintColor: Colors.headerText,
+                            headerTitleStyle: { fontWeight: "700" },
+                        }}
+                    />
+                    <Stack.Screen
+                        name="settings/techniques"
+                        options={{
+                            title: t("settings.techniques.title"),
+                            headerStyle: { backgroundColor: Colors.headerBg },
+                            headerTintColor: Colors.headerText,
+                            headerTitleStyle: { fontWeight: "700" },
+                        }}
+                    />
+                    <Stack.Screen
+                        name="settings/favorite-resorts"
+                        options={{
+                            title: t("settings.favoriteResorts.title"),
+                            headerStyle: { backgroundColor: Colors.headerBg },
+                            headerTintColor: Colors.headerText,
+                            headerTitleStyle: { fontWeight: "700" },
+                        }}
+                    />
+                    <Stack.Screen
+                        name="settings/tags"
+                        options={{
+                            title: t("settings.tags.title"),
+                            headerStyle: { backgroundColor: Colors.headerBg },
+                            headerTintColor: Colors.headerText,
+                            headerTitleStyle: { fontWeight: "700" },
+                        }}
+                    />
+                    <Stack.Screen
+                        name="settings/calendar"
+                        options={{
+                            title: t("settings.calendar.title"),
+                            headerStyle: { backgroundColor: Colors.headerBg },
+                            headerTintColor: Colors.headerText,
+                            headerTitleStyle: { fontWeight: "700" },
+                        }}
+                    />
+                    <Stack.Screen
+                        name="settings/duplicate-candidates"
+                        options={{
+                            title: t("settings.duplicateCandidates.title"),
+                            headerStyle: { backgroundColor: Colors.headerBg },
+                            headerTintColor: Colors.headerText,
+                            headerTitleStyle: { fontWeight: "700" },
+                        }}
+                    />
+                    <Stack.Screen
+                        name="settings/language"
+                        options={{
+                            title: t("settings.language.title"),
+                            headerStyle: { backgroundColor: Colors.headerBg },
+                            headerTintColor: Colors.headerText,
+                            headerTitleStyle: { fontWeight: "700" },
+                        }}
+                    />
+                </Stack>
+            </ThemeProvider>
         </GestureHandlerRootView>
     );
 }

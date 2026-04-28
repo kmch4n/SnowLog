@@ -1,14 +1,17 @@
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
+import { useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import { useTranslation } from "@/i18n/useTranslation";
 
 type SettingsRoute =
     | "/settings/calendar"
     | "/settings/techniques"
     | "/settings/favorite-resorts"
     | "/settings/tags"
-    | "/settings/duplicate-candidates";
+    | "/settings/duplicate-candidates"
+    | "/settings/language";
 
 interface SettingsItem {
     label: string;
@@ -16,49 +19,58 @@ interface SettingsItem {
     route: SettingsRoute;
 }
 
-const SETTINGS_ITEMS: SettingsItem[] = [
-    {
-        label: "カレンダー設定",
-        description: "週の開始曜日を変更",
-        route: "/settings/calendar",
-    },
-    {
-        label: "滑走種別の管理",
-        description: "選択候補の追加と削除",
-        route: "/settings/techniques",
-    },
-    {
-        label: "お気に入りスキー場",
-        description: "入力候補に出すスキー場を管理",
-        route: "/settings/favorite-resorts",
-    },
-    {
-        label: "タグの管理",
-        description: "カスタムタグの追加と削除",
-        route: "/settings/tags",
-    },
-    {
-        label: "重複候補の確認",
-        description: "似ている動画をまとめて確認",
-        route: "/settings/duplicate-candidates",
-    },
-];
-
 export default function SettingsScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
+
+    const items = useMemo<SettingsItem[]>(
+        () => [
+            {
+                label: t("settings.menu.calendar"),
+                description: t("settings.descriptions.calendar"),
+                route: "/settings/calendar",
+            },
+            {
+                label: t("settings.menu.techniques"),
+                description: t("settings.descriptions.techniques"),
+                route: "/settings/techniques",
+            },
+            {
+                label: t("settings.menu.favoriteResorts"),
+                description: t("settings.descriptions.favoriteResorts"),
+                route: "/settings/favorite-resorts",
+            },
+            {
+                label: t("settings.menu.tags"),
+                description: t("settings.descriptions.tags"),
+                route: "/settings/tags",
+            },
+            {
+                label: t("settings.menu.duplicateCandidates"),
+                description: t("settings.descriptions.duplicateCandidates"),
+                route: "/settings/duplicate-candidates",
+            },
+            {
+                label: t("settings.menu.language"),
+                description: t("settings.descriptions.language"),
+                route: "/settings/language",
+            },
+        ],
+        [t]
+    );
 
     return (
         <View style={styles.container}>
             <View style={styles.section}>
-                {SETTINGS_ITEMS.map((item, index) => (
+                {items.map((item, index) => (
                     <TouchableOpacity
                         key={item.route}
                         style={[
                             styles.row,
                             index === 0 && styles.rowFirst,
-                            index === SETTINGS_ITEMS.length - 1 && styles.rowLast,
+                            index === items.length - 1 && styles.rowLast,
                         ]}
-                        onPress={() => router.push(item.route)}
+                        onPress={() => router.push(item.route as Href)}
                         activeOpacity={0.7}
                     >
                         <View style={styles.rowContent}>

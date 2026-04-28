@@ -1,8 +1,11 @@
 import { Stack } from "expo-router";
 
 import { Colors } from "@/constants/colors";
+import { useTranslation } from "@/i18n/useTranslation";
 
 export default function HomeLayout() {
+    const { t } = useTranslation();
+
     return (
         <Stack
             screenOptions={{
@@ -11,7 +14,7 @@ export default function HomeLayout() {
                 headerTitleStyle: { fontWeight: "700" },
             }}
         >
-            <Stack.Screen name="index" options={{ title: "ホーム" }} />
+            <Stack.Screen name="index" options={{ title: t("home.title") }} />
         </Stack>
     );
 }

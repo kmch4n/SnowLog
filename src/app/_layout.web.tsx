@@ -4,12 +4,20 @@
  */
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
+import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import { loadInitialLocale } from "@/i18n";
+import { useTranslation } from "@/i18n/useTranslation";
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
+    const { t } = useTranslation();
+
+    useEffect(() => {
+        loadInitialLocale().catch(() => {});
+    }, []);
 
     return (
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -19,7 +27,7 @@ export default function RootLayout() {
                     name="video-import"
                     options={{
                         presentation: "modal",
-                        title: "動画をインポート",
+                        title: t("import.title"),
                         headerStyle: { backgroundColor: Colors.headerBg },
                         headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
@@ -28,7 +36,7 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="video/[id]"
                     options={{
-                        title: "動画詳細",
+                        title: t("videoDetail.title"),
                         headerStyle: { backgroundColor: Colors.headerBg },
                         headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
@@ -37,7 +45,7 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="settings/techniques"
                     options={{
-                        title: "滑走種別の管理",
+                        title: t("settings.techniques.title"),
                         headerStyle: { backgroundColor: Colors.headerBg },
                         headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
@@ -46,7 +54,7 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="settings/favorite-resorts"
                     options={{
-                        title: "お気に入りスキー場",
+                        title: t("settings.favoriteResorts.title"),
                         headerStyle: { backgroundColor: Colors.headerBg },
                         headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
@@ -55,7 +63,7 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="settings/tags"
                     options={{
-                        title: "タグの管理",
+                        title: t("settings.tags.title"),
                         headerStyle: { backgroundColor: Colors.headerBg },
                         headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
@@ -64,7 +72,7 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="settings/calendar"
                     options={{
-                        title: "カレンダー設定",
+                        title: t("settings.calendar.title"),
                         headerStyle: { backgroundColor: Colors.headerBg },
                         headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
@@ -73,7 +81,16 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="settings/duplicate-candidates"
                     options={{
-                        title: "重複候補の確認",
+                        title: t("settings.duplicateCandidates.title"),
+                        headerStyle: { backgroundColor: Colors.headerBg },
+                        headerTintColor: Colors.headerText,
+                        headerTitleStyle: { fontWeight: "700" },
+                    }}
+                />
+                <Stack.Screen
+                    name="settings/language"
+                    options={{
+                        title: t("settings.language.title"),
                         headerStyle: { backgroundColor: Colors.headerBg },
                         headerTintColor: Colors.headerText,
                         headerTitleStyle: { fontWeight: "700" },
