@@ -72,6 +72,10 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
+    "locales": {
+      "ja": "./locales/ja.json",
+      "en": "./locales/en.json"
+    },
     "extra": {
       "router": {},
       "eas": {

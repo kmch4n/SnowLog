@@ -1,0 +1,4 @@
+{
+    "NSPhotoLibraryUsageDescription": "スキー動画のインポートとサムネイル生成のため、フォトライブラリへのアクセスが必要です。",
+    "NSPhotoLibraryAddUsageDescription": "サムネイル画像の保存のため、フォトライブラリへの書き込みが必要です。"
+}
