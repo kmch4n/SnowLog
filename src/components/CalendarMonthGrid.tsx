@@ -9,6 +9,7 @@ import {
     isSundayColumn,
 } from "@/utils/calendarUtils";
 import { toDateKey } from "@/utils/dateUtils";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { DayInfo, WeekStartDay } from "@/types";
 
 interface CalendarMonthGridProps {
@@ -35,9 +36,10 @@ export function CalendarMonthGrid({
     weekStartDay,
     onSelectDay,
 }: CalendarMonthGridProps) {
+    const { locale } = useTranslation();
     const today = new Date();
     const todayKey = toDateKey(Math.floor(today.getTime() / 1000));
-    const dayLabels = getDayLabels(weekStartDay);
+    const dayLabels = getDayLabels(weekStartDay, locale);
 
     // 月の日数
     const daysInMonth = new Date(year, month, 0).getDate();

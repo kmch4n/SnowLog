@@ -17,12 +17,14 @@ import {
 } from "@/database/repositories/favoriteResortRepository";
 import { Colors } from "@/constants/colors";
 import { SkiResortSearch } from "@/components/SkiResortSearch";
+import { useTranslation } from "@/i18n/useTranslation";
 
 /**
  * お気に入りスキー場管理画面
  * 登録・削除を行う
  */
 export default function FavoriteResortsScreen() {
+    const { t } = useTranslation();
     const [favorites, setFavorites] = useState<string[]>([]);
     const [selectedResort, setSelectedResort] = useState<string | null>(null);
 
@@ -39,24 +41,27 @@ export default function FavoriteResortsScreen() {
         if (!selectedResort) return;
 
         if (favorites.includes(selectedResort)) {
-            Alert.alert("追加できません", "このスキー場はすでにお気に入りに登録されています。");
+            Alert.alert(
+                t("settings.common.addFailed"),
+                t("settings.favoriteResorts.duplicateName")
+            );
             return;
         }
 
         await addFavoriteResort(selectedResort);
         setSelectedResort(null);
         await loadFavorites();
-    }, [selectedResort, favorites, loadFavorites]);
+    }, [selectedResort, favorites, loadFavorites, t]);
 
     const handleDelete = useCallback(
         (name: string) => {
             Alert.alert(
-                "削除の確認",
-                `「${name}」をお気に入りから削除しますか？`,
+                t("settings.common.deleteConfirm"),
+                t("settings.favoriteResorts.deleteConfirm.body", { name }),
                 [
-                    { text: "キャンセル", style: "cancel" },
+                    { text: t("common.cancel"), style: "cancel" },
                     {
-                        text: "削除",
+                        text: t("common.delete"),
                         style: "destructive",
                         onPress: async () => {
                             await removeFavoriteResort(name);
@@ -66,7 +71,7 @@ export default function FavoriteResortsScreen() {
                 ]
             );
         },
-        [loadFavorites]
+        [loadFavorites, t]
     );
 
     return (
@@ -84,7 +89,7 @@ export default function FavoriteResortsScreen() {
                     onPress={handleAdd}
                     disabled={!selectedResort}
                 >
-                    <Text style={styles.addButtonText}>追加</Text>
+                    <Text style={styles.addButtonText}>{t("common.add")}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -94,7 +99,7 @@ export default function FavoriteResortsScreen() {
                 keyExtractor={(item) => item}
                 ListEmptyComponent={
                     <Text style={styles.empty}>
-                        お気に入りがありません。上のフォームからスキー場を検索して追加してください。
+                        {t("settings.favoriteResorts.emptyWithHint")}
                     </Text>
                 }
                 renderItem={({ item }) => (
@@ -104,7 +109,7 @@ export default function FavoriteResortsScreen() {
                             style={styles.deleteButton}
                             onPress={() => handleDelete(item)}
                         >
-                            <Text style={styles.deleteButtonText}>削除</Text>
+                            <Text style={styles.deleteButtonText}>{t("common.delete")}</Text>
                         </TouchableOpacity>
                     </View>
                 )}

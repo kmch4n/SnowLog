@@ -5,6 +5,7 @@ import {
     THUMBNAIL_MISSING_SENTINEL,
     resolveThumbnailUri,
 } from "../services/thumbnailService";
+import { useTranslation } from "../i18n/useTranslation";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
 import { TagChip } from "./TagChip";
@@ -19,6 +20,7 @@ interface VideoCardProps {
  * サムネイル + 日付・スキー場名・タグを表示する
  */
 export function VideoCard({ video, onPress }: VideoCardProps) {
+    const { t, locale } = useTranslation();
     const isUnavailable = video.isFileAvailable === 0;
     const isThumbnailMissing = video.thumbnailUri === THUMBNAIL_MISSING_SENTINEL;
 
@@ -29,7 +31,9 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
                 {isThumbnailMissing ? (
                     <View style={[styles.thumbnail, styles.thumbnailMissing]}>
                         <Text style={styles.thumbnailMissingIcon}>🖼️</Text>
-                        <Text style={styles.thumbnailMissingText}>サムネイルなし</Text>
+                        <Text style={styles.thumbnailMissingText}>
+                            {t("components.videoCard.thumbnailMissing")}
+                        </Text>
                     </View>
                 ) : (
                     <Image
@@ -40,7 +44,7 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
                 )}
                 {/* 再生時間バッジ */}
                 <View style={styles.durationBadge}>
-                    <Text style={styles.durationText}>{formatDuration(video.duration)}</Text>
+                    <Text style={styles.durationText}>{formatDuration(video.duration, locale)}</Text>
                 </View>
                 {/* お気に入りバッジ */}
                 {video.isFavorite === 1 && (
@@ -51,14 +55,14 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
                 {/* ファイル削除済みの警告 */}
                 {isUnavailable && (
                     <View style={styles.unavailableOverlay}>
-                        <Text style={styles.unavailableText}>ファイルなし</Text>
+                        <Text style={styles.unavailableText}>{t("components.videoCard.unavailable")}</Text>
                     </View>
                 )}
             </View>
 
             {/* メタデータ */}
             <View style={styles.meta}>
-                <Text style={styles.date}>{formatDate(video.capturedAt)}</Text>
+                <Text style={styles.date}>{formatDate(video.capturedAt, locale)}</Text>
                 {/* タイトル（未設定時はfilenameにフォールバック） */}
                 <Text style={styles.title} numberOfLines={1}>
                     {video.title ?? video.filename}
@@ -66,7 +70,7 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
                 {video.skiResortName ? (
                     <Text style={styles.resort}>{video.skiResortName}</Text>
                 ) : (
-                    <Text style={styles.resortEmpty}>スキー場未設定</Text>
+                    <Text style={styles.resortEmpty}>{t("components.videoCard.unsetResort")}</Text>
                 )}
 
                 {/* タグ一覧（technique タグは TechniqueSelector で管理するため除外） */}

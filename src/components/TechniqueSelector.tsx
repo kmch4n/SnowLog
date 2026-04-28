@@ -4,6 +4,7 @@ import { useFocusEffect } from "expo-router";
 
 import { Colors } from "../constants/colors";
 import { getAllTechniqueOptions } from "../database/repositories/techniqueOptionRepository";
+import { useTranslation } from "../i18n/useTranslation";
 import type { TechniqueOptionSelect } from "../database/schema";
 
 interface TechniqueSelectorProps {
@@ -16,6 +17,7 @@ interface TechniqueSelectorProps {
  * 完全制御コンポーネント。選択肢は technique_options テーブルから取得する
  */
 export function TechniqueSelector({ selected, onChange }: TechniqueSelectorProps) {
+    const { t } = useTranslation();
     const [options, setOptions] = useState<TechniqueOptionSelect[]>([]);
 
     useFocusEffect(
@@ -34,7 +36,7 @@ export function TechniqueSelector({ selected, onChange }: TechniqueSelectorProps
 
     if (options.length === 0) {
         return (
-            <Text style={styles.empty}>設定から滑走種別を追加してください</Text>
+            <Text style={styles.empty}>{t("components.techniqueSelector.manageHint")}</Text>
         );
     }
 

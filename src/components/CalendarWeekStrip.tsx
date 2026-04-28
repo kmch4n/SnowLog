@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { CalendarDayCell } from "./CalendarDayCell";
 import { getDayLabels } from "@/utils/calendarUtils";
 import { toDateKey } from "@/utils/dateUtils";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { DayInfo, WeekStartDay } from "@/types";
 
 interface CalendarWeekStripProps {
@@ -23,9 +24,10 @@ export function CalendarWeekStrip({
     weekStartDay,
     onSelectDay,
 }: CalendarWeekStripProps) {
+    const { locale } = useTranslation();
     const today = new Date();
     const todayKey = toDateKey(Math.floor(today.getTime() / 1000));
-    const dayLabels = getDayLabels(weekStartDay);
+    const dayLabels = getDayLabels(weekStartDay, locale);
 
     return (
         <View style={styles.container}>

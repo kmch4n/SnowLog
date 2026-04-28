@@ -14,6 +14,7 @@ import {
 } from "../services/managedVideoFileService";
 import { checkAssetExists, isSyntheticAssetId } from "../services/mediaService";
 import { deleteThumbnail } from "../services/thumbnailService";
+import { t } from "../i18n";
 import type { VideoWithTags } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
 
@@ -31,14 +32,14 @@ export function useVideoDetail(videoId: string) {
         try {
             const raw = await getVideoById(videoId);
             if (!raw) {
-                setError("動画が見つかりません。");
+                setError(t("videoDetail.notFound"));
                 return;
             }
             const tags = await getTagsForVideo(videoId);
             const techniques = parseTechniques(raw.techniques as string | null);
             setVideo({ ...raw, tags, techniques });
         } catch (e) {
-            setError(e instanceof Error ? e.message : "動画の取得に失敗しました。");
+            setError(e instanceof Error ? e.message : t("videoDetail.loadFailed"));
         } finally {
             setIsLoading(false);
         }

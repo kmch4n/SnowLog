@@ -16,6 +16,7 @@ import { MonthlyBarChart } from "@/components/dashboard/MonthlyBarChart";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { FilterOptions } from "@/types";
 import type { Season } from "@/types/dashboard";
 import { endOfMonth, startOfMonth } from "@/utils/dateUtils";
@@ -27,6 +28,7 @@ import { buildSearchHref } from "@/utils/searchRouteParams";
  */
 export default function DashboardScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
     const { stats, isLoading, error, season, setSeason, availableSeasons } = useDashboard();
 
     const openSearch = useCallback(
@@ -103,16 +105,15 @@ export default function DashboardScreen() {
             ) : error ? (
                 <>
                     <Text style={styles.emptyIcon}>⚠️</Text>
-                    <Text style={styles.emptyTitle}>読み込みに失敗しました</Text>
+                    <Text style={styles.emptyTitle}>{t("dashboard.loadFailed")}</Text>
                     <Text style={styles.emptyText}>{error}</Text>
                 </>
             ) : isEmpty ? (
                 <>
                     <Text style={styles.emptyIcon}>📊</Text>
-                    <Text style={styles.emptyTitle}>データがありません</Text>
+                    <Text style={styles.emptyTitle}>{t("dashboard.empty")}</Text>
                     <Text style={styles.emptyText}>
-                        {season.label} シーズンの動画をインポートすると{"\n"}
-                        統計が表示されます
+                        {t("dashboard.emptySeason", { season: season.label })}
                     </Text>
                 </>
             ) : (
@@ -128,12 +129,12 @@ export default function DashboardScreen() {
                     <SummaryCards summary={stats.summary} />
 
                     {/* スキー場ランキング */}
-                    <DashboardSection title="スキー場ランキング">
+                    <DashboardSection title={t("dashboard.resortRanking")}>
                         <HorizontalBarChart
                             data={stats.resortRanking.map((r) => ({
                                 label: r.skiResortName,
                                 value: r.visitDays,
-                                subLabel: `${r.videoCount}本`,
+                                subLabel: t("dashboard.videoCountShort", { count: r.videoCount }),
                             }))}
                             maxItems={5}
                             barColor={Colors.alpineBlue}
@@ -142,7 +143,7 @@ export default function DashboardScreen() {
                     </DashboardSection>
 
                     {/* テクニック分布 */}
-                    <DashboardSection title="テクニック分布">
+                    <DashboardSection title={t("dashboard.techniqueBreakdown")}>
                         <HorizontalBarChart
                             data={stats.techniqueDistribution.map((t) => ({
                                 label: t.name,
@@ -154,7 +155,7 @@ export default function DashboardScreen() {
                     </DashboardSection>
 
                     {/* 月別トレンド */}
-                    <DashboardSection title="月別トレンド">
+                    <DashboardSection title={t("dashboard.monthlyTrend")}>
                         <MonthlyBarChart
                             data={stats.monthlyTrend}
                             onBarPress={(item) => handleMonthPress(item.yearMonth)}
@@ -162,7 +163,7 @@ export default function DashboardScreen() {
                     </DashboardSection>
 
                     {/* アクティビティヒートマップ */}
-                    <DashboardSection title="アクティビティ">
+                    <DashboardSection title={t("dashboard.heatmap")}>
                         <ActivityHeatmap
                             days={stats.heatmapDays}
                             season={season}
@@ -173,9 +174,9 @@ export default function DashboardScreen() {
                     {/* 最近の動画 */}
                     {stats.recentVideos.length > 0 && (
                         <DashboardSection
-                            title="最近の動画"
+                            title={t("dashboard.recentVideos")}
                             rightAction={{
-                                label: "もっと見る →",
+                                label: t("dashboard.seeMore"),
                                 onPress: () => router.push("/(tabs)/search"),
                             }}
                         >

@@ -7,6 +7,7 @@ import {
 } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { BulkImportGpsGroup } from "@/types";
 
 interface GpsConfirmationDialogProps {
@@ -29,13 +30,14 @@ export function GpsConfirmationDialog({
     onSkip,
     isApplying,
 }: GpsConfirmationDialogProps) {
+    const { t } = useTranslation();
     const hasConfirmed = groups.some((g) => g.confirmed);
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>撮影地のスキー場を設定</Text>
+            <Text style={styles.title}>{t("import.gpsConfirm.title")}</Text>
             <Text style={styles.subtitle}>
-                GPS情報から検出されたスキー場です
+                {t("import.gpsConfirm.description")}
             </Text>
 
             {/* スキー場グループリスト */}
@@ -58,7 +60,10 @@ export function GpsConfirmationDialog({
                         <View style={styles.groupInfo}>
                             <Text style={styles.resortName}>{group.resortName}</Text>
                             <Text style={styles.groupMeta}>
-                                {group.videoIds.length}本 · {group.distanceKm.toFixed(1)} km
+                                {t("import.gpsConfirm.distanceLabel", {
+                                    count: group.videoIds.length,
+                                    distance: group.distanceKm.toFixed(1),
+                                })}
                             </Text>
                         </View>
                     </TouchableOpacity>
@@ -68,7 +73,7 @@ export function GpsConfirmationDialog({
             {/* GPS なし動画のカウント */}
             {noGpsCount > 0 && (
                 <Text style={styles.noGpsText}>
-                    GPS情報なし: {noGpsCount}本（後で個別に設定できます）
+                    {t("import.gpsConfirm.noGps", { count: noGpsCount })}
                 </Text>
             )}
 
@@ -79,7 +84,7 @@ export function GpsConfirmationDialog({
                     onPress={onSkip}
                     disabled={isApplying}
                 >
-                    <Text style={styles.skipButtonText}>スキップ</Text>
+                    <Text style={styles.skipButtonText}>{t("import.gpsConfirm.skip")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[
@@ -92,7 +97,7 @@ export function GpsConfirmationDialog({
                     {isApplying ? (
                         <ActivityIndicator color={Colors.headerText} size="small" />
                     ) : (
-                        <Text style={styles.confirmButtonText}>適用する</Text>
+                        <Text style={styles.confirmButtonText}>{t("import.gpsConfirm.apply")}</Text>
                     )}
                 </TouchableOpacity>
             </View>

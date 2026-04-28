@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppPreference } from "./useAppPreference";
 import { useVideos } from "./useVideos";
 import { getDiaryDateKeysInRange } from "@/database/repositories/diaryEntryRepository";
+import { useTranslation } from "@/i18n/useTranslation";
 import {
     getWeekDateRange,
     getWeekDates,
@@ -23,6 +24,7 @@ import type {
  * - DayInfo マップ（リッチセル用）
  */
 export function useCalendarEnhanced() {
+    const { t } = useTranslation();
     const today = new Date();
     const [year, setYear] = useState(today.getFullYear());
     const [month, setMonth] = useState(today.getMonth() + 1); // 1-based
@@ -156,8 +158,8 @@ export function useCalendarEnhanced() {
         const y = first.getFullYear();
         const m = first.getMonth() + 1;
         const weekNum = getWeekNumber(first, typedWeekStartDay);
-        return `${y}年${m}月 第${weekNum}週`;
-    }, [weekDates, typedWeekStartDay]);
+        return t("calendar.weekTitle", { year: y, month: m, week: weekNum });
+    }, [weekDates, typedWeekStartDay, t]);
 
     // --- ナビゲーション ---
 

@@ -6,6 +6,7 @@ import {
     getDashboardStats,
     getOldestCapturedAt,
 } from "../database/repositories/dashboardRepository";
+import { t } from "../i18n";
 import { buildSeason, getCurrentSeason } from "../utils/dateUtils";
 import type { DashboardStats, Season } from "../types/dashboard";
 
@@ -70,7 +71,7 @@ export function useDashboard() {
                     }
                 } catch (e) {
                     if (!cancelled) {
-                        setError(e instanceof Error ? e.message : "データの取得に失敗しました");
+                        setError(e instanceof Error ? e.message : t("dashboard.loadFailed"));
                     }
                 } finally {
                     if (!cancelled) {

@@ -7,6 +7,7 @@ import { getAllTechniqueOptions } from "../database/repositories/techniqueOption
 import { getFavoriteResorts } from "../database/repositories/favoriteResortRepository";
 import { getAllDiaryEntries } from "../database/repositories/diaryEntryRepository";
 import { getAllPreferences } from "../database/repositories/appPreferenceRepository";
+import { t } from "../i18n";
 import type { Tag, VideoWithTags } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
 
@@ -98,12 +99,12 @@ export async function exportAllToJSON(): Promise<void> {
     try {
         const isSharingAvailable = await Sharing.isAvailableAsync();
         if (!isSharingAvailable) {
-            throw new Error("この端末では共有機能が使用できません。");
+            throw new Error(t("settings.export.sharingUnavailable"));
         }
 
         await Sharing.shareAsync(fileUri, {
             mimeType: "application/json",
-            dialogTitle: "SnowLogデータをエクスポート",
+            dialogTitle: t("settings.export.shareDialogTitle"),
         });
     } finally {
         // Clean up temp file regardless of outcome

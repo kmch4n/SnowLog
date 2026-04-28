@@ -1,6 +1,7 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import { useTranslation } from "@/i18n/useTranslation";
 
 interface BulkImportProgressProps {
     current: number;
@@ -20,15 +21,16 @@ export function BulkImportProgress({
     errorCount,
     currentFilename,
 }: BulkImportProgressProps) {
+    const { t } = useTranslation();
     const progress = total > 0 ? current / total : 0;
 
     return (
         <View style={styles.container}>
             <ActivityIndicator size="large" color={Colors.alpineBlue} style={styles.spinner} />
 
-            <Text style={styles.title}>インポート中...</Text>
+            <Text style={styles.title}>{t("import.bulk.progressTitle")}</Text>
             <Text style={styles.count}>
-                {current} / {total}
+                {t("import.bulk.progressLabel", { current, total })}
             </Text>
 
             {/* プログレスバー */}
@@ -46,12 +48,12 @@ export function BulkImportProgress({
             <View style={styles.statsRow}>
                 {skippedCount > 0 && (
                     <Text style={styles.statText}>
-                        スキップ: {skippedCount}本 (インポート済み)
+                        {t("import.bulk.skippedAlreadyImported", { count: skippedCount })}
                     </Text>
                 )}
                 {errorCount > 0 && (
                     <Text style={[styles.statText, styles.errorText]}>
-                        エラー: {errorCount}本
+                        {t("import.bulk.summaryError", { count: errorCount })}
                     </Text>
                 )}
             </View>

@@ -1,3 +1,5 @@
+import { t } from "../i18n";
+
 export function getManagedVideoFileUri(
     _videoId: string,
     _filename?: string | null,
@@ -11,7 +13,7 @@ export async function persistManagedVideoFile(
     _videoId: string,
     _filename?: string | null
 ): Promise<string> {
-    throw new Error("Managed local video files are not supported on Web.");
+    throw new Error(t("errors.managedFilesUnsupported"));
 }
 
 export async function managedVideoFileExists(

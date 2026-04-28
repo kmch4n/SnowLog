@@ -6,20 +6,21 @@ import { useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import { useTranslation } from "@/i18n/useTranslation";
 
 export default function VideoImportScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
 
     return (
         <View style={styles.container}>
             <Text style={styles.icon}>🎬</Text>
-            <Text style={styles.title}>iOSアプリでご利用ください</Text>
+            <Text style={styles.title}>{t("import.webUnsupportedTitle")}</Text>
             <Text style={styles.description}>
-                動画のインポートはiOSアプリでのみ利用できます。{"\n"}
-                EAS Build でアプリをビルドしてお試しください。
+                {t("import.webUnsupportedBody")}
             </Text>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Text style={styles.backButtonText}>戻る</Text>
+                <Text style={styles.backButtonText}>{t("common.back")}</Text>
             </TouchableOpacity>
         </View>
     );

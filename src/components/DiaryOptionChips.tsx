@@ -2,6 +2,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
 import type { DiaryOption } from "@/constants/diaryOptions";
+import { useTranslation } from "@/i18n/useTranslation";
 
 interface SingleSelectProps<T extends string | number> {
     options: DiaryOption<T>[];
@@ -9,6 +10,7 @@ interface SingleSelectProps<T extends string | number> {
     onChange: (value: T | null) => void;
     multiple?: false;
     showIcon?: boolean;
+    labelPrefix?: string;
 }
 
 interface MultiSelectProps<T extends string | number> {
@@ -17,6 +19,7 @@ interface MultiSelectProps<T extends string | number> {
     onChange: (value: T[]) => void;
     multiple: true;
     showIcon?: boolean;
+    labelPrefix?: string;
 }
 
 type DiaryOptionChipsProps<T extends string | number> =
@@ -31,7 +34,11 @@ type DiaryOptionChipsProps<T extends string | number> =
 export function DiaryOptionChips<T extends string | number>(
     props: DiaryOptionChipsProps<T>
 ) {
-    const { options, showIcon = false } = props;
+    const { options, showIcon = false, labelPrefix } = props;
+    const { t } = useTranslation();
+
+    const resolveLabel = (option: DiaryOption<T>): string =>
+        labelPrefix ? t(`${labelPrefix}.${option.value}`) : option.label;
 
     // Normalize selected into a Set for unified rendering
     const selectedSet = new Set<T>(
@@ -67,7 +74,7 @@ export function DiaryOptionChips<T extends string | number>(
                             ]}
                         >
                             {showIcon && opt.icon ? `${opt.icon} ` : ""}
-                            {opt.label}
+                            {resolveLabel(opt)}
                         </Text>
                     </TouchableOpacity>
                 );

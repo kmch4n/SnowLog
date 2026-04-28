@@ -5,6 +5,7 @@ import {
     THUMBNAIL_MISSING_SENTINEL,
     resolveThumbnailUri,
 } from "@/services/thumbnailService";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { CalendarViewMode, DayInfo } from "@/types";
 
 interface CalendarDayCellProps {
@@ -38,6 +39,8 @@ export function CalendarDayCell({
     isSunday,
     dayLabel,
 }: CalendarDayCellProps) {
+    const { t } = useTranslation();
+
     if (day === null) {
         return <View style={viewMode === "month" ? styles.monthCell : styles.weekCell} />;
     }
@@ -95,7 +98,7 @@ export function CalendarDayCell({
                 {dayInfo && dayInfo.videoCount > 0 && (
                     <View style={styles.weekMeta}>
                         <Text style={styles.weekVideoCount}>
-                            {dayInfo.videoCount}本
+                            {t("calendar.videoCountShort", { count: dayInfo.videoCount })}
                         </Text>
                         <View style={styles.dotRow}>
                             {dayInfo.resortNames.slice(0, 3).map((_, i) => (

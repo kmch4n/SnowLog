@@ -18,6 +18,7 @@ import {
 import { useAppPreference } from "@/hooks/useAppPreference";
 import { useSelectionMode } from "@/hooks/useSelectionMode";
 import { useVideos } from "@/hooks/useVideos";
+import { useTranslation } from "@/i18n/useTranslation";
 import {
     hapticLight,
     hapticSelection,
@@ -31,16 +32,11 @@ interface VideoSection {
     data: VideoWithTags[];
 }
 
-const UNSET_RESORT_LABEL = "スキー場未設定";
+/** Stable sentinel used to bucket videos with no ski resort assigned. Must not collide with any real resort name. */
+const UNSET_RESORT_SENTINEL = "__SNOWLOG_UNSET_RESORT__";
 
 const SORT_ORDER_KEY = "home_sort_order";
 const DEFAULT_SORT_ORDER: VideoSortOrder = "newest";
-
-const SORT_LABELS: Record<VideoSortOrder, string> = {
-    newest: "新しい順",
-    oldest: "古い順",
-    resort: "スキー場別",
-};
 
 const SORT_ORDERS: VideoSortOrder[] = ["newest", "oldest", "resort"];
 
@@ -63,7 +59,7 @@ function buildSections(
 ): VideoSection[] {
     const map = new Map<string, VideoWithTags[]>();
     for (const video of videos) {
-        const key = video.skiResortName ?? UNSET_RESORT_LABEL;
+        const key = video.skiResortName ?? UNSET_RESORT_SENTINEL;
         if (!map.has(key)) map.set(key, []);
         map.get(key)!.push(video);
     }
@@ -86,9 +82,9 @@ function buildSections(
         );
     } else {
         entries.sort(([a], [b]) => {
-            // 「スキー場未設定」は常に末尾
-            if (a === UNSET_RESORT_LABEL) return 1;
-            if (b === UNSET_RESORT_LABEL) return -1;
+            // unset bucket sinks to the bottom regardless of locale
+            if (a === UNSET_RESORT_SENTINEL) return 1;
+            if (b === UNSET_RESORT_SENTINEL) return -1;
             return a.localeCompare(b, "ja");
         });
     }
@@ -96,10 +92,7 @@ function buildSections(
     return entries.map(([title, data]) => ({ title, data }));
 }
 
-const TABS = [
-    { key: "all", label: "すべて" },
-    { key: "favorites", label: "★ お気に入り" },
-] as const;
+const TAB_KEYS = ["all", "favorites"] as const;
 
 /**
  * ホーム画面
@@ -107,7 +100,22 @@ const TABS = [
  */
 export default function HomeScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState(0);
+
+    const sortLabels: Record<VideoSortOrder, string> = useMemo(
+        () => ({
+            newest: t("home.sort.newest"),
+            oldest: t("home.sort.oldest"),
+            resort: t("home.sort.resort"),
+        }),
+        [t]
+    );
+
+    const tabLabels = useMemo(
+        () => [t("home.tabs.all"), t("home.tabs.favorites")],
+        [t]
+    );
     const favoritesFilter = useMemo<FilterOptions>(() => ({ favoritesOnly: true }), []);
 
     const [sortOrderRaw, setSortOrderRaw] = useAppPreference(
@@ -174,12 +182,12 @@ export default function HomeScreen() {
 
     const handleBulkDelete = useCallback(() => {
         Alert.alert(
-            "動画を一括削除",
-            `${selectedCount}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）`,
+            t("home.bulkDelete.title"),
+            t("home.bulkDelete.body", { count: selectedCount }),
             [
-                { text: "キャンセル", style: "cancel" },
+                { text: t("common.cancel"), style: "cancel" },
                 {
-                    text: "削除",
+                    text: t("common.delete"),
                     style: "destructive",
                     onPress: async () => {
                         hapticWarning();
@@ -196,7 +204,7 @@ export default function HomeScreen() {
                 },
             ]
         );
-    }, [selectedIds, selectedCount, exitSelectionMode, refreshAll, refreshFav]);
+    }, [t, selectedIds, selectedCount, exitSelectionMode, refreshAll, refreshFav]);
 
     const handleTabPress = useCallback(
         (index: number) => {
@@ -227,19 +235,19 @@ export default function HomeScreen() {
     );
 
     const handleOpenSortPicker = useCallback(() => {
-        Alert.alert("並び順", undefined, [
+        Alert.alert(t("home.sort.label"), undefined, [
             ...SORT_ORDERS.map((order) => ({
                 text:
                     order === sortOrder
-                        ? `✓ ${SORT_LABELS[order]}`
-                        : SORT_LABELS[order],
+                        ? t("home.sort.checked", { label: sortLabels[order] })
+                        : sortLabels[order],
                 onPress: () => {
                     if (order !== sortOrder) setSortOrderRaw(order);
                 },
             })),
-            { text: "キャンセル", style: "cancel" as const },
+            { text: t("common.cancel"), style: "cancel" as const },
         ]);
-    }, [sortOrder, setSortOrderRaw]);
+    }, [t, sortLabels, sortOrder, setSortOrderRaw]);
 
     const renderItem = useCallback(
         ({ item }: { item: VideoWithTags }) => (
@@ -255,31 +263,39 @@ export default function HomeScreen() {
     );
 
     const renderSectionHeader = useCallback(
-        ({ section }: { section: VideoSection }) => (
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                    📍 {section.title}
-                </Text>
-                <Text style={styles.sectionCount}>{section.data.length}件</Text>
-            </View>
-        ),
-        []
+        ({ section }: { section: VideoSection }) => {
+            const displayTitle =
+                section.title === UNSET_RESORT_SENTINEL
+                    ? t("home.unsetResort")
+                    : section.title;
+            return (
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>
+                        {t("home.sectionHeader", { name: displayTitle })}
+                    </Text>
+                    <Text style={styles.sectionCount}>
+                        {t("home.sectionCount", { count: section.data.length })}
+                    </Text>
+                </View>
+            );
+        },
+        [t]
     );
 
     return (
         <View style={styles.container}>
             {/* セグメントコントロール */}
             <View style={[styles.segmentBar, isSelectionMode && styles.segmentBarDisabled]}>
-                {TABS.map((tab, i) => (
+                {TAB_KEYS.map((key, i) => (
                     <TouchableOpacity
-                        key={tab.key}
+                        key={key}
                         style={[styles.segmentTab, activeTab === i && styles.segmentTabActive]}
                         onPress={() => handleTabPress(i)}
                         activeOpacity={0.7}
                         disabled={isSelectionMode}
                     >
                         <Text style={[styles.segmentText, activeTab === i && styles.segmentTextActive]}>
-                            {tab.label}
+                            {tabLabels[i]}
                         </Text>
                     </TouchableOpacity>
                 ))}
@@ -294,7 +310,7 @@ export default function HomeScreen() {
                     disabled={isSelectionMode}
                 >
                     <Text style={styles.sortChipText}>
-                        並び順: {SORT_LABELS[sortOrder]} ▾
+                        {t("home.sort.current", { label: sortLabels[sortOrder] })}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -314,9 +330,9 @@ export default function HomeScreen() {
                     ListEmptyComponent={
                         allLoading ? null : (
                             <View style={styles.empty}>
-                                <Text style={styles.emptyTitle}>動画がありません</Text>
+                                <Text style={styles.emptyTitle}>{t("home.empty.videosTitle")}</Text>
                                 <Text style={styles.emptySubtitle}>
-                                    下のボタンからスキー動画をインポートしてください
+                                    {t("home.empty.videosSubtitle")}
                                 </Text>
                             </View>
                         )
@@ -336,9 +352,9 @@ export default function HomeScreen() {
                     ListEmptyComponent={
                         favLoading ? null : (
                             <View style={styles.empty}>
-                                <Text style={styles.emptyTitle}>お気に入りがありません</Text>
+                                <Text style={styles.emptyTitle}>{t("home.empty.favoritesTitle")}</Text>
                                 <Text style={styles.emptySubtitle}>
-                                    動画詳細画面の ★ ボタンでお気に入りに追加しましょう
+                                    {t("home.empty.favoritesSubtitle")}
                                 </Text>
                             </View>
                         )
@@ -349,7 +365,7 @@ export default function HomeScreen() {
             {/* インポートFAB (hidden during selection mode) */}
             {!isSelectionMode && (
                 <TouchableOpacity style={styles.fab} onPress={handleImportPress}>
-                    <Text style={styles.fabText}>＋ インポート</Text>
+                    <Text style={styles.fabText}>{t("home.importFab")}</Text>
                 </TouchableOpacity>
             )}
 

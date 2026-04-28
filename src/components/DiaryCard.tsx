@@ -5,6 +5,7 @@ import {
     SNOW_CONDITION_OPTIONS,
     WEATHER_OPTIONS,
 } from "@/constants/diaryOptions";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { DiaryEntry } from "@/types";
 
 /** Parse snow_condition JSON string into string array (safe fallback) */
@@ -28,6 +29,7 @@ interface DiaryCardProps {
  * Shows a placeholder "add" button when no diary exists.
  */
 export function DiaryCard({ diary, onPress }: DiaryCardProps) {
+    const { t } = useTranslation();
     if (diary == null) {
         return (
             <TouchableOpacity
@@ -35,7 +37,7 @@ export function DiaryCard({ diary, onPress }: DiaryCardProps) {
                 onPress={onPress}
                 activeOpacity={0.7}
             >
-                <Text style={styles.addButtonText}>+ 日記を書く</Text>
+                <Text style={styles.addButtonText}>{t("diary.addButton")}</Text>
             </TouchableOpacity>
         );
     }
@@ -61,15 +63,15 @@ export function DiaryCard({ diary, onPress }: DiaryCardProps) {
                         <View style={styles.badge}>
                             <Text style={styles.badgeText}>
                                 {weatherOption.icon
-                                    ? `${weatherOption.icon} ${weatherOption.label}`
-                                    : weatherOption.label}
+                                    ? `${weatherOption.icon} ${t(`diary.weather.${weatherOption.value}`)}`
+                                    : t(`diary.weather.${weatherOption.value}`)}
                             </Text>
                         </View>
                     )}
                     {snowOptions.map((opt) => (
                         <View key={opt.value} style={styles.badge}>
                             <Text style={styles.badgeText}>
-                                {opt.label}
+                                {t(`diary.snow.${opt.value}`)}
                             </Text>
                         </View>
                     ))}

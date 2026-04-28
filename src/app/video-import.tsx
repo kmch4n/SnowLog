@@ -27,6 +27,8 @@ import {
     getVideoByAssetId,
     updateSkiResortForVideos,
 } from "@/database/repositories/videoRepository";
+import { t as translate } from "@/i18n";
+import { useTranslation } from "@/i18n/useTranslation";
 import {
     hapticError,
     hapticSuccess,
@@ -65,7 +67,7 @@ function inferExtension(filename?: string | null, uri?: string | null): string {
 
 async function stageAssetFile(sourceUri: string, filename?: string | null): Promise<string> {
     if (!isSupportedImportUri(sourceUri) || !IMPORT_CACHE_DIR) {
-        throw new Error("ファイルを読み込めませんでした。");
+        throw new Error(translate("import.bulk.unsupported"));
     }
     await ensureImportCacheDir();
     const dest = `${IMPORT_CACHE_DIR}${Date.now()}-${Math.random().toString(36).slice(2)}.${inferExtension(
@@ -88,6 +90,7 @@ async function stageAssetFile(sourceUri: string, filename?: string | null): Prom
 export default function VideoImportScreen() {
     const router = useRouter();
     const navigation = useNavigation();
+    const { t, locale } = useTranslation();
 
     const [selectedAsset, setSelectedAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
     const [title, setTitle] = useState("");
@@ -139,26 +142,29 @@ export default function VideoImportScreen() {
         if (!isImportBlocked) return;
         const unsubscribe = navigation.addListener("beforeRemove", (e: { preventDefault: () => void }) => {
             e.preventDefault();
-            Alert.alert("インポート中", "処理が完了するまでお待ちください。");
+            Alert.alert(
+                t("import.importingBlocked.title"),
+                t("import.importingBlocked.body")
+            );
         });
         return unsubscribe;
-    }, [isImportBlocked, navigation]);
+    }, [isImportBlocked, navigation, t]);
 
     useEffect(() => {
         if (isImportBlocked) {
             navigation.setOptions({
-                title: "インポート中...",
+                title: t("import.titleImporting"),
                 headerLeft: () => null,
                 gestureEnabled: false,
             });
         } else {
             navigation.setOptions({
-                title: "動画をインポート",
+                title: t("import.title"),
                 headerLeft: undefined,
                 gestureEnabled: true,
             });
         }
-    }, [isImportBlocked, navigation]);
+    }, [isImportBlocked, navigation, t]);
 
     const stageForImport = useCallback(
         async (sourceUri: string | null, filename?: string | null): Promise<string | null> => {
@@ -176,8 +182,8 @@ export default function VideoImportScreen() {
         const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permResult.granted) {
             Alert.alert(
-                "権限が必要です",
-                "フォトライブラリへのアクセスを許可してください。"
+                t("permissions.photoLibraryRequired.title"),
+                t("permissions.photoLibraryRequired.body")
             );
             return;
         }
@@ -198,14 +204,14 @@ export default function VideoImportScreen() {
                     ? error.message
                     : typeof error === "string"
                         ? error
-                        : "不明なエラーが発生しました。";
+                        : t("common.unknownError");
             if (message.includes("3164")) {
                 Alert.alert(
-                    "iCloud 動画を取得できませんでした",
-                    "ネットワークに接続されているか確認して、もう一度お試しください。"
+                    t("import.iCloudFailed.title"),
+                    t("import.iCloudFailed.body")
                 );
             } else {
-                Alert.alert("動画の選択に失敗しました", message);
+                Alert.alert(t("import.pickFailed"), message);
             }
             return;
         }
@@ -220,12 +226,12 @@ export default function VideoImportScreen() {
             const existing = await getVideoByAssetId(asset.assetId);
             if (existing) {
                 Alert.alert(
-                    "インポート済み",
-                    "この動画は既にインポートされています。編集画面を開きますか？",
+                    t("import.alreadyImported.title"),
+                    t("import.alreadyImported.body"),
                     [
-                        { text: "キャンセル", style: "cancel" },
+                        { text: t("common.cancel"), style: "cancel" },
                         {
-                            text: "編集する",
+                            text: t("import.alreadyImported.openEdit"),
                             onPress: () => router.replace({ pathname: "/video/[id]", params: { id: existing.id } }),
                         },
                     ]
@@ -271,8 +277,8 @@ export default function VideoImportScreen() {
 
         if (!stagedUri) {
             Alert.alert(
-                "動画を読み込めませんでした",
-                "動画ファイルの取得に失敗しました。クラウドまたは端末ストレージから再度お試しください。"
+                t("import.loadFailed.title"),
+                t("import.loadFailed.body")
             );
             setSelectedAsset(null);
             setResolvedAssetUri(null);
@@ -280,18 +286,18 @@ export default function VideoImportScreen() {
         }
 
         setResolvedAssetUri(stagedUri);
-    }, [cleanupStagedFile, router, stageForImport]);
+    }, [cleanupStagedFile, router, stageForImport, t]);
 
     /** 動画をインポートしてDBに保存する */
     const handleSave = useCallback(async () => {
         if (!selectedAsset) {
-            Alert.alert("動画を選択してください");
+            Alert.alert(t("import.notSelected"));
             return;
         }
         if (!resolvedAssetUri) {
             Alert.alert(
-                "動画を取得しています",
-                "動画ファイルの準備が完了してから保存してください。"
+                t("import.notReady.title"),
+                t("import.notReady.body")
             );
             return;
         }
@@ -324,8 +330,8 @@ export default function VideoImportScreen() {
         } catch (e) {
             hapticError();
             Alert.alert(
-                "インポートに失敗しました",
-                e instanceof Error ? e.message : "不明なエラーが発生しました。"
+                t("import.importFailed"),
+                e instanceof Error ? e.message : t("common.unknownError")
             );
         } finally {
             setIsSaving(false);
@@ -341,6 +347,7 @@ export default function VideoImportScreen() {
         techniques,
         router,
         cleanupStagedFile,
+        t,
     ]);
 
     // ── 一括インポート ──
@@ -373,9 +380,9 @@ export default function VideoImportScreen() {
     const showBulkSummary = useCallback(
         (successCount: number, skippedCount: number, errorCount: number) => {
             const parts: string[] = [];
-            parts.push(`${successCount}本インポートしました`);
-            if (skippedCount > 0) parts.push(`スキップ: ${skippedCount}本`);
-            if (errorCount > 0) parts.push(`エラー: ${errorCount}本`);
+            parts.push(t("import.bulk.summarySuccess", { count: successCount }));
+            if (skippedCount > 0) parts.push(t("import.bulk.summarySkipped", { count: skippedCount }));
+            if (errorCount > 0) parts.push(t("import.bulk.summaryError", { count: errorCount }));
 
             if (errorCount > 0) {
                 hapticWarning();
@@ -383,11 +390,11 @@ export default function VideoImportScreen() {
                 hapticSuccess();
             }
 
-            Alert.alert("一括インポート完了", parts.join("\n"), [
-                { text: "OK", onPress: () => router.back() },
+            Alert.alert(t("import.bulk.summaryTitle"), parts.join("\n"), [
+                { text: t("common.ok"), onPress: () => router.back() },
             ]);
         },
-        [router]
+        [router, t]
     );
 
     /** 一括インポートのコアロジック */
@@ -439,7 +446,7 @@ export default function VideoImportScreen() {
                     // ファイルをステージング
                     const sourceUri = assetInfo?.localUri ?? asset.uri ?? null;
                     if (!sourceUri || !isSupportedImportUri(sourceUri)) {
-                        throw new Error("ファイルを読み込めませんでした。");
+                        throw new Error(t("import.bulk.unsupported"));
                     }
                     const stagedUri = await stageAssetFile(sourceUri, asset.fileName);
 
@@ -497,7 +504,7 @@ export default function VideoImportScreen() {
                     }
                 } catch (e) {
                     item.status = "error";
-                    item.error = e instanceof Error ? e.message : "不明なエラー";
+                    item.error = e instanceof Error ? e.message : t("common.unknownError");
                     errorCount++;
                 }
 
@@ -521,14 +528,14 @@ export default function VideoImportScreen() {
                 showBulkSummary(successCount, skipped, errorCount);
             }
         },
-        [buildGpsGroups, showBulkSummary]
+        [buildGpsGroups, showBulkSummary, t]
     );
 
     /** 複数動画を選択して一括インポートを開始する */
     const handlePickBulk = useCallback(async () => {
         const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permResult.granted) {
-            Alert.alert("権限が必要です", "フォトライブラリへのアクセスを許可してください。");
+            Alert.alert(t("permissions.photoLibraryRequired.title"), t("permissions.photoLibraryRequired.body"));
             return;
         }
 
@@ -553,8 +560,8 @@ export default function VideoImportScreen() {
         } catch (error) {
             setBulkPhase("idle");
             const message =
-                error instanceof Error ? error.message : "不明なエラーが発生しました。";
-            Alert.alert("動画の選択に失敗しました", message);
+                error instanceof Error ? error.message : t("common.unknownError");
+            Alert.alert(t("import.pickFailed"), message);
             return;
         }
 
@@ -571,7 +578,7 @@ export default function VideoImportScreen() {
         setBulkCurrentFilename(undefined);
 
         await processBulkImport(pickerResult.assets);
-    }, [processBulkImport]);
+    }, [processBulkImport, t]);
 
     /** GPS グループのチェック状態をトグルする */
     const handleToggleGpsGroup = useCallback((resortName: string) => {
@@ -592,8 +599,8 @@ export default function VideoImportScreen() {
             }
         } catch (e) {
             Alert.alert(
-                "スキー場の設定に失敗しました",
-                e instanceof Error ? e.message : "不明なエラーが発生しました"
+                t("import.bulk.applyResortFailed"),
+                e instanceof Error ? e.message : t("common.unknownError")
             );
         } finally {
             setIsApplyingGps(false);
@@ -601,7 +608,7 @@ export default function VideoImportScreen() {
 
         const totalSuccess = bulkGpsGroups.reduce((sum, g) => sum + g.videoIds.length, 0) + bulkNoGpsCount;
         showBulkSummary(totalSuccess, bulkSkippedCount, bulkErrorCount);
-    }, [bulkGpsGroups, bulkNoGpsCount, bulkSkippedCount, bulkErrorCount, showBulkSummary]);
+    }, [bulkGpsGroups, bulkNoGpsCount, bulkSkippedCount, bulkErrorCount, showBulkSummary, t]);
 
     /** GPS 設定をスキップして完了する */
     const handleGpsSkip = useCallback(() => {
@@ -620,10 +627,9 @@ export default function VideoImportScreen() {
         return (
             <View style={styles.preparingContainer}>
                 <ActivityIndicator size="large" color={Colors.alpineBlue} />
-                <Text style={styles.preparingTitle}>動画を準備しています...</Text>
+                <Text style={styles.preparingTitle}>{t("import.preparingTitle")}</Text>
                 <Text style={styles.preparingSubtitle}>
-                    iCloudから動画を取得する場合、{"\n"}
-                    少し時間がかかることがあります。
+                    {t("import.preparingSubtitle")}
                 </Text>
             </View>
         );
@@ -681,11 +687,11 @@ export default function VideoImportScreen() {
                             />
                             <View style={styles.previewMeta}>
                                 <Text style={styles.previewFilename} numberOfLines={1}>
-                                    {selectedAsset.fileName ?? "動画"}
+                                    {selectedAsset.fileName ?? t("import.fallbackFilename")}
                                 </Text>
                                 {capturedAt && (
                                     <Text style={styles.previewDate}>
-                                        {formatDate(capturedAt)}
+                                        {formatDate(capturedAt, locale)}
                                     </Text>
                                 )}
                                 {selectedAsset.duration != null && (
@@ -695,13 +701,13 @@ export default function VideoImportScreen() {
                                 )}
                             </View>
                             <TouchableOpacity style={styles.changeButton} onPress={handlePickVideo}>
-                                <Text style={styles.changeButtonText}>変更</Text>
+                                <Text style={styles.changeButtonText}>{t("import.changeButton")}</Text>
                             </TouchableOpacity>
                         </View>
                     ) : (
                         <View style={styles.pickPlaceholder}>
                             <Text style={styles.pickIcon}>🎬</Text>
-                            <Text style={styles.pickText}>タップして動画を選択</Text>
+                            <Text style={styles.pickText}>{t("import.pickPlaceholder")}</Text>
                         </View>
                     )}
                 </TouchableOpacity>
@@ -710,7 +716,7 @@ export default function VideoImportScreen() {
                 {!selectedAsset && (
                     <TouchableOpacity style={styles.bulkButton} onPress={handlePickBulk}>
                         <Text style={styles.bulkButtonText}>
-                            まとめてインポート (最大{BULK_SELECTION_LIMIT}本)
+                            {t("import.bulkPickButtonWithLimit", { limit: BULK_SELECTION_LIMIT })}
                         </Text>
                     </TouchableOpacity>
                 )}
@@ -719,18 +725,18 @@ export default function VideoImportScreen() {
                 {isLoadingMeta && (
                     <View style={styles.metaLoading}>
                         <ActivityIndicator size="small" color={Colors.alpineBlue} />
-                        <Text style={styles.metaLoadingText}>メタデータを取得中...</Text>
+                        <Text style={styles.metaLoadingText}>{t("import.metaLoading")}</Text>
                     </View>
                 )}
 
                 {/* タイトル */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>タイトル</Text>
+                    <Text style={styles.sectionTitle}>{t("import.titleField")}</Text>
                     <TextInput
                         style={styles.titleInput}
                         value={title}
                         onChangeText={setTitle}
-                        placeholder={capturedAt != null ? formatDateTime(capturedAt) : "タイトルを入力..."}
+                        placeholder={capturedAt != null ? formatDateTime(capturedAt, locale) : t("import.titlePlaceholder")}
                         placeholderTextColor={Colors.textTertiary}
                         returnKeyType="done"
                         numberOfLines={1}
@@ -739,11 +745,11 @@ export default function VideoImportScreen() {
 
                 {/* スキー場名 */}
                 <View style={[styles.section, styles.resortSection]}>
-                    <Text style={styles.sectionTitle}>スキー場</Text>
+                    <Text style={styles.sectionTitle}>{t("import.resortField")}</Text>
                     {/* GPS撮影地からのサジェスト（スキー場未設定かつ GPS検出成功時のみ表示） */}
                     {gpsSuggestions.length > 0 && !skiResortName && (
                         <View style={styles.gpsBanner}>
-                            <Text style={styles.gpsBannerLabel}>📍 撮影地の近くのスキー場</Text>
+                            <Text style={styles.gpsBannerLabel}>{t("import.gpsSuggestionLabel")}</Text>
                             <ScrollView
                                 horizontal
                                 showsHorizontalScrollIndicator={false}
@@ -771,13 +777,13 @@ export default function VideoImportScreen() {
 
                 {/* 滑走種別 */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>滑走種別</Text>
+                    <Text style={styles.sectionTitle}>{t("import.techniquesField")}</Text>
                     <TechniqueSelector selected={techniques} onChange={setTechniques} />
                 </View>
 
                 {/* タグ */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>タグ</Text>
+                    <Text style={styles.sectionTitle}>{t("import.tagsField")}</Text>
                     <View style={styles.tagSelectorContainer}>
                         <TagSelector selectedTagIds={tagIds} onChange={setTagIds} />
                     </View>
@@ -785,12 +791,12 @@ export default function VideoImportScreen() {
 
                 {/* メモ */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>メモ</Text>
+                    <Text style={styles.sectionTitle}>{t("import.memoField")}</Text>
                     <TextInput
                         style={styles.memoInput}
                         value={memo}
                         onChangeText={setMemo}
-                        placeholder="振り返りメモを入力..."
+                        placeholder={t("import.memoPlaceholder")}
                         multiline
                         numberOfLines={4}
                         textAlignVertical="top"
@@ -809,7 +815,7 @@ export default function VideoImportScreen() {
                     {isSaving ? (
                         <ActivityIndicator color={Colors.headerText} />
                     ) : (
-                        <Text style={styles.saveButtonText}>保存する</Text>
+                        <Text style={styles.saveButtonText}>{t("import.save")}</Text>
                     )}
                 </TouchableOpacity>
             </ScrollView>

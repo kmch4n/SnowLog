@@ -11,6 +11,7 @@ import {
 
 import { Colors } from "../constants/colors";
 import { getFavoriteResorts } from "../database/repositories/favoriteResortRepository";
+import { useTranslation } from "../i18n/useTranslation";
 import SKI_RESORTS from "../constants/skiResorts.json";
 import type { SkiResort } from "../types";
 
@@ -26,6 +27,7 @@ const MAX_RESULTS = 20;
  * src/constants/skiResorts.json のマスターデータからフィルタリングする
  */
 export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
+    const { t } = useTranslation();
     const [query, setQuery] = useState(value ?? "");
     const [isFocused, setIsFocused] = useState(false);
     const [favorites, setFavorites] = useState<string[]>([]);
@@ -100,7 +102,7 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
                             blurTimeoutRef.current = null;
                         }, 200);
                     }}
-                    placeholder="スキー場名を検索..."
+                    placeholder={t("components.skiResortSearch.placeholder")}
                     returnKeyType="done"
                 />
                 {query.length > 0 && (

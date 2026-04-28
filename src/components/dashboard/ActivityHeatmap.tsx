@@ -1,6 +1,7 @@
 import { StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 
 import { Colors } from "../../constants/colors";
+import { useTranslation } from "../../i18n/useTranslation";
 import type { HeatmapDay, Season } from "../../types/dashboard";
 
 interface ActivityHeatmapProps {
@@ -9,9 +10,17 @@ interface ActivityHeatmapProps {
     onDayPress?: (day: HeatmapDay) => void;
 }
 
-const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
+const DAY_LABELS = {
+    ja: ["月", "火", "水", "木", "金", "土", "日"],
+    en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+};
 const LABEL_WIDTH = 20;
 const CELL_GAP = 2;
+
+function formatMonthLabel(month: number, locale: "ja" | "en"): string {
+    if (locale === "ja") return `${month}月`;
+    return new Date(2000, month - 1, 1).toLocaleString("en-US", { month: "short" });
+}
 
 /** 色の強度を算出（0=空、1-2=薄い、3+=濃い） */
 function getColor(count: number): string {
@@ -23,6 +32,7 @@ function getColor(count: number): string {
 
 /** GitHub風アクティビティヒートマップ */
 export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapProps) {
+    const { t, locale } = useTranslation();
     const { width: screenWidth } = useWindowDimensions();
     const availableWidth = screenWidth - 32 - 32 - LABEL_WIDTH; // padding + card padding + labels
 
@@ -79,7 +89,7 @@ export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapPro
                     lastMonth = month;
                     monthLabels.push({
                         x: week * (cellSize + CELL_GAP),
-                        label: `${cursor.getMonth() + 1}月`,
+                        label: formatMonthLabel(cursor.getMonth() + 1, locale),
                     });
                 }
             }
@@ -104,7 +114,7 @@ export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapPro
             <View style={styles.gridRow}>
                 {/* 曜日ラベル */}
                 <View style={styles.dayLabels}>
-                    {DAY_LABELS.map((label, i) => (
+                    {DAY_LABELS[locale].map((label, i) => (
                         <View
                             key={label}
                             style={[styles.dayLabelCell, { height: cellSize + CELL_GAP }]}
@@ -146,7 +156,7 @@ export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapPro
 
             {/* 凡例 */}
             <View style={styles.legendRow}>
-                <Text style={styles.legendText}>少</Text>
+                <Text style={styles.legendText}>{t("dashboard.heatmapLess")}</Text>
                 {[0, 1, 2, 3].map((level) => (
                     <View
                         key={level}
@@ -156,7 +166,7 @@ export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapPro
                         ]}
                     />
                 ))}
-                <Text style={styles.legendText}>多</Text>
+                <Text style={styles.legendText}>{t("dashboard.heatmapMore")}</Text>
             </View>
         </View>
     );

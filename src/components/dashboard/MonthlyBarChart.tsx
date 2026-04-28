@@ -2,6 +2,7 @@ import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "../../constants/colors";
+import { useTranslation } from "../../i18n/useTranslation";
 import type { MonthlyTrend } from "../../types/dashboard";
 
 interface MonthlyBarChartProps {
@@ -14,8 +15,16 @@ type Metric = "videoCount" | "skiDays";
 const CHART_HEIGHT = 120;
 const BAR_BOTTOM_MARGIN = 20; // X軸ラベル分のスペース
 
+function formatMonthLabel(yearMonth: string, locale: "ja" | "en"): string {
+    const month = Number(yearMonth.split("-")[1]);
+    if (!Number.isFinite(month)) return yearMonth;
+    if (locale === "ja") return `${month}月`;
+    return new Date(2000, month - 1, 1).toLocaleString("en-US", { month: "short" });
+}
+
 /** 月別縦棒グラフ（11月〜5月） */
 export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
+    const { t, locale } = useTranslation();
     const [metric, setMetric] = useState<Metric>("videoCount");
 
     const maxValue = Math.max(...data.map((d) => d[metric]), 1);
@@ -23,7 +32,7 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
 
     if (data.length === 0) {
         return (
-            <Text style={styles.emptyText}>データなし</Text>
+            <Text style={styles.emptyText}>{t("dashboard.empty")}</Text>
         );
     }
 
@@ -41,7 +50,7 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
                             metric === "videoCount" && styles.toggleTextActive,
                         ]}
                     >
-                        動画数
+                        {t("dashboard.videosLabel")}
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -54,7 +63,7 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
                             metric === "skiDays" && styles.toggleTextActive,
                         ]}
                     >
-                        滑走日数
+                        {t("dashboard.summary.skiDays")}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -105,7 +114,9 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
                         <Text style={styles.valueLabel}>
                             {item[metric] > 0 ? item[metric] : ""}
                         </Text>
-                        <Text style={styles.monthLabel}>{item.label}</Text>
+                        <Text style={styles.monthLabel}>
+                            {formatMonthLabel(item.yearMonth, locale)}
+                        </Text>
                     </TouchableOpacity>
                 ))}
             </View>

@@ -20,12 +20,14 @@ import {
 } from "@/database/repositories/techniqueOptionRepository";
 import { Colors } from "@/constants/colors";
 import type { TechniqueOptionSelect } from "@/database/schema";
+import { useTranslation } from "@/i18n/useTranslation";
 
 /**
  * 滑走種別管理画面
  * 種別の追加・削除・ドラッグ並べ替えを行う
  */
 export default function TechniquesSettingsScreen() {
+    const { t } = useTranslation();
     const headerHeight = useHeaderHeight();
     const [options, setOptions] = useState<TechniqueOptionSelect[]>([]);
     const [input, setInput] = useState("");
@@ -44,14 +46,17 @@ export default function TechniquesSettingsScreen() {
         if (!name) return;
 
         if (options.some((o) => o.name === name)) {
-            Alert.alert("追加できません", "同じ名前の種別がすでに存在します");
+            Alert.alert(
+                t("settings.common.addFailed"),
+                t("settings.techniques.duplicateName")
+            );
             return;
         }
 
         await insertTechniqueOption(name);
         setInput("");
         await loadOptions();
-    }, [input, options, loadOptions]);
+    }, [input, options, loadOptions, t]);
 
     const handleDragEnd = useCallback(
         async ({ data }: { data: TechniqueOptionSelect[] }) => {
@@ -64,12 +69,12 @@ export default function TechniquesSettingsScreen() {
     const handleDelete = useCallback(
         (option: TechniqueOptionSelect) => {
             Alert.alert(
-                "削除の確認",
-                `「${option.name}」を削除しますか？\n（この種別が設定された動画には影響しません）`,
+                t("settings.common.deleteConfirm"),
+                t("settings.techniques.deleteConfirmWithImpact", { name: option.name }),
                 [
-                    { text: "キャンセル", style: "cancel" },
+                    { text: t("common.cancel"), style: "cancel" },
                     {
-                        text: "削除",
+                        text: t("common.delete"),
                         style: "destructive",
                         onPress: async () => {
                             await deleteTechniqueOption(option.id);
@@ -79,7 +84,7 @@ export default function TechniquesSettingsScreen() {
                 ]
             );
         },
-        [loadOptions]
+        [loadOptions, t]
     );
 
     const renderItem = useCallback(
@@ -97,11 +102,11 @@ export default function TechniquesSettingsScreen() {
                     style={styles.deleteButton}
                     onPress={() => handleDelete(item)}
                 >
-                    <Text style={styles.deleteButtonText}>削除</Text>
+                    <Text style={styles.deleteButtonText}>{t("common.delete")}</Text>
                 </TouchableOpacity>
             </View>
         ),
-        [handleDelete]
+        [handleDelete, t]
     );
 
     return (
@@ -116,7 +121,7 @@ export default function TechniquesSettingsScreen() {
                 renderItem={renderItem}
                 onDragEnd={handleDragEnd}
                 ListEmptyComponent={
-                    <Text style={styles.empty}>種別がありません。下のフォームから追加してください。</Text>
+                    <Text style={styles.empty}>{t("settings.techniques.emptyWithHint")}</Text>
                 }
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
                 contentContainerStyle={styles.list}
@@ -128,7 +133,7 @@ export default function TechniquesSettingsScreen() {
                     style={styles.addInput}
                     value={input}
                     onChangeText={setInput}
-                    placeholder="種別名を入力..."
+                    placeholder={t("settings.techniques.addPlaceholder")}
                     returnKeyType="done"
                     onSubmitEditing={handleAdd}
                 />
@@ -137,7 +142,7 @@ export default function TechniquesSettingsScreen() {
                     onPress={handleAdd}
                     disabled={!input.trim()}
                 >
-                    <Text style={styles.addButtonText}>追加</Text>
+                    <Text style={styles.addButtonText}>{t("common.add")}</Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>

@@ -1,4 +1,5 @@
 import type { WeekStartDay } from "@/types";
+import type { SupportedLocale } from "@/i18n/types";
 
 /**
  * カレンダー計算のための純粋関数群
@@ -6,9 +7,17 @@ import type { WeekStartDay } from "@/types";
 
 const DAY_LABELS_MONDAY = ["月", "火", "水", "木", "金", "土", "日"];
 const DAY_LABELS_SUNDAY = ["日", "月", "火", "水", "木", "金", "土"];
+const DAY_LABELS_MONDAY_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAY_LABELS_SUNDAY_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** 週の開始曜日に応じた曜日ラベル配列を返す */
-export function getDayLabels(weekStartDay: WeekStartDay): string[] {
+export function getDayLabels(
+    weekStartDay: WeekStartDay,
+    locale: SupportedLocale = "ja"
+): string[] {
+    if (locale === "en") {
+        return weekStartDay === "monday" ? DAY_LABELS_MONDAY_EN : DAY_LABELS_SUNDAY_EN;
+    }
     return weekStartDay === "monday" ? DAY_LABELS_MONDAY : DAY_LABELS_SUNDAY;
 }
 

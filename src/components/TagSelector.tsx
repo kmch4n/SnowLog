@@ -10,6 +10,7 @@ import {
 
 import { Colors } from "../constants/colors";
 import { getAllTags, getOrCreateTag } from "../database/repositories/tagRepository";
+import { useTranslation } from "../i18n/useTranslation";
 import type { Tag } from "../types";
 import { TagChip } from "./TagChip";
 
@@ -25,6 +26,7 @@ interface TagSelectorProps {
  * ※ 滑走種別は TechniqueSelector で独立管理
  */
 export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
+    const { t } = useTranslation();
     const [allTags, setAllTags] = useState<Tag[]>([]);
     const [customInput, setCustomInput] = useState("");
 
@@ -71,7 +73,7 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
             {/* 滑走者 */}
             {skierTags.length > 0 && (
                 <>
-                    <Text style={styles.sectionLabel}>滑走者</Text>
+                    <Text style={styles.sectionLabel}>{t("components.tagSelector.skierHeader")}</Text>
                     <View style={styles.chips}>
                         {skierTags.map((tag) => (
                             <TouchableOpacity key={tag.id} onPress={() => toggleTag(tag)}>
@@ -86,18 +88,18 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
             )}
 
             {/* カスタムタグ */}
-            <Text style={styles.sectionLabel}>カスタムタグ</Text>
+            <Text style={styles.sectionLabel}>{t("components.tagSelector.customHeader")}</Text>
             <View style={styles.customInputRow}>
                 <TextInput
                     style={styles.customInput}
                     value={customInput}
                     onChangeText={setCustomInput}
-                    placeholder="タグを入力..."
+                    placeholder={t("components.tagSelector.placeholder")}
                     onSubmitEditing={addCustomTag}
                     returnKeyType="done"
                 />
                 <TouchableOpacity style={styles.addButton} onPress={addCustomTag}>
-                    <Text style={styles.addButtonText}>追加</Text>
+                    <Text style={styles.addButtonText}>{t("common.add")}</Text>
                 </TouchableOpacity>
             </View>
             {customTags.length > 0 && (

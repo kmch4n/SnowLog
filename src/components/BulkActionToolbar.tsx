@@ -7,6 +7,7 @@ import {
 } from "react-native";
 
 import { Colors } from "../constants/colors";
+import { useTranslation } from "../i18n/useTranslation";
 
 interface BulkActionToolbarProps {
     selectedCount: number;
@@ -27,16 +28,20 @@ export function BulkActionToolbar({
     onCancel,
     isProcessing,
 }: BulkActionToolbarProps) {
+    const { t } = useTranslation();
+
     return (
         <View style={styles.container}>
             {isProcessing ? (
                 <View style={styles.processingRow}>
                     <ActivityIndicator size="small" color={Colors.alpineBlue} />
-                    <Text style={styles.processingText}>処理中...</Text>
+                    <Text style={styles.processingText}>{t("common.processing")}</Text>
                 </View>
             ) : (
                 <>
-                    <Text style={styles.countLabel}>{selectedCount}件選択中</Text>
+                    <Text style={styles.countLabel}>
+                        {t("bulkToolbar.selectedCount", { count: selectedCount })}
+                    </Text>
 
                     <View style={styles.actions}>
                         <TouchableOpacity
@@ -44,7 +49,7 @@ export function BulkActionToolbar({
                             onPress={onToggleFavorite}
                             activeOpacity={0.7}
                         >
-                            <Text style={styles.favoriteText}>★ お気に入り</Text>
+                            <Text style={styles.favoriteText}>{t("bulkToolbar.favorite")}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -52,7 +57,7 @@ export function BulkActionToolbar({
                             onPress={onDelete}
                             activeOpacity={0.7}
                         >
-                            <Text style={styles.deleteText}>削除</Text>
+                            <Text style={styles.deleteText}>{t("bulkToolbar.delete")}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -60,7 +65,7 @@ export function BulkActionToolbar({
                             onPress={onCancel}
                             activeOpacity={0.7}
                         >
-                            <Text style={styles.cancelText}>キャンセル</Text>
+                            <Text style={styles.cancelText}>{t("bulkToolbar.cancel")}</Text>
                         </TouchableOpacity>
                     </View>
                 </>

@@ -18,11 +18,23 @@ import { Colors } from "@/constants/colors";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useCalendarEnhanced } from "@/hooks/useCalendarEnhanced";
 import { useDiaryEntry } from "@/hooks/useDiaryEntry";
+import { useTranslation } from "@/i18n/useTranslation";
 
-const MONTH_NAMES = [
-    "1月", "2月", "3月", "4月", "5月", "6月",
-    "7月", "8月", "9月", "10月", "11月", "12月",
-];
+function formatMonthTitle(year: number, month: number, locale: "ja" | "en"): string {
+    if (locale === "ja") return `${year}年 ${month}月`;
+    return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+    });
+}
+
+function formatPanelTitle(month: number, day: number, locale: "ja" | "en"): string {
+    if (locale === "ja") return `${month}月${day}日`;
+    return new Date(2000, month - 1, day).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+    });
+}
 
 /**
  * カレンダー画面
@@ -33,6 +45,7 @@ const NATIVE_TAB_BAR_HEIGHT = 50;
 export default function CalendarScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { t, locale } = useTranslation();
     const {
         year,
         month,
@@ -74,10 +87,10 @@ export default function CalendarScreen() {
     // 選択日のパネルタイトル
     const panelTitle = selectedDay !== null
         ? isMonthView
-            ? `${month}月${selectedDay}日`
+            ? formatPanelTitle(month, selectedDay, locale)
             : (() => {
                 const d = weekDates.find((wd) => wd.getDate() === selectedDay);
-                return d ? `${d.getMonth() + 1}月${d.getDate()}日` : "";
+                return d ? formatPanelTitle(d.getMonth() + 1, d.getDate(), locale) : "";
             })()
         : "";
 
@@ -95,11 +108,13 @@ export default function CalendarScreen() {
                 <TouchableOpacity onPress={toggleViewMode} activeOpacity={0.7}>
                     <Text style={styles.monthTitle}>
                         {isMonthView
-                            ? `${year}年 ${MONTH_NAMES[month - 1]}`
+                            ? formatMonthTitle(year, month, locale)
                             : weekTitle}
                     </Text>
                     <Text style={styles.viewModeHint}>
-                        {isMonthView ? "タップで週表示" : "タップで月表示"}
+                        {isMonthView
+                            ? t("calendar.switchToWeek")
+                            : t("calendar.switchToMonth")}
                     </Text>
                 </TouchableOpacity>
 
@@ -151,7 +166,7 @@ export default function CalendarScreen() {
                     <View style={styles.panelHeader}>
                         <Text style={styles.panelTitle}>{panelTitle}</Text>
                         <Text style={styles.panelCount}>
-                            {selectedDateVideos.length}件
+                            {t("calendar.videoCount", { count: selectedDateVideos.length })}
                         </Text>
                     </View>
                     <DiaryCard
@@ -165,6 +180,7 @@ export default function CalendarScreen() {
         isMonthView, year, month, selectedDay, dayInfoMap, weekStartDay,
         weekDates, weekTitle, panelTitle, selectedDateVideos.length, diary,
         prevMonth, nextMonth, prevWeek, nextWeek, toggleViewMode, setSelectedDay,
+        t, locale,
     ]);
 
     return (
@@ -186,7 +202,7 @@ export default function CalendarScreen() {
                     selectedDay !== null ? (
                         <View style={styles.panelEmpty}>
                             <Text style={styles.panelEmptyText}>
-                                この日の動画はありません
+                                {t("calendar.empty")}
                             </Text>
                         </View>
                     ) : null

@@ -11,6 +11,7 @@ import { useFocusEffect } from "expo-router";
 
 import { Colors } from "../constants/colors";
 import { getAllTags } from "../database/repositories/tagRepository";
+import { useTranslation } from "../i18n/useTranslation";
 import { endOfMonth, startOfMonth } from "../utils/dateUtils";
 import type { FilterOptions, Tag } from "../types";
 import { SkiResortSearch } from "./SkiResortSearch";
@@ -22,9 +23,9 @@ interface FilterBarProps {
 }
 
 const DATE_PRESETS = [
-    { key: "thisMonth", label: "今月" },
-    { key: "lastMonth", label: "先月" },
-    { key: "thisSeason", label: "今シーズン" },
+    { key: "thisMonth" },
+    { key: "lastMonth" },
+    { key: "thisSeason" },
 ] as const;
 
 type PresetKey = (typeof DATE_PRESETS)[number]["key"];
@@ -65,6 +66,7 @@ const DEBOUNCE_MS = 400;
  * テキスト検索・スキー場名・タグ・期間でのフィルタリングをサポート
  */
 export function FilterBar({ filter, onChange }: FilterBarProps) {
+    const { t } = useTranslation();
     const [allTags, setAllTags] = useState<Tag[]>([]);
     const [searchDraft, setSearchDraft] = useState(filter.searchText ?? "");
     const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
@@ -152,7 +154,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                     style={styles.searchInput}
                     value={searchDraft}
                     onChangeText={handleSearchChange}
-                    placeholder="タイトル・メモで検索..."
+                    placeholder={t("search.searchPlaceholder")}
                     placeholderTextColor={Colors.textTertiary}
                     returnKeyType="search"
                     autoCorrect={false}
@@ -216,7 +218,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                             onPress={() => handlePresetPress(preset.key)}
                         >
                             <Text style={[styles.presetText, active && styles.presetTextActive]}>
-                                {preset.label}
+                                {t(`search.datePresets.${preset.key}`)}
                             </Text>
                         </TouchableOpacity>
                     );
@@ -226,7 +228,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
             {/* Clear all filters */}
             {hasActiveFilter && (
                 <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
-                    <Text style={styles.clearButtonText}>フィルターをクリア</Text>
+                    <Text style={styles.clearButtonText}>{t("search.clearAll")}</Text>
                 </TouchableOpacity>
             )}
         </View>

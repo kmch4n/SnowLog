@@ -5,6 +5,7 @@ import {
     THUMBNAIL_MISSING_SENTINEL,
     resolveThumbnailUri,
 } from "../services/thumbnailService";
+import { useTranslation } from "../i18n/useTranslation";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
 
@@ -30,6 +31,7 @@ export function VideoCardCompact({
     isSelected = false,
     showResort = false,
 }: VideoCardCompactProps) {
+    const { t, locale } = useTranslation();
     const isUnavailable = video.isFileAvailable === 0;
     const isThumbnailMissing = video.thumbnailUri === THUMBNAIL_MISSING_SENTINEL;
 
@@ -67,7 +69,7 @@ export function VideoCardCompact({
                 )}
                 {isUnavailable && (
                     <View style={styles.unavailableOverlay}>
-                        <Text style={styles.unavailableText}>なし</Text>
+                        <Text style={styles.unavailableText}>{t("components.videoCard.compactUnavailable")}</Text>
                     </View>
                 )}
             </View>
@@ -78,7 +80,7 @@ export function VideoCardCompact({
                     {video.title ?? video.filename}
                 </Text>
                 <Text style={styles.date}>
-                    {formatDate(video.capturedAt)} · {formatDuration(video.duration)}
+                    {formatDate(video.capturedAt, locale)} · {formatDuration(video.duration, locale)}
                 </Text>
                 {showResort && video.skiResortName && (
                     <Text style={styles.resort} numberOfLines={1}>

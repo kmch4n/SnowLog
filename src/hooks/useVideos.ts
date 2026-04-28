@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { getTagsForVideo } from "../database/repositories/tagRepository";
 import { getVideosByFilter } from "../database/repositories/videoRepository";
+import { t } from "../i18n";
 import type { FilterOptions, VideoWithTags } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
 
@@ -63,7 +64,7 @@ export function useVideos(filter?: FilterOptions) {
 
             setVideos(videosWithTags);
         } catch (e) {
-            setError(e instanceof Error ? e.message : "動画の取得に失敗しました。");
+            setError(e instanceof Error ? e.message : t("errors.videoLoadFailed"));
         } finally {
             setIsLoading(false);
         }

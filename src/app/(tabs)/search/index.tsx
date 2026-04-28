@@ -6,6 +6,7 @@ import { Colors } from "@/constants/colors";
 import { FilterBar } from "@/components/FilterBar";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useVideos } from "@/hooks/useVideos";
+import { useTranslation } from "@/i18n/useTranslation";
 import { hapticLight } from "@/services/hapticsService";
 import type { FilterOptions } from "@/types";
 import { parseSearchRouteParams } from "@/utils/searchRouteParams";
@@ -16,6 +17,7 @@ import { parseSearchRouteParams } from "@/utils/searchRouteParams";
  */
 export default function SearchScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
     const searchParams = useLocalSearchParams();
     const [filter, setFilter] = useState<FilterOptions>({});
     const { videos, isLoading, refresh } = useVideos(filter);
@@ -82,7 +84,9 @@ export default function SearchScreen() {
             {/* 検索結果件数 */}
             {!isLoading && (
                 <View style={styles.resultCountRow}>
-                    <Text style={styles.resultCount}>{videos.length}件</Text>
+                    <Text style={styles.resultCount}>
+                        {t("search.resultCount", { count: videos.length })}
+                    </Text>
                 </View>
             )}
 
@@ -100,7 +104,7 @@ export default function SearchScreen() {
                     isLoading ? null : (
                         <View style={styles.empty}>
                             <Text style={styles.emptyText}>
-                                該当する動画が見つかりません
+                                {t("search.empty")}
                             </Text>
                         </View>
                     )

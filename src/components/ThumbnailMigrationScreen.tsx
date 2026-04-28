@@ -1,6 +1,7 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import { useTranslation } from "@/i18n/useTranslation";
 
 interface ThumbnailMigrationScreenProps {
     processed: number;
@@ -16,16 +17,16 @@ export function ThumbnailMigrationScreen({
     processed,
     total,
 }: ThumbnailMigrationScreenProps) {
+    const { t } = useTranslation();
     const ratio = total > 0 ? Math.min(processed / total, 1) : 0;
     const percent = Math.round(ratio * 100);
 
     return (
         <View style={styles.container}>
             <ActivityIndicator size="large" color={Colors.alpineBlue} />
-            <Text style={styles.title}>アップデート後の初回準備中</Text>
+            <Text style={styles.title}>{t("thumbnailMigration.title")}</Text>
             <Text style={styles.subtitle}>
-                動画サムネイルを確認・再生成しています。{"\n"}
-                完了までアプリを閉じずにお待ちください。
+                {t("thumbnailMigration.subtitle")}
             </Text>
             <View style={styles.progressBarTrack}>
                 <View
@@ -36,7 +37,9 @@ export function ThumbnailMigrationScreen({
                 />
             </View>
             <Text style={styles.progressText}>
-                {total > 0 ? `${processed} / ${total} 件` : "準備中..."}
+                {total > 0
+                    ? t("thumbnailMigration.progress", { processed, total })
+                    : t("thumbnailMigration.preparing")}
             </Text>
         </View>
     );

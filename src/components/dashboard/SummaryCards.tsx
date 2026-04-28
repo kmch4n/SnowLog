@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { Colors } from "../../constants/colors";
+import { useTranslation } from "../../i18n/useTranslation";
 import { formatDurationHM } from "../../utils/dateUtils";
 import type { DashboardSummary } from "../../types/dashboard";
 
@@ -17,29 +18,30 @@ interface CardData {
 
 /** 2x2 サマリーカードグリッド */
 export function SummaryCards({ summary }: SummaryCardsProps) {
+    const { t, locale } = useTranslation();
     const cards: CardData[] = [
         {
             icon: "🎿",
             value: `${summary.totalSkiDays}`,
-            label: "滑走日数",
+            label: t("dashboard.summary.skiDays"),
             color: Colors.alpineBlue,
         },
         {
             icon: "🎬",
             value: `${summary.totalVideoCount}`,
-            label: "動画数",
+            label: t("dashboard.summary.videos"),
             color: Colors.textPrimary,
         },
         {
             icon: "⏱",
-            value: formatDurationHM(summary.totalDurationSeconds),
-            label: "総撮影時間",
+            value: formatDurationHM(summary.totalDurationSeconds, locale),
+            label: t("dashboard.summary.duration"),
             color: Colors.morningGold,
         },
         {
             icon: "⛷",
             value: `${summary.uniqueResortCount}`,
-            label: "訪問スキー場",
+            label: t("dashboard.summary.resorts"),
             color: Colors.alpineBlue,
         },
     ];

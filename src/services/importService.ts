@@ -2,6 +2,7 @@ import { randomUUID } from "expo-crypto";
 
 import { insertVideo } from "../database/repositories/videoRepository";
 import { setTagsForVideo } from "../database/repositories/tagRepository";
+import { getCurrentLocale, t } from "../i18n";
 import {
     deleteManagedVideoFile,
     persistManagedVideoFile,
@@ -31,7 +32,7 @@ export async function importVideo(
 ): Promise<string> {
     let videoUri = asset.localUri ?? asset.uri ?? options.sourceUri;
     if (!videoUri) {
-        throw new Error("動画ファイルのURIを取得できませんでした。");
+        throw new Error(t("errors.importFailed"));
     }
 
     const assetCreationTime = asset.creationTime;
@@ -66,7 +67,7 @@ export async function importVideo(
             thumbnailUri,
             duration: Math.round(asset.duration),
             capturedAt,
-            title: metadata.title || formatDateTime(capturedAt),
+            title: metadata.title || formatDateTime(capturedAt, getCurrentLocale()),
             skiResortName: metadata.skiResortName,
             memo: metadata.memo,
             techniques: metadata.techniques.length > 0 ? JSON.stringify(metadata.techniques) : null,

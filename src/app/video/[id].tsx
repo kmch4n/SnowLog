@@ -25,6 +25,7 @@ import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
+import { useTranslation } from "@/i18n/useTranslation";
 import { formatDateTime, formatDuration, formatDurationDecimal } from "@/utils/dateUtils";
 
 /** セクション間の薄いディバイダー */
@@ -39,6 +40,7 @@ function SectionDivider() {
 export default function VideoDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
+    const { t, locale } = useTranslation();
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const { video, isLoading, error, refresh, updateTitle, updateTechniques, updateMemo, updateSkiResort, updateTags, toggleFavorite, removeVideo } = useVideoDetail(id);
 
@@ -173,11 +175,11 @@ export default function VideoDetailScreen() {
                     if (!granted) {
                         // 権限拒否は一時的な状態であり、ファイル欠損ではない
                         Alert.alert(
-                            "写真ライブラリへのアクセスが必要です",
-                            "動画を再生するには、設定からアクセスを許可してください。",
+                            t("permissions.photoLibraryPlaybackRequired.title"),
+                            t("permissions.photoLibraryPlaybackRequired.body"),
                             [
-                                { text: "キャンセル", style: "cancel" },
-                                { text: "設定を開く", onPress: () => Linking.openSettings() },
+                                { text: t("common.cancel"), style: "cancel" },
+                                { text: t("common.openSettings"), onPress: () => Linking.openSettings() },
                             ]
                         );
                         return;
@@ -199,17 +201,17 @@ export default function VideoDetailScreen() {
                 }
             })();
         }
-    }, [video]);
+    }, [t, video]);
 
     /** 動画レコードを削除する（確認ダイアログ付き） */
     const handleDelete = useCallback(() => {
         Alert.alert(
-            "動画を削除",
-            "この動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",
+            t("videoDetail.deleteConfirm.title"),
+            t("videoDetail.deleteConfirm.body"),
             [
-                { text: "キャンセル", style: "cancel" },
+                { text: t("common.cancel"), style: "cancel" },
                 {
-                    text: "削除",
+                    text: t("common.delete"),
                     style: "destructive",
                     onPress: async () => {
                         await removeVideo();
@@ -218,7 +220,7 @@ export default function VideoDetailScreen() {
                 },
             ]
         );
-    }, [removeVideo, router]);
+    }, [removeVideo, router, t]);
 
     const handleSaveSkiResort = useCallback(
         async (name: string | null) => {
@@ -239,20 +241,20 @@ export default function VideoDetailScreen() {
     /** メタ情報を1行にまとめる（日付 · 時間 · 解像度） */
     const metaLine = useMemo(() => {
         if (!video) return "";
-        const parts: string[] = [formatDateTime(video.capturedAt)];
+        const parts: string[] = [formatDateTime(video.capturedAt, locale)];
         if (assetInfoMeta) {
-            parts.push(formatDurationDecimal(assetInfoMeta.duration));
+            parts.push(formatDurationDecimal(assetInfoMeta.duration, locale));
             parts.push(`${assetInfoMeta.width}×${assetInfoMeta.height}`);
         } else {
-            parts.push(formatDuration(video.duration));
+            parts.push(formatDuration(video.duration, locale));
         }
         return parts.join("  ·  ");
-    }, [video, assetInfoMeta]);
+    }, [video, assetInfoMeta, locale]);
 
     if (isLoading) {
         return (
             <View style={styles.center}>
-                <Text style={styles.loadingText}>読み込み中...</Text>
+                <Text style={styles.loadingText}>{t("common.loading")}</Text>
             </View>
         );
     }
@@ -260,7 +262,7 @@ export default function VideoDetailScreen() {
     if (error || !video) {
         return (
             <View style={styles.center}>
-                <Text style={styles.loadingText}>{error ?? "動画が見つかりません"}</Text>
+                <Text style={styles.loadingText}>{error ?? t("videoDetail.notFound")}</Text>
             </View>
         );
     }
@@ -283,7 +285,7 @@ export default function VideoDetailScreen() {
                 ) : video.isFileAvailable !== 1 ? (
                     <View style={styles.unavailableBanner}>
                         <Text style={styles.unavailableText}>
-                            元の動画ファイルが見つかりません
+                            {t("videoDetail.fileMissing")}
                         </Text>
                     </View>
                 ) : (
@@ -310,9 +312,9 @@ export default function VideoDetailScreen() {
                         </TouchableOpacity>
                         <Text style={styles.saveStatus}>
                             {titleSaveStatus === "saving"
-                                ? "保存中..."
+                                ? t("videoDetail.saveStatus.saving")
                                 : titleSaveStatus === "saved"
-                                  ? "保存済み"
+                                  ? t("videoDetail.saveStatus.saved")
                                   : ""}
                         </Text>
                     </View>
@@ -329,21 +331,21 @@ export default function VideoDetailScreen() {
                                         await Linking.openURL("photos-redirect://");
                                     } catch {
                                         Alert.alert(
-                                            "写真アプリを開けません",
-                                            "写真アプリへのアクセスが利用できません。"
+                                            t("videoDetail.photosOpenFailed.title"),
+                                            t("videoDetail.photosOpenFailed.body")
                                         );
                                     }
                                 }}
                                 hitSlop={8}
                             >
-                                <Text style={styles.photosLink}>写真アプリ ↗</Text>
+                                <Text style={styles.photosLink}>{t("videoDetail.openPhotos")}</Text>
                             </TouchableOpacity>
                         )}
                     </View>
 
                     {/* スキー場名（編集可能） */}
                     <View style={styles.fieldSection}>
-                        <Text style={styles.fieldLabel}>スキー場</Text>
+                        <Text style={styles.fieldLabel}>{t("videoDetail.skiResortLabel")}</Text>
                         <SkiResortSearch
                             value={video.skiResortName}
                             onSelect={handleSaveSkiResort}
@@ -355,7 +357,7 @@ export default function VideoDetailScreen() {
 
                 {/* 滑走種別 */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>滑走種別</Text>
+                    <Text style={styles.sectionTitle}>{t("videoDetail.techniquesLabel")}</Text>
                     <TechniqueSelector
                         selected={video.techniques ?? []}
                         onChange={updateTechniques}
@@ -366,7 +368,7 @@ export default function VideoDetailScreen() {
 
                 {/* タグ（自動保存） */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>タグ</Text>
+                    <Text style={styles.sectionTitle}>{t("videoDetail.tagsLabel")}</Text>
                     <TagSelector
                         selectedTagIds={tagIds}
                         onChange={handleTagsChange}
@@ -378,12 +380,12 @@ export default function VideoDetailScreen() {
                 {/* メモ（自動保存） */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>メモ</Text>
+                        <Text style={styles.sectionTitle}>{t("videoDetail.memoLabel")}</Text>
                         <Text style={styles.saveStatus}>
                             {memoSaveStatus === "saving"
-                                ? "保存中..."
+                                ? t("videoDetail.saveStatus.saving")
                                 : memoSaveStatus === "saved"
-                                  ? "保存済み"
+                                  ? t("videoDetail.saveStatus.saved")
                                   : ""}
                         </Text>
                     </View>
@@ -392,7 +394,7 @@ export default function VideoDetailScreen() {
                         style={styles.memoInput}
                         value={memoInput}
                         onChangeText={setMemoInput}
-                        placeholder="振り返りメモを入力..."
+                        placeholder={t("videoDetail.memoPlaceholder")}
                         multiline
                         numberOfLines={6}
                         textAlignVertical="top"
@@ -401,7 +403,7 @@ export default function VideoDetailScreen() {
 
                 {/* 削除ボタン */}
                 <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-                    <Text style={styles.deleteButtonText}>この動画の記録を削除</Text>
+                    <Text style={styles.deleteButtonText}>{t("videoDetail.deleteRecord")}</Text>
                 </TouchableOpacity>
             </ScrollView>
         </KeyboardAvoidingView>

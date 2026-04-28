@@ -17,6 +17,7 @@ import {
     getOrCreateTag,
 } from "@/database/repositories/tagRepository";
 import { Colors } from "@/constants/colors";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { Tag } from "@/types";
 
 /**
@@ -24,6 +25,7 @@ import type { Tag } from "@/types";
  * タグの追加・削除を行う
  */
 export default function TagsSettingsScreen() {
+    const { t } = useTranslation();
     const [customTags, setCustomTags] = useState<Tag[]>([]);
     const [input, setInput] = useState("");
 
@@ -41,24 +43,27 @@ export default function TagsSettingsScreen() {
         if (!name) return;
 
         if (customTags.some((t) => t.name === name)) {
-            Alert.alert("追加できません", "同じ名前のタグがすでに存在します。");
+            Alert.alert(
+                t("settings.common.addFailed"),
+                t("settings.tags.duplicateName")
+            );
             return;
         }
 
         await getOrCreateTag(name, "custom");
         setInput("");
         await loadTags();
-    }, [input, customTags, loadTags]);
+    }, [input, customTags, loadTags, t]);
 
     const handleDelete = useCallback(
         (tag: Tag) => {
             Alert.alert(
-                "タグを削除",
-                `「${tag.name}」を削除しますか？\nこの操作は取り消せません。このタグが付いた動画からも削除されます。`,
+                t("settings.tags.deleteConfirm.title"),
+                t("settings.tags.deleteConfirmDetailed", { name: tag.name }),
                 [
-                    { text: "キャンセル", style: "cancel" },
+                    { text: t("common.cancel"), style: "cancel" },
                     {
-                        text: "削除",
+                        text: t("common.delete"),
                         style: "destructive",
                         onPress: async () => {
                             await deleteCustomTag(tag.id);
@@ -68,7 +73,7 @@ export default function TagsSettingsScreen() {
                 ]
             );
         },
-        [loadTags]
+        [loadTags, t]
     );
 
     return (
@@ -81,7 +86,7 @@ export default function TagsSettingsScreen() {
                 keyExtractor={(item) => String(item.id)}
                 ListEmptyComponent={
                     <Text style={styles.empty}>
-                        カスタムタグがありません。下のフォームから追加してください。
+                        {t("settings.tags.emptyWithHint")}
                     </Text>
                 }
                 renderItem={({ item }) => (
@@ -91,7 +96,7 @@ export default function TagsSettingsScreen() {
                             style={styles.deleteButton}
                             onPress={() => handleDelete(item)}
                         >
-                            <Text style={styles.deleteButtonText}>削除</Text>
+                            <Text style={styles.deleteButtonText}>{t("common.delete")}</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -105,7 +110,7 @@ export default function TagsSettingsScreen() {
                     style={styles.addInput}
                     value={input}
                     onChangeText={setInput}
-                    placeholder="タグ名を入力..."
+                    placeholder={t("settings.tags.addPlaceholder")}
                     returnKeyType="done"
                     onSubmitEditing={handleAdd}
                 />
@@ -114,7 +119,7 @@ export default function TagsSettingsScreen() {
                     onPress={handleAdd}
                     disabled={!input.trim()}
                 >
-                    <Text style={styles.addButtonText}>追加</Text>
+                    <Text style={styles.addButtonText}>{t("common.add")}</Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>

@@ -15,6 +15,7 @@ import {
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { Colors } from "@/constants/colors";
 import { useVideos } from "@/hooks/useVideos";
+import { useTranslation } from "@/i18n/useTranslation";
 import {
     detectDuplicateCandidates,
     type DuplicateCandidateGroup,
@@ -24,6 +25,19 @@ import { deleteVideosWithCleanup } from "@/services/videoDeletionService";
 function buildInitialSelectedIds(group: DuplicateCandidateGroup): Set<string> {
     return new Set(group.videos.slice(1).map((video) => video.id));
 }
+
+const DUPLICATE_REASON_KEYS: Record<string, string> = {
+    "長さが一致": "durationExact",
+    "長さの差が1秒以内": "durationWithinOne",
+    "長さの差が2秒以内": "durationWithinTwo",
+    "撮影時刻が一致": "capturedAtExact",
+    "撮影時刻の差が5秒以内": "capturedAtWithinFive",
+    "撮影時刻の差が1分以内": "capturedAtWithinMinute",
+    "ファイル名がほぼ一致": "filenameNearlyExact",
+    "ファイル名が似ている": "filenameSimilar",
+    "スキー場名が一致": "resortExact",
+    "一致条件は動画ごとに異なります": "mixed",
+};
 
 function DuplicateGroupCard({
     group,
@@ -36,6 +50,7 @@ function DuplicateGroupCard({
     onDeleteSelected: (groupId: string, videoIds: string[]) => Promise<void>;
     onOpenVideo: (id: string) => void;
 }) {
+    const { t } = useTranslation();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(() => buildInitialSelectedIds(group));
 
     useEffect(() => {
@@ -65,12 +80,12 @@ function DuplicateGroupCard({
         }
 
         Alert.alert(
-            "重複候補を削除",
-            `${deleteIds.length}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）`,
+            t("settings.duplicateCandidates.removeConfirm.title"),
+            t("settings.duplicateCandidates.removeConfirm.bodyWithCount", { count: deleteIds.length }),
             [
-                { text: "キャンセル", style: "cancel" },
+                { text: t("common.cancel"), style: "cancel" },
                 {
-                    text: "削除",
+                    text: t("common.delete"),
                     style: "destructive",
                     onPress: () => {
                         void onDeleteSelected(group.id, deleteIds);
@@ -78,15 +93,19 @@ function DuplicateGroupCard({
                 },
             ]
         );
-    }, [group.id, isDeleting, onDeleteSelected, selectedIds]);
+    }, [group.id, isDeleting, onDeleteSelected, selectedIds, t]);
 
     return (
         <View style={styles.groupCard}>
             <View style={styles.groupHeader}>
                 <View>
-                    <Text style={styles.groupTitle}>候補グループ</Text>
+                    <Text style={styles.groupTitle}>{t("settings.duplicateCandidates.groupTitle")}</Text>
                     <Text style={styles.groupMeta}>
-                        {group.videos.length}件 ・ スコア {group.similarityScore} ・ 削除予定 {selectedIds.size}件
+                        {t("settings.duplicateCandidates.groupMeta", {
+                            videoCount: group.videos.length,
+                            score: group.similarityScore,
+                            deleteCount: selectedIds.size,
+                        })}
                     </Text>
                 </View>
                 <View
@@ -98,7 +117,9 @@ function DuplicateGroupCard({
                     ]}
                 >
                     <Text style={styles.confidenceText}>
-                        {group.confidence === "high" ? "高" : "中"}
+                        {group.confidence === "high"
+                            ? t("settings.duplicateCandidates.confidence.high")
+                            : t("settings.duplicateCandidates.confidence.medium")}
                     </Text>
                 </View>
             </View>
@@ -107,7 +128,11 @@ function DuplicateGroupCard({
                 <View style={styles.reasonWrap}>
                     {group.reasons.map((reason) => (
                         <View key={reason} style={styles.reasonChip}>
-                            <Text style={styles.reasonText}>{reason}</Text>
+                            <Text style={styles.reasonText}>
+                                {DUPLICATE_REASON_KEYS[reason]
+                                    ? t(`settings.duplicateCandidates.reasons.${DUPLICATE_REASON_KEYS[reason]}`)
+                                    : reason}
+                            </Text>
                         </View>
                     ))}
                 </View>
@@ -140,7 +165,9 @@ function DuplicateGroupCard({
                                             : styles.selectionBadgeTextKeep,
                                     ]}
                                 >
-                                    {selectedIds.has(video.id) ? "削除予定" : "残す"}
+                                    {selectedIds.has(video.id)
+                                        ? t("settings.duplicateCandidates.markedForDelete")
+                                        : t("settings.duplicateCandidates.keepLabel")}
                                 </Text>
                             </View>
                             <View style={styles.videoActionsButtons}>
@@ -149,14 +176,14 @@ function DuplicateGroupCard({
                                     onPress={() => keepOnly(video.id)}
                                     disabled={isDeleting}
                                 >
-                                    <Text style={styles.inlineActionText}>これを残す</Text>
+                                    <Text style={styles.inlineActionText}>{t("settings.duplicateCandidates.keepThis")}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.inlineActionButton}
                                     onPress={() => onOpenVideo(video.id)}
                                     disabled={isDeleting}
                                 >
-                                    <Text style={styles.inlineActionText}>詳細</Text>
+                                    <Text style={styles.inlineActionText}>{t("common.detail")}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -167,7 +194,7 @@ function DuplicateGroupCard({
 
             <View style={styles.groupFooter}>
                 <Text style={styles.groupHint}>
-                    先頭以外を削除候補として選択しています。タップで切り替えできます。
+                    {t("settings.duplicateCandidates.groupHint")}
                 </Text>
                 <TouchableOpacity
                     style={[
@@ -180,7 +207,7 @@ function DuplicateGroupCard({
                     {isDeleting ? (
                         <ActivityIndicator size="small" color={Colors.headerText} />
                     ) : (
-                        <Text style={styles.deleteButtonText}>選択した動画を削除</Text>
+                        <Text style={styles.deleteButtonText}>{t("settings.duplicateCandidates.deleteSelected")}</Text>
                     )}
                 </TouchableOpacity>
             </View>
@@ -190,6 +217,7 @@ function DuplicateGroupCard({
 
 export default function DuplicateCandidatesScreen() {
     const router = useRouter();
+    const { t } = useTranslation();
     const { videos, isLoading, refresh } = useVideos();
     const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
     const [groups, setGroups] = useState<DuplicateCandidateGroup[]>([]);
@@ -227,16 +255,16 @@ export default function DuplicateCandidatesScreen() {
                 await refresh();
             } catch (error) {
                 Alert.alert(
-                    "削除に失敗しました",
+                    t("settings.duplicateCandidates.deleteFailed"),
                     error instanceof Error
                         ? error.message
-                        : "重複候補の削除中にエラーが発生しました。"
+                        : t("settings.duplicateCandidates.deleteFailedBody")
                 );
             } finally {
                 setDeletingGroupId((current) => (current === groupId ? null : current));
             }
         },
-        [refresh]
+        [refresh, t]
     );
 
     return (
@@ -248,14 +276,17 @@ export default function DuplicateCandidatesScreen() {
             )}
         >
             <View style={styles.summaryCard}>
-                <Text style={styles.summaryTitle}>重複候補</Text>
+                <Text style={styles.summaryTitle}>{t("settings.duplicateCandidates.title")}</Text>
                 <Text style={styles.summaryText}>
-                    撮影時刻、長さ、ファイル名、スキー場名が近い動画を候補として表示します。
+                    {t("settings.duplicateCandidates.summary")}
                 </Text>
                 <Text style={styles.summaryCount}>
                     {isComputing
-                        ? `${videos.length}件をスキャン中...`
-                        : `${videos.length}件中 ${groups.length}グループ`}
+                        ? t("settings.duplicateCandidates.scanningCount", { count: videos.length })
+                        : t("settings.duplicateCandidates.summaryCount", {
+                            videoCount: videos.length,
+                            groupCount: groups.length,
+                        })}
                 </Text>
             </View>
 
@@ -263,22 +294,24 @@ export default function DuplicateCandidatesScreen() {
                 <View style={styles.centerState}>
                     <ActivityIndicator size="large" color={Colors.alpineBlue} />
                     <Text style={styles.computingTitle}>
-                        {isLoading ? "動画を読み込んでいます" : "重複候補を計算しています"}
+                        {isLoading
+                            ? t("settings.duplicateCandidates.loadingVideos")
+                            : t("settings.duplicateCandidates.computing")}
                     </Text>
                     <Text style={styles.computingText}>
                         {isLoading
-                            ? "ライブラリの内容を取得しています。"
-                            : "ライブラリが大きい場合は数秒かかることがあります。"}
+                            ? t("settings.duplicateCandidates.loadingVideosBody")
+                            : t("settings.duplicateCandidates.computingBody")}
                     </Text>
                 </View>
             ) : groups.length === 0 ? (
                 <View style={styles.emptyState}>
-                    <Text style={styles.emptyTitle}>重複候補は見つかりませんでした</Text>
+                    <Text style={styles.emptyTitle}>{t("settings.duplicateCandidates.empty")}</Text>
                     <Text style={styles.emptyText}>
-                        現在の判定条件では確認が必要な組み合わせはありません。
+                        {t("settings.duplicateCandidates.emptyBody")}
                     </Text>
                     <TouchableOpacity style={styles.refreshButton} onPress={refresh}>
-                        <Text style={styles.refreshButtonText}>再スキャン</Text>
+                        <Text style={styles.refreshButtonText}>{t("settings.duplicateCandidates.rescan")}</Text>
                     </TouchableOpacity>
                 </View>
             ) : (

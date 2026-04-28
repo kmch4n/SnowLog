@@ -3,9 +3,11 @@
  */
 import { Alert } from "react-native";
 
+import { t } from "../i18n";
+
 export async function exportAllToJSON(): Promise<void> {
     Alert.alert(
-        "Web未対応",
-        "エクスポート機能はiOSアプリでのみ利用できます。"
+        t("settings.export.webUnsupportedTitle"),
+        t("settings.export.webUnsupportedBody")
     );
 }

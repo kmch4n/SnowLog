@@ -18,11 +18,13 @@ import { Colors } from "@/constants/colors";
 import { TagChip } from "@/components/TagChip";
 import { exportAllToJSON } from "@/services/exportService";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
+import { useTranslation } from "@/i18n/useTranslation";
 import { formatDate, formatDuration } from "@/utils/dateUtils";
 
 export default function VideoDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const navigation = useNavigation();
+    const { t, locale } = useTranslation();
     const { video, isLoading, error } = useVideoDetail(id);
 
     const [isExporting, setIsExporting] = useState(false);
@@ -32,11 +34,14 @@ export default function VideoDetailScreen() {
         try {
             await exportAllToJSON();
         } catch (e) {
-            Alert.alert("書き出し失敗", e instanceof Error ? e.message : "エラーが発生しました");
+            Alert.alert(
+                t("settings.export.failed"),
+                e instanceof Error ? e.message : t("common.unknownError")
+            );
         } finally {
             setIsExporting(false);
         }
-    }, []);
+    }, [t]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -47,17 +52,17 @@ export default function VideoDetailScreen() {
                     disabled={isExporting}
                 >
                     <Text style={{ color: Colors.headerText, fontSize: 14 }}>
-                        {isExporting ? "..." : "書き出し"}
+                        {isExporting ? "..." : t("settings.export.headerButton")}
                     </Text>
                 </TouchableOpacity>
             ),
         });
-    }, [navigation, isExporting, handleExport]);
+    }, [navigation, isExporting, handleExport, t]);
 
     if (isLoading) {
         return (
             <View style={styles.center}>
-                <Text style={styles.loadingText}>読み込み中...</Text>
+                <Text style={styles.loadingText}>{t("common.loading")}</Text>
             </View>
         );
     }
@@ -65,7 +70,7 @@ export default function VideoDetailScreen() {
     if (error || !video) {
         return (
             <View style={styles.center}>
-                <Text style={styles.loadingText}>{error ?? "動画が見つかりません"}</Text>
+                <Text style={styles.loadingText}>{error ?? t("videoDetail.notFound")}</Text>
             </View>
         );
     }
@@ -77,7 +82,7 @@ export default function VideoDetailScreen() {
                 <View style={styles.videoPlaceholder}>
                     <Text style={styles.videoPlaceholderIcon}>▶</Text>
                     <Text style={styles.videoPlaceholderText}>
-                        動画再生はiOSアプリでご利用ください
+                        {t("videoDetail.webPlaybackNotice")}
                     </Text>
                 </View>
 
@@ -92,13 +97,13 @@ export default function VideoDetailScreen() {
                         </Text>
                     </View>
                     <Text style={styles.metaRow}>
-                        📅 {formatDate(video.capturedAt)}　⏱ {formatDuration(video.duration)}
+                        📅 {formatDate(video.capturedAt, locale)}　⏱ {formatDuration(video.duration, locale)}
                     </Text>
 
                     <View style={styles.fieldSection}>
-                        <Text style={styles.fieldLabel}>スキー場</Text>
+                        <Text style={styles.fieldLabel}>{t("videoDetail.skiResortLabel")}</Text>
                         <Text style={styles.readonlyText}>
-                            {video.skiResortName ?? "未設定"}
+                            {video.skiResortName ?? t("videoDetail.unset")}
                         </Text>
                     </View>
                 </View>
@@ -106,13 +111,13 @@ export default function VideoDetailScreen() {
                 {/* タグ */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>タグ</Text>
+                        <Text style={styles.sectionTitle}>{t("videoDetail.tagsLabel")}</Text>
                     </View>
                     <View style={styles.tagList}>
                         {video.tags.length > 0 ? (
                             video.tags.map((tag) => <TagChip key={tag.id} tag={tag} />)
                         ) : (
-                            <Text style={styles.emptyTag}>タグなし</Text>
+                            <Text style={styles.emptyTag}>{t("videoDetail.noTags")}</Text>
                         )}
                     </View>
                 </View>
@@ -120,17 +125,17 @@ export default function VideoDetailScreen() {
                 {/* メモ */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>メモ</Text>
+                        <Text style={styles.sectionTitle}>{t("videoDetail.memoLabel")}</Text>
                     </View>
                     <Text style={styles.memoText}>
-                        {video.memo || "メモなし"}
+                        {video.memo || t("videoDetail.noMemo")}
                     </Text>
                 </View>
 
                 {/* iOS限定機能の案内 */}
                 <View style={styles.iosNotice}>
                     <Text style={styles.iosNoticeText}>
-                        ✏️ メモ・タグ・スキー場の編集は iOS アプリでのみ利用できます
+                        {t("videoDetail.webEditNotice")}
                     </Text>
                 </View>
             </ScrollView>

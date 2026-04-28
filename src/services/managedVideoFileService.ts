@@ -1,5 +1,7 @@
 import * as FileSystem from "expo-file-system/legacy";
 
+import { t } from "../i18n";
+
 const MANAGED_VIDEO_DIR = `${FileSystem.documentDirectory}videos/`;
 
 function isSupportedManagedVideoUri(sourceUri: string): boolean {
@@ -36,7 +38,7 @@ export async function persistManagedVideoFile(
     filename?: string | null
 ): Promise<string> {
     if (!isSupportedManagedVideoUri(sourceUri)) {
-        throw new Error("Could not access the imported video file.");
+        throw new Error(t("errors.unsupportedSource"));
     }
 
     await ensureManagedVideoDir();

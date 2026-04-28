@@ -2,11 +2,12 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "@/constants/colors";
 import { useAppPreference } from "@/hooks/useAppPreference";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { WeekStartDay } from "@/types";
 
-const OPTIONS: { value: WeekStartDay; label: string }[] = [
-    { value: "monday", label: "月曜日" },
-    { value: "sunday", label: "日曜日" },
+const OPTIONS: { value: WeekStartDay; labelKey: string }[] = [
+    { value: "monday", labelKey: "settings.calendar.monday" },
+    { value: "sunday", labelKey: "settings.calendar.sunday" },
 ];
 
 /**
@@ -14,6 +15,7 @@ const OPTIONS: { value: WeekStartDay; label: string }[] = [
  * 週の開始曜日を切り替える
  */
 export default function CalendarSettingsScreen() {
+    const { t } = useTranslation();
     const [weekStartDay, setWeekStartDay] = useAppPreference(
         "weekStartDay",
         "monday"
@@ -22,7 +24,7 @@ export default function CalendarSettingsScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>週の開始曜日</Text>
+                <Text style={styles.sectionTitle}>{t("settings.calendar.weekStartDay")}</Text>
                 <View style={styles.segmentRow}>
                     {OPTIONS.map((opt) => {
                         const isActive = weekStartDay === opt.value;
@@ -42,7 +44,7 @@ export default function CalendarSettingsScreen() {
                                         isActive && styles.segmentTextActive,
                                     ]}
                                 >
-                                    {opt.label}
+                                    {t(opt.labelKey)}
                                 </Text>
                             </TouchableOpacity>
                         );

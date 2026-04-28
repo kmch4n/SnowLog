@@ -1,6 +1,7 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "../../constants/colors";
+import { useTranslation } from "../../i18n/useTranslation";
 
 interface BarItem {
     label: string;
@@ -24,12 +25,13 @@ export function HorizontalBarChart({
     barHeight = 20,
     onItemPress,
 }: HorizontalBarChartProps) {
+    const { t } = useTranslation();
     const items = data.slice(0, maxItems);
     const maxValue = Math.max(...items.map((d) => d.value), 1);
 
     if (items.length === 0) {
         return (
-            <Text style={styles.emptyText}>データなし</Text>
+            <Text style={styles.emptyText}>{t("dashboard.empty")}</Text>
         );
     }
 

@@ -3,6 +3,11 @@
  */
 
 import type { Season } from "../types/dashboard";
+import type { SupportedLocale } from "../i18n/types";
+
+function toIntlLocale(locale: SupportedLocale = "ja"): string {
+    return locale === "ja" ? "ja-JP" : "en-US";
+}
 
 /**
  * EXIF DateTimeOriginal 文字列をミリ秒タイムスタンプに変換する
@@ -22,9 +27,12 @@ export function parseExifDateTime(exifStr: string): number | null {
  * Unix timestamp（秒）を日本語形式の日付文字列に変換する
  * 例: 1735689600 → "2025年1月1日"
  */
-export function formatDate(unixTimestamp: number): string {
+export function formatDate(
+    unixTimestamp: number,
+    locale: SupportedLocale = "ja"
+): string {
     const date = new Date(unixTimestamp * 1000);
-    return date.toLocaleDateString("ja-JP", {
+    return date.toLocaleDateString(toIntlLocale(locale), {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -35,9 +43,12 @@ export function formatDate(unixTimestamp: number): string {
  * Unix timestamp（秒）を短い日付形式に変換する
  * 例: 1735689600 → "2025/01/01"
  */
-export function formatDateShort(unixTimestamp: number): string {
+export function formatDateShort(
+    unixTimestamp: number,
+    locale: SupportedLocale = "ja"
+): string {
     const date = new Date(unixTimestamp * 1000);
-    return date.toLocaleDateString("ja-JP", {
+    return date.toLocaleDateString(toIntlLocale(locale), {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
@@ -48,9 +59,12 @@ export function formatDateShort(unixTimestamp: number): string {
  * Unix timestamp（秒）を日本語形式の日時文字列に変換する
  * 例: 1735689600 → "2025年1月1日 14:30"
  */
-export function formatDateTime(unixTimestamp: number): string {
+export function formatDateTime(
+    unixTimestamp: number,
+    locale: SupportedLocale = "ja"
+): string {
     const date = new Date(unixTimestamp * 1000);
-    return date.toLocaleString("ja-JP", {
+    return date.toLocaleString(toIntlLocale(locale), {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -63,9 +77,15 @@ export function formatDateTime(unixTimestamp: number): string {
  * 小数秒を "1分12.5秒" 形式に変換する
  * 例: 72.483 → "1分12.5秒"
  */
-export function formatDurationDecimal(seconds: number): string {
+export function formatDurationDecimal(
+    seconds: number,
+    locale: SupportedLocale = "ja"
+): string {
     const m = Math.floor(seconds / 60);
     const s = (seconds % 60).toFixed(1);
+    if (locale === "en") {
+        return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
     return m > 0 ? `${m}分${s}秒` : `${s}秒`;
 }
 
@@ -73,7 +93,10 @@ export function formatDurationDecimal(seconds: number): string {
  * 秒数を "mm:ss" 形式に変換する
  * 例: 185 → "3:05"
  */
-export function formatDuration(seconds: number): string {
+export function formatDuration(
+    seconds: number,
+    _locale: SupportedLocale = "ja"
+): string {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${String(s).padStart(2, "0")}`;
@@ -138,9 +161,16 @@ export function getCurrentSeason(): Season {
  * 秒数を "X時間Y分" 形式にフォーマットする（ダッシュボード表示用）
  * 例: 12240 → "3時間24分", 300 → "5分"
  */
-export function formatDurationHM(totalSeconds: number): string {
+export function formatDurationHM(
+    totalSeconds: number,
+    locale: SupportedLocale = "ja"
+): string {
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
+    if (locale === "en") {
+        if (h === 0) return `${m} min`;
+        return `${h} hr ${m} min`;
+    }
     if (h === 0) return `${m}分`;
     return `${h}時間${m}分`;
 }

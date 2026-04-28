@@ -19,6 +19,7 @@ import {
     SNOW_CONDITION_OPTIONS,
     WEATHER_OPTIONS,
 } from "@/constants/diaryOptions";
+import { useTranslation } from "@/i18n/useTranslation";
 import { formatDate } from "@/utils/dateUtils";
 import { DiaryOptionChips } from "./DiaryOptionChips";
 import { SkiResortSearch } from "./SkiResortSearch";
@@ -61,6 +62,7 @@ export function DiaryEditModal({
     onDelete,
     onClose,
 }: DiaryEditModalProps) {
+    const { t, locale } = useTranslation();
     // --- Core fields ---
     const [weather, setWeather] = useState<string | null>(null);
     const [snowConditions, setSnowConditions] = useState<string[]>([]);
@@ -156,10 +158,10 @@ export function DiaryEditModal({
             onClose();
         } else if (isEditing) {
             // Existing entry was cleared — confirm deletion
-            Alert.alert("日記を削除", "全ての内容が削除されます。よろしいですか？", [
-                { text: "キャンセル", style: "cancel" },
+            Alert.alert(t("diary.deleteConfirm.title"), t("diary.deleteAllOnClose"), [
+                { text: t("common.cancel"), style: "cancel" },
                 {
-                    text: "削除",
+                    text: t("common.delete"),
                     style: "destructive",
                     onPress: async () => {
                         await onDelete();
@@ -186,13 +188,14 @@ export function DiaryEditModal({
         onSave,
         onDelete,
         onClose,
+        t,
     ]);
 
     const handleDelete = useCallback(() => {
-        Alert.alert("日記を削除", "この日の日記を削除しますか？", [
-            { text: "キャンセル", style: "cancel" },
+        Alert.alert(t("diary.deleteConfirm.title"), t("diary.deleteConfirm.body"), [
+            { text: t("common.cancel"), style: "cancel" },
             {
-                text: "削除",
+                text: t("common.delete"),
                 style: "destructive",
                 onPress: async () => {
                     await onDelete();
@@ -200,7 +203,7 @@ export function DiaryEditModal({
                 },
             },
         ]);
-    }, [onDelete, onClose]);
+    }, [onDelete, onClose, t]);
 
     // Convert dateKey "YYYY-MM-DD" to displayable date
     const displayDate = (() => {
@@ -211,7 +214,7 @@ export function DiaryEditModal({
                 Number(parts[1]) - 1,
                 Number(parts[2])
             ).getTime() / 1000;
-            return formatDate(ts);
+            return formatDate(ts, locale);
         }
         return dateKey;
     })();
@@ -243,29 +246,31 @@ export function DiaryEditModal({
                 >
                     {/* Weather */}
                     <View style={styles.section}>
-                        <Text style={styles.label}>天気</Text>
+                        <Text style={styles.label}>{t("diary.weatherLabel")}</Text>
                         <DiaryOptionChips
                             options={WEATHER_OPTIONS}
                             selected={weather}
                             onChange={setWeather}
                             showIcon
+                            labelPrefix="diary.weather"
                         />
                     </View>
 
                     {/* Snow condition (multi-select) */}
                     <View style={styles.section}>
-                        <Text style={styles.label}>雪質</Text>
+                        <Text style={styles.label}>{t("diary.snowConditionLabel")}</Text>
                         <DiaryOptionChips
                             options={SNOW_CONDITION_OPTIONS}
                             selected={snowConditions}
                             onChange={setSnowConditions}
                             multiple
+                            labelPrefix="diary.snow"
                         />
                     </View>
 
                     {/* Ski resort */}
                     <View style={styles.section}>
-                        <Text style={styles.label}>スキー場</Text>
+                        <Text style={styles.label}>{t("diary.skiResortLabel")}</Text>
                         <SkiResortSearch
                             value={skiResortName}
                             onSelect={setSkiResortName}
@@ -274,12 +279,12 @@ export function DiaryEditModal({
 
                     {/* Impressions */}
                     <View style={styles.section}>
-                        <Text style={styles.label}>感想</Text>
+                        <Text style={styles.label}>{t("diary.impressionsLabel")}</Text>
                         <TextInput
                             style={styles.impressionsInput}
                             value={impressions}
                             onChangeText={setImpressions}
-                            placeholder="今日の感想を書く..."
+                            placeholder={t("diary.impressionsPlaceholder")}
                             placeholderTextColor={Colors.textTertiary}
                             multiline
                             numberOfLines={4}
@@ -295,8 +300,8 @@ export function DiaryEditModal({
                     >
                         <Text style={styles.optionalToggleText}>
                             {showOptional
-                                ? "▾ その他の項目を閉じる"
-                                : "▸ その他の項目"}
+                                ? t("diary.optionalSectionExpanded")
+                                : t("diary.optionalSectionCollapsed")}
                         </Text>
                     </TouchableOpacity>
 
@@ -308,77 +313,78 @@ export function DiaryEditModal({
                         >
                             {/* Temperature */}
                             <View style={styles.section}>
-                                <Text style={styles.label}>気温</Text>
+                                <Text style={styles.label}>{t("diary.temperatureLabel")}</Text>
                                 <View style={styles.inlineInputRow}>
                                     <TextInput
                                         style={styles.numberInput}
                                         value={temperature}
                                         onChangeText={handleTemperatureChange}
-                                        placeholder="-5"
+                                        placeholder={t("diary.temperaturePlaceholder")}
                                         placeholderTextColor={
                                             Colors.textTertiary
                                         }
                                         keyboardType="numbers-and-punctuation"
                                     />
-                                    <Text style={styles.unit}>°C</Text>
+                                    <Text style={styles.unit}>{t("diary.temperatureUnit")}</Text>
                                 </View>
                             </View>
 
                             {/* Companions */}
                             <View style={styles.section}>
-                                <Text style={styles.label}>同行者</Text>
+                                <Text style={styles.label}>{t("diary.companionsLabel")}</Text>
                                 <TextInput
                                     style={styles.textInput}
                                     value={companions}
                                     onChangeText={setCompanions}
-                                    placeholder="一緒に行った人"
+                                    placeholder={t("diary.companionsPlaceholder")}
                                     placeholderTextColor={Colors.textTertiary}
                                 />
                             </View>
 
                             {/* Fatigue level */}
                             <View style={styles.section}>
-                                <Text style={styles.label}>疲労度</Text>
+                                <Text style={styles.label}>{t("diary.fatigueLabel")}</Text>
                                 <DiaryOptionChips
                                     options={FATIGUE_LEVEL_OPTIONS}
                                     selected={fatigueLevel}
                                     onChange={setFatigueLevel}
+                                    labelPrefix="diary.fatigue"
                                 />
                             </View>
 
                             {/* Expenses */}
                             <View style={styles.section}>
-                                <Text style={styles.label}>費用</Text>
+                                <Text style={styles.label}>{t("diary.expensesLabel")}</Text>
                                 <View style={styles.inlineInputRow}>
                                     <TextInput
                                         style={styles.numberInput}
                                         value={expenses}
                                         onChangeText={setExpenses}
-                                        placeholder="5000"
+                                        placeholder={t("diary.expensesPlaceholder")}
                                         placeholderTextColor={
                                             Colors.textTertiary
                                         }
                                         keyboardType="number-pad"
                                     />
-                                    <Text style={styles.unit}>円</Text>
+                                    <Text style={styles.unit}>{t("diary.expensesUnit")}</Text>
                                 </View>
                             </View>
 
                             {/* Number of runs */}
                             <View style={styles.section}>
-                                <Text style={styles.label}>滑走本数</Text>
+                                <Text style={styles.label}>{t("diary.runsLabel")}</Text>
                                 <View style={styles.inlineInputRow}>
                                     <TextInput
                                         style={styles.numberInput}
                                         value={numberOfRuns}
                                         onChangeText={setNumberOfRuns}
-                                        placeholder="10"
+                                        placeholder={t("diary.runsPlaceholder")}
                                         placeholderTextColor={
                                             Colors.textTertiary
                                         }
                                         keyboardType="number-pad"
                                     />
-                                    <Text style={styles.unit}>本</Text>
+                                    <Text style={styles.unit}>{t("diary.runsUnit")}</Text>
                                 </View>
                             </View>
                         </Animated.View>
@@ -390,7 +396,7 @@ export function DiaryEditModal({
                             onPress={handleDelete}
                         >
                             <Text style={styles.deleteButtonText}>
-                                この日の日記を削除
+                                {t("diary.deleteEntry")}
                             </Text>
                         </TouchableOpacity>
                     )}
