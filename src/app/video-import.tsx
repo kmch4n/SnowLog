@@ -39,6 +39,10 @@ import { importVideo, type ImportableAsset } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
 import { randomUUID } from "expo-crypto";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
+import {
+    estimateBulkImportRemainingMs,
+    formatRemainingTime,
+} from "@/utils/bulkImportProgressUtils";
 import { formatDate, formatDateTime, formatDuration, parseExifDateTime } from "@/utils/dateUtils";
 import { findNearbySkiResorts } from "@/utils/geoUtils";
 import * as FileSystem from "expo-file-system/legacy";
@@ -47,6 +51,7 @@ const IMPORT_CACHE_DIR = `${FileSystem.cacheDirectory ?? FileSystem.documentDire
 const BULK_SELECTION_LIMIT = 20;
 
 type BulkPhase = "idle" | "preparing" | "importing" | "gps-confirm";
+type BulkImportStep = "resolving" | "downloading" | "staging" | "saving";
 
 function isSupportedImportUri(sourceUri: string): boolean {
     return sourceUri.startsWith("file://") || sourceUri.startsWith("content://");
@@ -113,20 +118,34 @@ export default function VideoImportScreen() {
     const [bulkPhase, setBulkPhase] = useState<BulkPhase>("idle");
     const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
     const [bulkCurrentFilename, setBulkCurrentFilename] = useState<string | undefined>();
+    const [bulkStep, setBulkStep] = useState<BulkImportStep | null>(null);
+    const [bulkEtaMs, setBulkEtaMs] = useState<number | null>(null);
     const [bulkSkippedCount, setBulkSkippedCount] = useState(0);
     const [bulkErrorCount, setBulkErrorCount] = useState(0);
     const [bulkGpsGroups, setBulkGpsGroups] = useState<BulkImportGpsGroup[]>([]);
     const [bulkNoGpsCount, setBulkNoGpsCount] = useState(0);
     const [isApplyingGps, setIsApplyingGps] = useState(false);
+    const [isBulkStopRequested, setIsBulkStopRequested] = useState(false);
+    const bulkStopRequestedRef = useRef(false);
+    const bulkStartedAtRef = useRef<number | null>(null);
+    const bulkCurrentItemStartedAtRef = useRef<number | null>(null);
+    const bulkCompletedElapsedMsRef = useRef(0);
 
     const resetBulkImportState = useCallback(() => {
         setBulkPhase("idle");
         setBulkProgress({ current: 0, total: 0 });
         setBulkCurrentFilename(undefined);
+        setBulkStep(null);
+        setBulkEtaMs(null);
         setBulkSkippedCount(0);
         setBulkErrorCount(0);
         setBulkGpsGroups([]);
         setBulkNoGpsCount(0);
+        setIsBulkStopRequested(false);
+        bulkStopRequestedRef.current = false;
+        bulkStartedAtRef.current = null;
+        bulkCurrentItemStartedAtRef.current = null;
+        bulkCompletedElapsedMsRef.current = 0;
     }, []);
 
     const cleanupStagedFile = useCallback(async () => {
@@ -178,6 +197,33 @@ export default function VideoImportScreen() {
             });
         }
     }, [isImportBlocked, navigation, t]);
+
+    useEffect(() => {
+        if (bulkPhase !== "importing") return undefined;
+        const timer = setInterval(() => {
+            if (bulkStartedAtRef.current == null) {
+                setBulkEtaMs(null);
+                return;
+            }
+
+            setBulkEtaMs(
+                estimateBulkImportRemainingMs({
+                    completedCount: bulkProgress.current,
+                    totalCount: bulkProgress.total,
+                    elapsedMs: bulkCompletedElapsedMsRef.current,
+                    nowMs: Date.now(),
+                    currentItemStartedAtMs: bulkCurrentItemStartedAtRef.current,
+                })
+            );
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [bulkPhase, bulkProgress]);
+
+    const handleRequestBulkStop = useCallback(() => {
+        bulkStopRequestedRef.current = true;
+        setIsBulkStopRequested(true);
+        hapticWarning();
+    }, []);
 
     const stageForImport = useCallback(
         async (sourceUri: string | null, filename?: string | null): Promise<string | null> => {
@@ -432,20 +478,28 @@ export default function VideoImportScreen() {
 
             const pendingItems = items.filter((i) => i.status === "pending");
             setBulkProgress({ current: 0, total: pendingItems.length });
+            setBulkEtaMs(null);
 
             let errorCount = 0;
+            bulkStartedAtRef.current = Date.now();
+            bulkCompletedElapsedMsRef.current = 0;
 
             for (let idx = 0; idx < pendingItems.length; idx++) {
+                if (bulkStopRequestedRef.current) break;
+
                 const item = pendingItems[idx];
                 const asset = assets[assetIndexMap.get(item.assetId)!];
                 item.status = "importing";
                 setBulkCurrentFilename(item.filename);
+                setBulkStep("resolving");
+                bulkCurrentItemStartedAtRef.current = Date.now();
 
                 try {
                     // メタデータ取得（GPS + localUri）
                     let assetInfo: Awaited<ReturnType<typeof getAssetInfoWithDownload>> | null = null;
                     if (asset.assetId) {
                         try {
+                            setBulkStep("downloading");
                             assetInfo = await getAssetInfoWithDownload(asset.assetId);
                         } catch {
                             assetInfo = null;
@@ -453,6 +507,7 @@ export default function VideoImportScreen() {
                     }
 
                     // ファイルをステージング
+                    setBulkStep("staging");
                     const sourceUri = assetInfo?.localUri ?? asset.uri ?? null;
                     if (!sourceUri || !isSupportedImportUri(sourceUri)) {
                         throw new Error(t("import.bulk.unsupported"));
@@ -460,6 +515,7 @@ export default function VideoImportScreen() {
                     const stagedUri = await stageAssetFile(sourceUri, asset.fileName);
 
                     try {
+                        setBulkStep("saving");
                         // 撮影日時を解決
                         const creationTime =
                             (asset.exif?.DateTimeOriginal
@@ -517,8 +573,23 @@ export default function VideoImportScreen() {
                     errorCount++;
                 }
 
+                if (bulkStartedAtRef.current != null) {
+                    bulkCompletedElapsedMsRef.current = Date.now() - bulkStartedAtRef.current;
+                }
+                bulkCurrentItemStartedAtRef.current = null;
                 setBulkProgress({ current: idx + 1, total: pendingItems.length });
+                setBulkEtaMs(
+                    estimateBulkImportRemainingMs({
+                        completedCount: idx + 1,
+                        totalCount: pendingItems.length,
+                        elapsedMs: bulkCompletedElapsedMsRef.current,
+                        nowMs: Date.now(),
+                        currentItemStartedAtMs: null,
+                    })
+                );
                 setBulkErrorCount(errorCount);
+
+                if (bulkStopRequestedRef.current) break;
             }
 
             // GPS グループ構築
@@ -528,7 +599,7 @@ export default function VideoImportScreen() {
                 (i) => i.status === "success" && !i.detectedResort
             ).length;
 
-            if (gpsGroups.length > 0) {
+            if (!bulkStopRequestedRef.current && gpsGroups.length > 0) {
                 setBulkGpsGroups(gpsGroups);
                 setBulkNoGpsCount(noGpsCount);
                 setBulkPhase("gps-confirm");
@@ -554,6 +625,8 @@ export default function VideoImportScreen() {
         // resolves. Without this guard, the idle import UI is exposed and
         // interactable during that download window.
         bulkCompletionExitRef.current = false;
+        bulkStopRequestedRef.current = false;
+        setIsBulkStopRequested(false);
         setBulkPhase("preparing");
 
         let pickerResult: ImagePicker.ImagePickerResult;
@@ -580,12 +653,19 @@ export default function VideoImportScreen() {
             return;
         }
 
+        if (bulkStopRequestedRef.current) {
+            resetBulkImportState();
+            return;
+        }
+
         // 一括モード開始
         setBulkPhase("importing");
         setBulkProgress({ current: 0, total: 0 });
         setBulkSkippedCount(0);
         setBulkErrorCount(0);
         setBulkCurrentFilename(undefined);
+        setBulkStep(null);
+        setBulkEtaMs(null);
 
         try {
             await processBulkImport(pickerResult.assets);
@@ -649,6 +729,20 @@ export default function VideoImportScreen() {
                 <Text style={styles.preparingSubtitle}>
                     {t("import.preparingSubtitle")}
                 </Text>
+                <TouchableOpacity
+                    style={[
+                        styles.preparingStopButton,
+                        isBulkStopRequested && styles.preparingStopButtonDisabled,
+                    ]}
+                    onPress={handleRequestBulkStop}
+                    disabled={isBulkStopRequested}
+                >
+                    <Text style={styles.preparingStopButtonText}>
+                        {isBulkStopRequested
+                            ? t("import.bulk.stopRequested")
+                            : t("import.bulk.stopButton")}
+                    </Text>
+                </TouchableOpacity>
             </View>
         );
     }
@@ -663,6 +757,16 @@ export default function VideoImportScreen() {
                     skippedCount={bulkSkippedCount}
                     errorCount={bulkErrorCount}
                     currentFilename={bulkCurrentFilename}
+                    stepLabel={bulkStep ? t(`import.bulk.steps.${bulkStep}`) : undefined}
+                    remainingLabel={
+                        bulkEtaMs != null
+                            ? t("import.bulk.remainingTime", {
+                                time: formatRemainingTime(bulkEtaMs, t),
+                            })
+                            : t("import.bulk.remainingUnknown")
+                    }
+                    isStopRequested={isBulkStopRequested}
+                    onRequestStop={handleRequestBulkStop}
                 />
             </View>
         );
@@ -1038,5 +1142,25 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
         textAlign: "center",
         lineHeight: 20,
+    },
+    preparingStopButton: {
+        minWidth: 160,
+        backgroundColor: Colors.freshSnow,
+        borderWidth: 1,
+        borderColor: Colors.error,
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        alignItems: "center",
+        marginTop: 8,
+    },
+    preparingStopButtonDisabled: {
+        borderColor: Colors.textTertiary,
+        opacity: 0.7,
+    },
+    preparingStopButtonText: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: Colors.error,
     },
 });
