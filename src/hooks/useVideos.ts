@@ -6,6 +6,11 @@ import { getVideosByFilter } from "../database/repositories/videoRepository";
 import { t } from "../i18n";
 import type { FilterOptions, VideoWithTags } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
+import { areVideoListsEqual } from "../utils/videoListEquality";
+
+interface FetchVideosOptions {
+    showLoading?: boolean;
+}
 
 /**
  * 動画一覧を取得・管理するカスタムフック
@@ -45,8 +50,11 @@ export function useVideos(filter?: FilterOptions) {
         };
     }, [hasFilter, skiResortName, stableTagIds, dateFrom, dateTo, searchText, favoritesOnly]);
 
-    const fetchVideos = useCallback(async () => {
-        setIsLoading(true);
+    const fetchVideos = useCallback(async (options: FetchVideosOptions = {}) => {
+        const showLoading = options.showLoading ?? true;
+        if (showLoading) {
+            setIsLoading(true);
+        }
         setError(null);
         try {
             const rawVideos = await getVideosByFilter(stableFilter);
@@ -62,7 +70,9 @@ export function useVideos(filter?: FilterOptions) {
                 })
             );
 
-            setVideos(videosWithTags);
+            setVideos((current) =>
+                areVideoListsEqual(current, videosWithTags) ? current : videosWithTags
+            );
         } catch (e) {
             setError(e instanceof Error ? e.message : t("errors.videoLoadFailed"));
         } finally {
@@ -73,9 +83,13 @@ export function useVideos(filter?: FilterOptions) {
     // 画面にフォーカスが戻るたびにリロード（削除・編集の反映）
     useFocusEffect(
         useCallback(() => {
-            fetchVideos();
+            fetchVideos({ showLoading: false });
         }, [fetchVideos])
     );
 
-    return { videos, isLoading, error, refresh: fetchVideos };
+    const refresh = useCallback(async () => {
+        await fetchVideos({ showLoading: true });
+    }, [fetchVideos]);
+
+    return { videos, isLoading, error, refresh };
 }
