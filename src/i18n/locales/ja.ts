@@ -55,6 +55,12 @@ export const ja = {
             title: "動画を一括削除",
             body: "{{count}}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",
         },
+        swipeDelete: {
+            title: "動画を削除",
+            body: "「{{name}}」の記録を削除しますか？\n（元の動画ファイルは削除されません）",
+            deleteFailedTitle: "削除に失敗しました",
+            deleteFailedBody: "動画の記録を削除できませんでした。時間をおいてもう一度試してください。",
+        },
     },
     bulkToolbar: {
         selectedCount: "{{count}}件選択中",

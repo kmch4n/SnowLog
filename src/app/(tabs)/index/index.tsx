@@ -21,6 +21,7 @@ import { useSelectionMode } from "@/hooks/useSelectionMode";
 import { useVideos } from "@/hooks/useVideos";
 import { useTranslation } from "@/i18n/useTranslation";
 import {
+    hapticError,
     hapticLight,
     hapticSelection,
     hapticWarning,
@@ -163,6 +164,7 @@ export default function HomeScreen() {
         toggleSelection,
     } = useSelectionMode();
     const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+    const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
 
     const currentVideos = activeTab === 0 ? allVideos : favVideos;
 
@@ -231,6 +233,40 @@ export default function HomeScreen() {
         );
     }, [t, selectedIds, selectedCount, exitSelectionMode, refreshAll, refreshFav]);
 
+    const handleSwipeDelete = useCallback(
+        (video: VideoWithTags) => {
+            Alert.alert(
+                t("home.swipeDelete.title"),
+                t("home.swipeDelete.body", { name: video.title ?? video.filename }),
+                [
+                    { text: t("common.cancel"), style: "cancel" },
+                    {
+                        text: t("common.delete"),
+                        style: "destructive",
+                        onPress: async () => {
+                            hapticWarning();
+                            setDeletingVideoId(video.id);
+                            try {
+                                await deleteVideosWithCleanup([video.id]);
+                                refreshAll();
+                                refreshFav();
+                            } catch {
+                                hapticError();
+                                Alert.alert(
+                                    t("home.swipeDelete.deleteFailedTitle"),
+                                    t("home.swipeDelete.deleteFailedBody")
+                                );
+                            } finally {
+                                setDeletingVideoId(null);
+                            }
+                        },
+                    },
+                ]
+            );
+        },
+        [t, refreshAll, refreshFav]
+    );
+
     const handleTabPress = useCallback(
         (index: number) => {
             if (index === activeTab) return;
@@ -282,9 +318,19 @@ export default function HomeScreen() {
                 onLongPress={() => handleVideoLongPress(item.id)}
                 isSelectionMode={isSelectionMode}
                 isSelected={selectedIds.has(item.id)}
+                onSwipeDelete={() => handleSwipeDelete(item)}
+                isSwipeDeleteDisabled={isBulkProcessing || deletingVideoId !== null}
             />
         ),
-        [handleVideoPress, handleVideoLongPress, isSelectionMode, selectedIds]
+        [
+            deletingVideoId,
+            handleSwipeDelete,
+            handleVideoPress,
+            handleVideoLongPress,
+            isBulkProcessing,
+            isSelectionMode,
+            selectedIds,
+        ]
     );
 
     const renderSectionHeader = useCallback(

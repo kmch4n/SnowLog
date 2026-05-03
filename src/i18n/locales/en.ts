@@ -57,6 +57,12 @@ export const en: Translations = {
             title: "Delete videos",
             body: "Delete {{count}} video record(s)?\n(The original files are not deleted.)",
         },
+        swipeDelete: {
+            title: "Delete video",
+            body: "Delete the record for \"{{name}}\"?\n(The original file is not deleted.)",
+            deleteFailedTitle: "Delete failed",
+            deleteFailedBody: "Could not delete the video record. Please try again later.",
+        },
     },
     bulkToolbar: {
         selectedCount: "{{count}} selected",

@@ -1,4 +1,10 @@
+import { useCallback } from "react";
+import { SymbolView } from "expo-symbols";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import ReanimatedSwipeable, {
+    type SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
+import type { SharedValue } from "react-native-reanimated";
 
 import { Colors } from "../constants/colors";
 import {
@@ -9,6 +15,8 @@ import { useTranslation } from "../i18n/useTranslation";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
 
+const IOS_DESTRUCTIVE_RED = "#FF3B30";
+
 interface VideoCardCompactProps {
     video: VideoWithTags;
     onPress: () => void;
@@ -16,6 +24,8 @@ interface VideoCardCompactProps {
     isSelectionMode?: boolean;
     isSelected?: boolean;
     showResort?: boolean;
+    onSwipeDelete?: () => void;
+    isSwipeDeleteDisabled?: boolean;
 }
 
 /**
@@ -30,12 +40,48 @@ export function VideoCardCompact({
     isSelectionMode = false,
     isSelected = false,
     showResort = false,
+    onSwipeDelete,
+    isSwipeDeleteDisabled = false,
 }: VideoCardCompactProps) {
     const { t, locale } = useTranslation();
     const isUnavailable = video.isFileAvailable === 0;
     const isThumbnailMissing = video.thumbnailUri === THUMBNAIL_MISSING_SENTINEL;
 
-    return (
+    const renderRightActions = useCallback(
+        (
+            _progress: SharedValue<number>,
+            _translation: SharedValue<number>,
+            swipeableMethods: SwipeableMethods
+        ) => {
+            if (!onSwipeDelete) {
+                return null;
+            }
+
+            return (
+                <TouchableOpacity
+                    style={styles.deleteAction}
+                    onPress={() => {
+                        swipeableMethods.close();
+                        onSwipeDelete();
+                    }}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("common.delete")}
+                >
+                    <SymbolView
+                        name="trash"
+                        size={20}
+                        weight="semibold"
+                        tintColor={Colors.headerText}
+                    />
+                    <Text style={styles.deleteActionText}>{t("common.delete")}</Text>
+                </TouchableOpacity>
+            );
+        },
+        [onSwipeDelete, t]
+    );
+
+    const cardContent = (
         <TouchableOpacity
             style={[styles.container, isSelected && styles.containerSelected]}
             onPress={onPress}
@@ -128,9 +174,47 @@ export function VideoCardCompact({
             </View>
         </TouchableOpacity>
     );
+
+    if (!onSwipeDelete) {
+        return cardContent;
+    }
+
+    return (
+        <ReanimatedSwipeable
+            enabled={Boolean(onSwipeDelete) && !isSelectionMode && !isSwipeDeleteDisabled}
+            friction={2}
+            rightThreshold={44}
+            dragOffsetFromRightEdge={12}
+            overshootRight={false}
+            renderRightActions={renderRightActions}
+            containerStyle={styles.swipeContainer}
+            childrenContainerStyle={styles.swipeChildren}
+        >
+            {cardContent}
+        </ReanimatedSwipeable>
+    );
 }
 
 const styles = StyleSheet.create({
+    swipeContainer: {
+        backgroundColor: IOS_DESTRUCTIVE_RED,
+    },
+    swipeChildren: {
+        backgroundColor: Colors.freshSnow,
+    },
+    deleteAction: {
+        width: 80,
+        backgroundColor: IOS_DESTRUCTIVE_RED,
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 3,
+    },
+    deleteActionText: {
+        color: Colors.headerText,
+        fontSize: 12,
+        fontWeight: "600",
+    },
     container: {
         flexDirection: "row",
         backgroundColor: Colors.freshSnow,
