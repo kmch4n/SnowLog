@@ -9,6 +9,7 @@ export const en: Translations = {
         edit: "Edit",
         detail: "Details",
         close: "Close",
+        done: "Done",
         add: "Add",
         retry: "Try again",
         loading: "Loading...",

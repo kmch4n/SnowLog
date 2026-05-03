@@ -7,6 +7,7 @@ export const ja = {
         edit: "編集",
         detail: "詳細",
         close: "閉じる",
+        done: "完了",
         add: "追加",
         retry: "もう一度試す",
         loading: "読み込み中...",

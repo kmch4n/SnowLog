@@ -7,6 +7,8 @@ import { resolveManagedVideoFileUri } from "@/services/managedVideoFileService";
 import { getAssetInfoWithDownload, isSyntheticAssetId, requestMediaPermissions } from "@/services/mediaService";
 import {
     Alert,
+    InputAccessoryView,
+    Keyboard,
     KeyboardAvoidingView,
     LayoutAnimation,
     Linking,
@@ -28,6 +30,8 @@ import { useVideoDetail } from "@/hooks/useVideoDetail";
 import { useTranslation } from "@/i18n/useTranslation";
 import { formatDateTime, formatDuration, formatDurationDecimal } from "@/utils/dateUtils";
 
+const MEMO_INPUT_ACCESSORY_ID = "video-detail-memo-accessory";
+
 /** セクション間の薄いディバイダー */
 function SectionDivider() {
     return <View style={styles.divider} />;
@@ -43,6 +47,10 @@ export default function VideoDetailScreen() {
     const { t, locale } = useTranslation();
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const { video, isLoading, error, refresh, updateTitle, updateTechniques, updateMemo, updateSkiResort, updateTags, toggleFavorite, removeVideo } = useVideoDetail(id);
+
+    const scrollViewRef = useRef<ScrollView>(null);
+    const shouldScrollMemoIntoViewRef = useRef(false);
+    const memoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [titleInput, setTitleInput] = useState("");
     const [titleSaveStatus, setTitleSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -84,6 +92,47 @@ export default function VideoDetailScreen() {
     // メモ自動保存用の debounce タイマー
     const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isInitialMemoLoad = useRef(true);
+
+    const clearMemoScrollTimer = useCallback(() => {
+        if (memoScrollTimerRef.current) {
+            clearTimeout(memoScrollTimerRef.current);
+            memoScrollTimerRef.current = null;
+        }
+    }, []);
+
+    const scrollMemoInputIntoView = useCallback(() => {
+        if (!shouldScrollMemoIntoViewRef.current) {
+            return;
+        }
+
+        clearMemoScrollTimer();
+        memoScrollTimerRef.current = setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+            memoScrollTimerRef.current = null;
+        }, Platform.OS === "ios" ? 250 : 100);
+    }, [clearMemoScrollTimer]);
+
+    useEffect(() => {
+        const keyboardShowSubscription = Keyboard.addListener(
+            Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+            scrollMemoInputIntoView
+        );
+
+        return () => {
+            keyboardShowSubscription.remove();
+            clearMemoScrollTimer();
+        };
+    }, [clearMemoScrollTimer, scrollMemoInputIntoView]);
+
+    const handleMemoFocus = useCallback(() => {
+        shouldScrollMemoIntoViewRef.current = true;
+        scrollMemoInputIntoView();
+    }, [scrollMemoInputIntoView]);
+
+    const handleMemoBlur = useCallback(() => {
+        shouldScrollMemoIntoViewRef.current = false;
+        clearMemoScrollTimer();
+    }, [clearMemoScrollTimer]);
 
     // タイトルが変更されたら1秒後に自動保存
     useEffect(() => {
@@ -275,7 +324,13 @@ export default function VideoDetailScreen() {
             style={styles.container}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-            <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="always">
+            <ScrollView
+                ref={scrollViewRef}
+                automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+                contentContainerStyle={styles.scroll}
+                keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+                keyboardShouldPersistTaps="handled"
+            >
                 {/* 動画プレイヤーエリア */}
                 {video.isFileAvailable === 1 && videoUri ? (
                     <VideoPlayerView
@@ -398,6 +453,9 @@ export default function VideoDetailScreen() {
                         multiline
                         numberOfLines={6}
                         textAlignVertical="top"
+                        inputAccessoryViewID={Platform.OS === "ios" ? MEMO_INPUT_ACCESSORY_ID : undefined}
+                        onFocus={handleMemoFocus}
+                        onBlur={handleMemoBlur}
                     />
                 </View>
 
@@ -406,6 +464,20 @@ export default function VideoDetailScreen() {
                     <Text style={styles.deleteButtonText}>{t("videoDetail.deleteRecord")}</Text>
                 </TouchableOpacity>
             </ScrollView>
+            {Platform.OS === "ios" && (
+                <InputAccessoryView nativeID={MEMO_INPUT_ACCESSORY_ID}>
+                    <View style={styles.keyboardAccessory}>
+                        <TouchableOpacity
+                            accessibilityRole="button"
+                            accessibilityLabel={t("common.done")}
+                            onPress={() => Keyboard.dismiss()}
+                            style={styles.keyboardAccessoryButton}
+                        >
+                            <Text style={styles.keyboardAccessoryButtonText}>{t("common.done")}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </InputAccessoryView>
+            )}
         </KeyboardAvoidingView>
     );
 }
@@ -448,7 +520,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     scroll: {
-        paddingBottom: 48,
+        paddingBottom: 96,
     },
     unavailableBanner: {
         height: 80,
@@ -547,6 +619,25 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: Colors.textTertiary,
         fontWeight: "500",
+    },
+    keyboardAccessory: {
+        minHeight: 44,
+        paddingHorizontal: 12,
+        alignItems: "flex-end",
+        justifyContent: "center",
+        backgroundColor: Colors.glacierWhite,
+        borderTopWidth: 1,
+        borderTopColor: Colors.borderLight,
+    },
+    keyboardAccessoryButton: {
+        minHeight: 36,
+        paddingHorizontal: 12,
+        justifyContent: "center",
+    },
+    keyboardAccessoryButtonText: {
+        color: Colors.alpineBlue,
+        fontSize: 16,
+        fontWeight: "700",
     },
     starActive: {
         fontSize: 24,
