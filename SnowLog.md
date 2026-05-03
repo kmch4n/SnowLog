@@ -1,7 +1,7 @@
 # SnowLog 技術仕様書
 
-最終更新: 2026-04-08
-対象バージョン: v1.0.0
+最終更新: 2026-05-04
+対象バージョン: v1.1.0
 基準: `main` ブランチの現行実装
 
 ---
@@ -67,6 +67,7 @@
 - `settings/favorite-resorts`
 - `settings/tags`
 - `settings/duplicate-candidates`
+- `settings/language`
 
 ---
 
@@ -77,6 +78,8 @@
 1. Drizzle migration を実行
 2. デフォルトの滑走種別候補を差分シード
 3. `capturedAt` が不正な動画レコードを修復
+4. サムネイル URI の相対パス移行（必要時のみ、後述）
+5. i18n の初期ロケール解決（`appPreferenceRepository` から永続化済みの言語設定を読み込み、未設定ならデバイスロケールにフォールバック）
 
 ### 5.1 滑走種別候補のシード
 
@@ -89,6 +92,22 @@
 - 以後は、明らかに不正なタイムスタンプだけを高速チェックする。
 - 修復時は MediaLibrary の `creationTime` を参照し、必要なら DB を更新する。
 - iCloud 専用アセットやメタデータ取得失敗は、起動を止めずにスキップする。
+
+### 5.3 サムネイル URI の相対パス移行
+
+- v1.1.x 以前のレコードはサムネイル URI を **絶対パス**（iOS のアプリコンテナ UUID 込み）で保持していた。
+- iOS はアプリ更新時にコンテナを再配置することがあり、絶対パスは突然無効化される。
+- 本マイグレーションは `app_preferences` の `thumbnail_migration_version` で初回のみガードして実行する。
+- 各動画について、(1) 相対パス（`thumbnails/<id>.jpg`）への正規化、(2) ファイル存在確認、(3) 不存在時はソース動画から再生成、(4) ソース動画も到達不能な場合は永続的欠損サムネイル用センチネル `THUMBNAIL_MISSING_SENTINEL` を保存、の順で処理する。
+- 進捗は `ThumbnailMigrationScreen` がブロッキング UI として表示する。
+- 1 件のエラーで全体を中断しない設計とし、失敗行は次回起動時に再試行されないよう移行バージョンを更新する。
+
+### 5.4 i18n 初期ロケール解決
+
+- `appPreferenceRepository.getPreference("locale")` で永続化された設定を取得する。
+- 値は `"ja" | "en" | "device"` の 3 種で、未設定または不正値は `"device"` 扱いになる。
+- `"device"` の場合は `expo-localization` の `getLocales()[0]?.languageCode` を参照し、`"ja"` ならそのまま、それ以外は `"en"` にフォールバックする。
+- 解決結果は `i18n-js` インスタンスの `locale` に反映され、画面起動前に確定する。
 
 ---
 
@@ -130,8 +149,9 @@ export const videos = sqliteTable("videos", {
 ### 6.3 重要な制約
 
 - `videos.assetId` はユニーク
-- `tags` は `(name, type)` の組み合わせでユニーク
+- `tags` は `(name, type)` の組み合わせでユニーク（migration `0007_simple_molecule_man.sql` で導入）
 - `diary_entries.dateKey` はユニーク
+- SQLite 接続は `foreign_keys = ON` および WAL モードで開く。タグ更新（`setTagsForVideo`）は単一トランザクション内で行うため、中間テーブルの整合性が保たれる。
 
 ### 6.4 エンティティ関係
 
@@ -158,10 +178,13 @@ videos --< video_tags >-- tags
 
 - 動画一覧を**ゲレンデ別セクション**にまとめて表示する。
 - セグメント切り替えで「すべて」と「お気に入り」を往復できる。
+- **並び順ピッカー** から `newest`（撮影日の新しい順）／ `oldest`（古い順）／ `resort`（ゲレンデ名でグルーピング）を切り替えられる。選択は `app_preferences` の `home_sort_order` に永続化する。
+- 動画カードの**スワイプ削除**に対応する。確認アラート経由で削除を確定する。
 - 動画カードの長押しで**一括選択モード**に入り、以下をまとめて実行できる。
     - お気に入り ON / OFF
     - 複数動画の削除
 - 削除時は DB レコードだけでなく、サムネイルや managed 動画ファイルもクリーンアップする。
+- インポート完了後の復帰時には、`bulkImportSummaryService` に積まれた一括インポートサマリー（成功 / スキップ / 失敗件数）をアラートで提示する。
 
 ### 7.2 動画インポート (`video-import`)
 
@@ -186,6 +209,8 @@ videos --< video_tags >-- tags
 - GPS が取れた動画は、近いゲレンデ候補ごとにグループ化して確認ダイアログを出す。
 - 確認後は対象グループに対して一括でゲレンデ名を反映する。
 - ステージングファイルは各動画の処理後に即時削除する。
+- **完了サマリー**: 全件処理が終わると `bulkImportSummaryService.setPendingBulkImportSummary` に成功 / スキップ / 失敗件数を積み、インポート画面を閉じる。ホーム画面はフォーカス時に `consumePendingBulkImportSummary` でこれを取り出し、アラートで提示する。
+- インポート画面はインポート進行中の意図せぬ離脱をブロックし、完了時にのみ自動で閉じる。
 
 ### 7.3 動画詳細 (`video/[id]`)
 
@@ -247,13 +272,14 @@ videos --< video_tags >-- tags
 
 ### 7.7 設定 (`settings`)
 
-現在の設定メニューは以下の 5 項目。
+現在の設定メニューは以下の 6 項目。
 
 1. カレンダー設定
 2. 滑走種別の管理
 3. お気に入りスキー場
 4. タグの管理
 5. 重複候補の確認
+6. 言語設定
 
 #### カレンダー設定
 
@@ -277,6 +303,11 @@ videos --< video_tags >-- tags
 
 - 似ている動画を自動検出し、グループ単位で確認できる。
 - ここから候補動画の削除を実行できる。
+
+#### 言語設定
+
+- 日本語 / English / デバイスに従う の 3 択。
+- 選択は `app_preferences` の `locale` キーに保存し、即時 UI に反映する。
 
 ---
 
@@ -324,6 +355,7 @@ videos --< video_tags >-- tags
 | `useDashboard` | シーズン選択と統計取得 |
 | `useAppPreference` | 設定値の読み書き |
 | `useSelectionMode` | 一括選択モードの状態管理 |
+| `useTranslation` | i18n の購読フック。`useSyncExternalStore` で locale 変更を全購読画面に再描画させ、`{ t, locale, preference, setPreference }` を返す |
 
 ### 9.3 Service
 
@@ -336,6 +368,9 @@ videos --< video_tags >-- tags
 | `duplicateDetectionService.ts` | 重複候補のスコアリングとグルーピング |
 | `videoDeletionService.ts` | 動画削除時のクリーンアップ統合 |
 | `exportService.ts` | JSON バックアップ生成と共有 |
+| `bulkImportSummaryService.ts` | 一括インポートの結果（成功 / スキップ / 失敗件数）をプロセス内で揮発キャッシュし、ホームへ引き渡す |
+| `hapticsService.ts` | `expo-haptics` の薄いラッパ。`UnavailabilityError` を吸収する `safeFire` 経由で `hapticLight / Medium / Selection / Success / Warning / Error` を提供する |
+| `thumbnailMigrationService.ts` | 旧形式（絶対パス）のサムネイル URI を相対パスへ正規化し、欠損時は再生成または欠損センチネルでマークする一度限りの起動マイグレーション |
 
 ---
 
@@ -417,10 +452,77 @@ videos --< video_tags >-- tags
 5. 重複候補確認画面が設定にある
 6. Android のインポート経路を考慮した実装になっている
 7. JSON バックアップ基盤が実装済みである
+8. **日英 2 言語の i18n 基盤**が導入済みで、設定から手動切替できる
+9. **ハプティクス**が主要操作（一括選択開始、お気に入りトグル、削除確定、インポート完了など）に配線済み
+10. サムネイルは `documentDirectory` 相対パスで保存され、iOS のコンテナ再配置に耐性がある
+11. ホームに**並び順切替**と**スワイプ削除**が組み込まれている
+12. 一括インポートの結果はホームへの復帰時に**サマリーアラート**として提示される
 
 ---
 
-## 14. 今後この文書を更新すべきタイミング
+## 14. 国際化 (i18n)
+
+### 14.1 構成
+
+`src/i18n/` 配下にエンジンを集約する。
+
+| ファイル | 役割 |
+|---|---|
+| `index.ts` | `i18n-js` インスタンス、ロケール解決、`loadInitialLocale` / `setLocalePreference`、購読リスナー管理 |
+| `useTranslation.ts` | `useSyncExternalStore` でロケール変更を購読する hook。`{ t, locale, preference, setPreference }` を返す |
+| `types.ts` | `SupportedLocale = "ja" \| "en"`、`LocalePreference = SupportedLocale \| "device"`、`LOCALE_PREFERENCE_KEY` |
+| `locales/ja.ts` | 日本語翻訳テーブル。フラットキー + ドメイン名前空間（`home.*`、`import.*`、`diary.*` など） |
+| `locales/en.ts` | 英語翻訳テーブル。`Translations = typeof ja` で型を強制し、キー欠落をコンパイル時に検出する |
+
+### 14.2 永続化
+
+- ユーザー選択は `app_preferences` の `locale` キーに `"ja" | "en" | "device"` のいずれかで保存する。
+- 読み込みは `appPreferenceRepository.getPreference("locale")` 経由で行う。
+- 値が不正・未設定の場合は `"device"` 扱いとし、`expo-localization` のデバイスロケールにフォールバックする。
+
+### 14.3 ロケール変更の伝播
+
+- 切替時に `i18n-js` の `locale` を更新し、登録されたリスナーへ通知する。
+- `useTranslation` を購読している全コンポーネント（Stack 画面のタイトルを含む）が即時に再レンダーする。
+
+### 14.4 iOS InfoPlist のローカライズ
+
+- 写真ライブラリの `NSPhotoLibraryUsageDescription` などのパーミッション文言は、リポジトリ直下の `locales/ja.json` および `locales/en.json` で言語別に定義する。
+- `app.json` の `expo.locales` ブロックがこれを iOS のリソースバンドルに配線する。
+- `app.json` の `infoPlist` 直下に書かれた値は **日本語のフォールバック値** として残しているのみで、ローカライズの一次ソースではない。
+- `CFBundleLocalizations: ["ja", "en"]` を `infoPlist` に追加してあり、App Store 上で英語ストア向けにフォールバック表示される。
+
+### 14.5 範囲外（既知の未対応）
+
+- ゲレンデ名（`src/constants/skiResorts.json`、378 件）と都道府県名は日本語固定。
+- ユーザーが設定画面で編集した滑走種別・タグ名・お気に入りゲレンデ名は、UI 言語に関係なく入力時の言語のまま表示する。
+
+---
+
+## 15. ハプティクス
+
+### 15.1 設計方針
+
+`expo-haptics` の native module は、新依存を取り込んだ後の dev client に古いバイナリが残っていると `UnavailabilityError` を投げる。これがアプリクラッシュへつながらないよう、`hapticsService.ts` では `safeFire` ラッパを介してすべての呼び出しを行い、同期 throw / Promise reject の双方を吸収する。
+
+### 15.2 公開 API
+
+| 関数 | 用途 |
+|---|---|
+| `hapticLight()` | お気に入りトグル等の軽い肯定アクション |
+| `hapticMedium()` | 長押しで一括選択モードに入る等のモード遷移 |
+| `hapticSelection()` | ピッカー / セグメント切替の確定 |
+| `hapticSuccess()` | バルクインポート完了等、複数ステップの成功 |
+| `hapticWarning()` | 削除確定など、影響度の大きい操作の確定 |
+| `hapticError()` | 操作の失敗通知 |
+
+### 15.3 配線箇所
+
+主要操作にのみ配線する方針で、リスト項目の単純タップやスクロール等のジェスチャには付与しない。具体的には、お気に入り切替・一括選択開始・削除確定・インポート完了・ピッカー切替等を対象としている。
+
+---
+
+## 16. 今後この文書を更新すべきタイミング
 
 以下の変更が入った場合は、本書も更新対象とする。
 
