@@ -1,7 +1,8 @@
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
     Alert,
+    InteractionManager,
     SectionList,
     StyleSheet,
     Text,
@@ -24,6 +25,7 @@ import {
     hapticSelection,
     hapticWarning,
 } from "@/services/hapticsService";
+import { consumePendingBulkImportSummary } from "@/services/bulkImportSummaryService";
 import { deleteVideosWithCleanup } from "@/services/videoDeletionService";
 import type { FilterOptions, VideoSortOrder, VideoWithTags } from "@/types";
 
@@ -128,6 +130,29 @@ export default function HomeScreen() {
 
     const { videos: allVideos, isLoading: allLoading, refresh: refreshAll } = useVideos();
     const { videos: favVideos, isLoading: favLoading, refresh: refreshFav } = useVideos(favoritesFilter);
+
+    useFocusEffect(
+        useCallback(() => {
+            const summary = consumePendingBulkImportSummary();
+            if (!summary) return undefined;
+
+            const task = InteractionManager.runAfterInteractions(() => {
+                const parts: string[] = [
+                    t("import.bulk.summarySuccess", { count: summary.successCount }),
+                ];
+                if (summary.skippedCount > 0) {
+                    parts.push(t("import.bulk.summarySkipped", { count: summary.skippedCount }));
+                }
+                if (summary.errorCount > 0) {
+                    parts.push(t("import.bulk.summaryError", { count: summary.errorCount }));
+                }
+
+                Alert.alert(t("import.bulk.summaryTitle"), parts.join("\n"));
+            });
+
+            return () => task.cancel();
+        }, [t])
+    );
 
     const {
         isSelectionMode,

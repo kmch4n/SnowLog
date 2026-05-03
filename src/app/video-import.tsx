@@ -34,6 +34,7 @@ import {
     hapticSuccess,
     hapticWarning,
 } from "@/services/hapticsService";
+import { setPendingBulkImportSummary } from "@/services/bulkImportSummaryService";
 import { importVideo, type ImportableAsset } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
 import { randomUUID } from "expo-crypto";
@@ -388,32 +389,21 @@ export default function VideoImportScreen() {
         }));
     }, []);
 
-    /** サマリー Alert を表示して画面を閉じる */
+    /** Store the summary, then return to Home where the alert is shown. */
     const showBulkSummary = useCallback(
         (successCount: number, skippedCount: number, errorCount: number) => {
-            const parts: string[] = [];
-            parts.push(t("import.bulk.summarySuccess", { count: successCount }));
-            if (skippedCount > 0) parts.push(t("import.bulk.summarySkipped", { count: skippedCount }));
-            if (errorCount > 0) parts.push(t("import.bulk.summaryError", { count: errorCount }));
-
             if (errorCount > 0) {
                 hapticWarning();
             } else {
                 hapticSuccess();
             }
 
+            setPendingBulkImportSummary({ successCount, skippedCount, errorCount });
+            bulkCompletionExitRef.current = true;
             resetBulkImportState();
-            Alert.alert(t("import.bulk.summaryTitle"), parts.join("\n"), [
-                {
-                    text: t("common.ok"),
-                    onPress: () => {
-                        bulkCompletionExitRef.current = true;
-                        router.back();
-                    },
-                },
-            ]);
+            router.back();
         },
-        [resetBulkImportState, router, t]
+        [resetBulkImportState, router]
     );
 
     /** 一括インポートのコアロジック */
