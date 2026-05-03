@@ -106,6 +106,7 @@ export default function VideoImportScreen() {
     const [resolvedAssetUri, setResolvedAssetUri] = useState<string | null>(null);
     const [isLoadingMeta, setIsLoadingMeta] = useState(false);
     const stagedFileUriRef = useRef<string | null>(null);
+    const bulkCompletionExitRef = useRef(false);
 
     // 一括インポート用 state
     const [bulkPhase, setBulkPhase] = useState<BulkPhase>("idle");
@@ -116,6 +117,16 @@ export default function VideoImportScreen() {
     const [bulkGpsGroups, setBulkGpsGroups] = useState<BulkImportGpsGroup[]>([]);
     const [bulkNoGpsCount, setBulkNoGpsCount] = useState(0);
     const [isApplyingGps, setIsApplyingGps] = useState(false);
+
+    const resetBulkImportState = useCallback(() => {
+        setBulkPhase("idle");
+        setBulkProgress({ current: 0, total: 0 });
+        setBulkCurrentFilename(undefined);
+        setBulkSkippedCount(0);
+        setBulkErrorCount(0);
+        setBulkGpsGroups([]);
+        setBulkNoGpsCount(0);
+    }, []);
 
     const cleanupStagedFile = useCallback(async () => {
         if (stagedFileUriRef.current) {
@@ -141,6 +152,7 @@ export default function VideoImportScreen() {
     useEffect(() => {
         if (!isImportBlocked) return;
         const unsubscribe = navigation.addListener("beforeRemove", (e: { preventDefault: () => void }) => {
+            if (bulkCompletionExitRef.current) return;
             e.preventDefault();
             Alert.alert(
                 t("import.importingBlocked.title"),
@@ -390,11 +402,18 @@ export default function VideoImportScreen() {
                 hapticSuccess();
             }
 
+            resetBulkImportState();
             Alert.alert(t("import.bulk.summaryTitle"), parts.join("\n"), [
-                { text: t("common.ok"), onPress: () => router.back() },
+                {
+                    text: t("common.ok"),
+                    onPress: () => {
+                        bulkCompletionExitRef.current = true;
+                        router.back();
+                    },
+                },
             ]);
         },
-        [router, t]
+        [resetBulkImportState, router, t]
     );
 
     /** 一括インポートのコアロジック */
@@ -544,6 +563,7 @@ export default function VideoImportScreen() {
         // pulls iCloud-backed assets in the background before the await
         // resolves. Without this guard, the idle import UI is exposed and
         // interactable during that download window.
+        bulkCompletionExitRef.current = false;
         setBulkPhase("preparing");
 
         let pickerResult: ImagePicker.ImagePickerResult;
@@ -577,8 +597,16 @@ export default function VideoImportScreen() {
         setBulkErrorCount(0);
         setBulkCurrentFilename(undefined);
 
-        await processBulkImport(pickerResult.assets);
-    }, [processBulkImport, t]);
+        try {
+            await processBulkImport(pickerResult.assets);
+        } catch (error) {
+            resetBulkImportState();
+            hapticError();
+            const message =
+                error instanceof Error ? error.message : t("common.unknownError");
+            Alert.alert(t("import.importFailed"), message);
+        }
+    }, [processBulkImport, resetBulkImportState, t]);
 
     /** GPS グループのチェック状態をトグルする */
     const handleToggleGpsGroup = useCallback((resortName: string) => {
