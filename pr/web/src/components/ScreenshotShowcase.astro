@@ -10,7 +10,7 @@ const { content } = Astro.props;
 ---
 
 <section class="section screenshots-section" aria-labelledby="screenshots-title">
-    <div class="section-heading">
+    <div class="section-heading compact">
         <p class="eyebrow">{content.eyebrow}</p>
         <h2 id="screenshots-title">
             {content.titleLines.map((line) => <span>{line}</span>)}

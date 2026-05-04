@@ -27,12 +27,14 @@ const footerByLocale: Record<Locale, HomeContent["footer"]> = {
     ja: {
         ariaLabel: "Footer navigation",
         appStore: "App Store",
+        github: "GitHub",
         privacy: "Privacy",
         support: "Contact",
     },
     en: {
         ariaLabel: "Footer navigation",
         appStore: "App Store",
+        github: "GitHub",
         privacy: "Privacy",
         support: "Contact",
     },
@@ -50,7 +52,7 @@ export const homeContent: Record<Locale, HomeContent> = {
         nav: navByLocale.ja,
         hero: {
             eyebrow: "Snow Video Review App",
-            titleLines: ["滑走動画を、あとから", "探せる練習ログへ。"],
+            titleLines: ["滑走動画を、練習ログへ。"],
             lead: "SnowLogは、スキー・スノーボードの動画をゲレンデ、技術、日付で整理して振り返るためのiOSアプリです。",
             appStoreAria: "App StoreでSnowLogをダウンロード",
             note: "iOS向け / オフラインファースト / 日本語・英語対応",
@@ -142,8 +144,8 @@ export const homeContent: Record<Locale, HomeContent> = {
         },
         privacyPanel: {
             eyebrow: "Offline First",
-            title: "動画を増やすほど効いてくる、端末内整理。",
-            body: "SnowLogはクラウド同期を前提にせず、動画の情報を端末内で管理します。大容量の滑走動画を整理のためだけに複製しないため、撮影本数が増えても運用しやすい設計です。",
+            title: "動画を増やすほど効く、\n端末内整理。",
+            body: "SnowLogはクラウド同期を前提にせず、動画の情報を端末内で管理します。\n大容量の滑走動画を整理のためだけに複製しないため、撮影本数が増えても運用しやすい設計です。",
             listAria: "SnowLogのデータ管理方針",
             items: [
                 "動画本体は写真ライブラリを参照",
@@ -203,7 +205,7 @@ export const homeContent: Record<Locale, HomeContent> = {
         nav: navByLocale.en,
         hero: {
             eyebrow: "Snow Video Review App",
-            titleLines: ["Turn slope videos into", "a practice log."],
+            titleLines: ["Turn slope videos into practice logs."],
             lead: "SnowLog helps skiers and snowboarders organize videos by resort, technique, and date, so every run is easier to review later.",
             appStoreAria: "Download SnowLog on the App Store",
             note: "For iOS / Offline-first / Japanese and English",
