@@ -59,6 +59,7 @@ app-example
 .codex/
 .gemini/
 .claude/
+.playwright-mcp/
 
 # Memo
 notes/
