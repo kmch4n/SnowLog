@@ -1,0 +1,104 @@
+---
+import AppHero from "./AppHero.astro";
+import FaqSection from "./FaqSection.astro";
+import FeatureGrid from "./FeatureGrid.astro";
+import OfflinePrivacySection from "./OfflinePrivacySection.astro";
+import ProblemSection from "./ProblemSection.astro";
+import ScreenshotShowcase from "./ScreenshotShowcase.astro";
+import SiteFooter from "./SiteFooter.astro";
+import SnowBackground from "./SnowBackground.astro";
+import StatStrip from "./StatStrip.astro";
+import { appStoreUrl, localePaths, type HomeContent } from "../i18n";
+import "../styles/global.css";
+
+interface Props {
+    content: HomeContent;
+}
+
+const { content } = Astro.props;
+const siteUrl = Astro.site?.href ?? "https://snowlog.kmchan.jp/";
+const canonical = new URL(content.path, siteUrl).href;
+const ogImage = new URL("/images/icon.png", siteUrl).href;
+const alternateJa = new URL(localePaths.ja, siteUrl).href;
+const alternateEn = new URL(localePaths.en, siteUrl).href;
+const xDefault = new URL("/", siteUrl).href;
+
+const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "SnowLog",
+    description: content.description,
+    operatingSystem: "iOS 16+",
+    applicationCategory: "LifestyleApplication",
+    inLanguage: ["ja", "en"],
+    url: canonical,
+    image: ogImage,
+    downloadUrl: appStoreUrl,
+    offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "JPY",
+    },
+    publisher: {
+        "@type": "Person",
+        name: "Kotaro Sasagawa",
+    },
+};
+---
+
+<!doctype html>
+<html lang={content.lang}>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="description" content={content.description} />
+        <link rel="canonical" href={canonical} />
+        <link rel="alternate" hreflang="ja" href={alternateJa} />
+        <link rel="alternate" hreflang="en" href={alternateEn} />
+        <link rel="alternate" hreflang="x-default" href={xDefault} />
+
+        <meta property="og:title" content={content.title} />
+        <meta property="og:description" content={content.description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:site_name" content="SnowLog" />
+        <meta property="og:locale" content={content.ogLocale} />
+        <meta property="og:image" content={ogImage} />
+
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={content.title} />
+        <meta name="twitter:description" content={content.description} />
+        <meta name="twitter:image" content={ogImage} />
+
+        <meta name="theme-color" content="#dff3ff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#0b1720" media="(prefers-color-scheme: dark)" />
+
+        <link rel="icon" href="/images/icon.png" />
+        <link rel="apple-touch-icon" href="/images/icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;600;700;800&display=swap"
+        />
+
+        <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline />
+
+        <title>{content.title}</title>
+    </head>
+    <body>
+        <SnowBackground />
+        <AppHero appStoreUrl={appStoreUrl} content={content.hero} nav={content.nav} />
+        <StatStrip ariaLabel={content.statsAria} stats={content.stats} />
+        <main>
+            <ProblemSection content={content.problem} />
+            <FeatureGrid content={content.features} />
+            <ScreenshotShowcase content={content.screenshots} />
+            <OfflinePrivacySection appStoreUrl={appStoreUrl} content={content.privacyPanel} />
+            <FaqSection content={content.faq} />
+        </main>
+        <SiteFooter appStoreUrl={appStoreUrl} content={content.footer} locale={content.locale} />
+    </body>
+</html>

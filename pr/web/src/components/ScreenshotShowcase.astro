@@ -1,0 +1,39 @@
+---
+import { Image } from "astro:assets";
+import type { ScreenshotContent } from "../i18n";
+
+interface Props {
+    content: ScreenshotContent;
+}
+
+const { content } = Astro.props;
+---
+
+<section class="section screenshots-section" aria-labelledby="screenshots-title">
+    <div class="section-heading">
+        <p class="eyebrow">{content.eyebrow}</p>
+        <h2 id="screenshots-title">
+            {content.titleLines.map((line) => <span>{line}</span>)}
+        </h2>
+    </div>
+    <div class="screenshot-rail">
+        {
+            content.items.map((screenshot) => (
+                <article class="screenshot-card">
+                    <div class="screenshot-phone">
+                        <Image
+                            src={screenshot.src}
+                            alt={screenshot.alt}
+                            widths={[230, 280, 360]}
+                            sizes="(max-width: 560px) 78vw, 280px"
+                            formats={["avif", "webp"]}
+                            loading="lazy"
+                        />
+                    </div>
+                    <h3>{screenshot.title}</h3>
+                    <p>{screenshot.body}</p>
+                </article>
+            ))
+        }
+    </div>
+</section>

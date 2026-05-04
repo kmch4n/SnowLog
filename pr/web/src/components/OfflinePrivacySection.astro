@@ -1,0 +1,24 @@
+---
+import type { PrivacyPanelContent } from "../i18n";
+
+interface Props {
+    appStoreUrl: string;
+    content: PrivacyPanelContent;
+}
+
+const { appStoreUrl, content } = Astro.props;
+---
+
+<section class="section privacy-section" aria-labelledby="privacy-title">
+    <div class="privacy-panel">
+        <div>
+            <p class="eyebrow">{content.eyebrow}</p>
+            <h2 id="privacy-title">{content.title}</h2>
+            <p>{content.body}</p>
+        </div>
+        <ul class="privacy-list" aria-label={content.listAria}>
+            {content.items.map((item) => <li>{item}</li>)}
+        </ul>
+        <a class="text-link" href={appStoreUrl}>{content.cta}</a>
+    </div>
+</section>

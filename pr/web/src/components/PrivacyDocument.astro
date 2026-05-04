@@ -1,0 +1,88 @@
+---
+import ContactReveal from "./ContactReveal.astro";
+import SiteFooter from "./SiteFooter.astro";
+import SnowBackground from "./SnowBackground.astro";
+import { appStoreUrl, privacyPaths, type PrivacyContent } from "../i18n";
+import "../styles/global.css";
+
+interface Props {
+    content: PrivacyContent;
+}
+
+const { content } = Astro.props;
+const siteUrl = Astro.site?.href ?? "https://snowlog.kmchan.jp/";
+const canonical = new URL(content.path, siteUrl).href;
+const alternateJa = new URL(privacyPaths.ja, siteUrl).href;
+const alternateEn = new URL(privacyPaths.en, siteUrl).href;
+const xDefault = new URL("/privacy/", siteUrl).href;
+---
+
+<!doctype html>
+<html lang={content.lang}>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="description" content={content.description} />
+        <link rel="canonical" href={canonical} />
+        <link rel="alternate" hreflang="ja" href={alternateJa} />
+        <link rel="alternate" hreflang="en" href={alternateEn} />
+        <link rel="alternate" hreflang="x-default" href={xDefault} />
+        <meta name="theme-color" content="#dff3ff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#0b1720" media="(prefers-color-scheme: dark)" />
+        <link rel="icon" href="/images/icon.png" />
+        <link rel="apple-touch-icon" href="/images/icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;600;700;800&display=swap"
+        />
+        <title>{content.title}</title>
+    </head>
+    <body>
+        <SnowBackground />
+        <header class="legal-header">
+            <nav class="top-nav" aria-label="Primary navigation">
+                <a class="brand" href={content.nav.homeHref} aria-label={content.nav.homeAria}>
+                    <img src="/images/icon.png" alt="" width="34" height="34" />
+                    <span>SnowLog</span>
+                </a>
+                <div class="nav-actions">
+                    <a class="language-link" href={content.nav.alternateHref} aria-label={content.nav.alternateAria}>
+                        {content.nav.alternateLabel}
+                    </a>
+                    <a class="nav-cta" href={appStoreUrl} aria-label={content.nav.appStoreAria}>App Store</a>
+                </div>
+            </nav>
+        </header>
+
+        <main class="legal-main">
+            <article class="legal-article">
+                <p class="eyebrow">{content.eyebrow}</p>
+                <h1>{content.heading}</h1>
+                <p class="legal-meta">{content.lastUpdatedLabel}: {content.lastUpdated}</p>
+
+                {
+                    content.sections.map((section) => (
+                        <section>
+                            <h2>{section.title}</h2>
+                            {section.paragraphs?.map((paragraph) => <p>{paragraph}</p>)}
+                            {section.items && (
+                                <ul>
+                                    {section.items.map((item) => <li>{item}</li>)}
+                                </ul>
+                            )}
+                        </section>
+                    ))
+                }
+
+                <section>
+                    <ContactReveal label={content.contactRevealLabel} className="legal-contact" />
+                </section>
+            </article>
+        </main>
+
+        <SiteFooter appStoreUrl={appStoreUrl} content={content.footer} locale={content.locale} />
+    </body>
+</html>

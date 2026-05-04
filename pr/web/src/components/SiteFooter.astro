@@ -1,0 +1,26 @@
+---
+import ContactReveal from "./ContactReveal.astro";
+import { privacyPaths, type FooterContent, type Locale } from "../i18n";
+
+interface Props {
+    appStoreUrl: string;
+    content: FooterContent;
+    locale: Locale;
+}
+
+const { appStoreUrl, content, locale } = Astro.props;
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+    <div class="footer-brand">
+        <img src="/images/icon.png" alt="" />
+        <span>SnowLog</span>
+    </div>
+    <nav aria-label={content.ariaLabel}>
+        <a href={appStoreUrl}>{content.appStore}</a>
+        <a href={privacyPaths[locale]}>{content.privacy}</a>
+        <ContactReveal label={content.support} className="footer-contact" />
+    </nav>
+    <p class="footer-copyright">Copyright © {currentYear} Kotaro Sasagawa. All rights reserved.</p>
+</footer>

@@ -1,0 +1,23 @@
+---
+import type { StatItem } from "../i18n";
+
+interface Props {
+    ariaLabel: string;
+    stats: StatItem[];
+}
+
+const { ariaLabel, stats } = Astro.props;
+---
+
+<section class="stat-strip" aria-label={ariaLabel}>
+    <ul>
+        {
+            stats.map((stat) => (
+                <li>
+                    <span class="stat-value">{stat.value}</span>
+                    <span class="stat-label">{stat.label}</span>
+                </li>
+            ))
+        }
+    </ul>
+</section>

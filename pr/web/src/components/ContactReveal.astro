@@ -1,0 +1,52 @@
+---
+import { supportEmailDomain, supportEmailText, supportEmailUser } from "../i18n";
+
+interface Props {
+    label: string;
+    className?: string;
+}
+
+const { label, className = "" } = Astro.props;
+---
+
+<button
+    type="button"
+    class:list={["contact-reveal", className]}
+    data-contact-reveal
+    data-contact-user={supportEmailUser}
+    data-contact-domain={supportEmailDomain}
+    aria-expanded="false"
+>
+    <span class="contact-reveal__label" data-contact-label>{label}</span>
+    <span class="contact-reveal__value" data-contact-value>{supportEmailText}</span>
+</button>
+
+<script is:inline>
+    (() => {
+        if (window.__snowLogContactRevealBound) {
+            return;
+        }
+
+        window.__snowLogContactRevealBound = true;
+        const controls = document.querySelectorAll("[data-contact-reveal]");
+
+        controls.forEach((control) => {
+            if (!(control instanceof HTMLButtonElement)) {
+                return;
+            }
+
+            control.addEventListener("click", () => {
+                const value = control.querySelector("[data-contact-value]");
+                const user = control.dataset.contactUser;
+                const domain = control.dataset.contactDomain;
+
+                if (value && user && domain) {
+                    value.textContent = `${user}@${domain}`;
+                }
+
+                control.dataset.revealed = "true";
+                control.setAttribute("aria-expanded", "true");
+            });
+        });
+    })();
+</script>

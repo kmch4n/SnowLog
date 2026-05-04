@@ -1,0 +1,127 @@
+---
+type Layer = {
+    className: "snowfall" | "snowfall-medium" | "snowfall-slow";
+    count: number;
+    durationMax: number;
+};
+
+type Snowflake = {
+    className: Layer["className"];
+    left: number;
+    delay: number;
+    size: number;
+    opacity: number;
+};
+
+const layers: Layer[] = [
+    { className: "snowfall", count: 15, durationMax: 10 },
+    { className: "snowfall-medium", count: 15, durationMax: 13 },
+    { className: "snowfall-slow", count: 15, durationMax: 16 },
+];
+
+function rand(min: number, max: number): number {
+    return Math.random() * (max - min) + min;
+}
+
+const snowflakes: Snowflake[] = layers.flatMap((layer) =>
+    Array.from({ length: layer.count }, () => ({
+        className: layer.className,
+        left: rand(0, 100),
+        delay: rand(-layer.durationMax, 0),
+        size: rand(10, 22),
+        opacity: rand(0.4, 0.8),
+    })),
+);
+---
+
+<div class="snow-bg" aria-hidden="true">
+    {
+        snowflakes.map((flake) => (
+            <div
+                class:list={["snow-flake", flake.className]}
+                style={`left: ${flake.left.toFixed(2)}%; animation-delay: ${flake.delay.toFixed(2)}s; font-size: ${flake.size.toFixed(2)}px; opacity: ${flake.opacity.toFixed(2)};`}
+            >
+                ❄︎
+            </div>
+        ))
+    }
+</div>
+
+<style>
+    .snow-bg {
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        position: fixed;
+        z-index: -1;
+    }
+
+    .snow-flake {
+        color: var(--blue);
+        line-height: 1;
+        position: absolute;
+        top: 0;
+        user-select: none;
+        will-change: transform, opacity;
+    }
+
+    .snowfall {
+        animation: snowfall 10s linear infinite;
+    }
+
+    .snowfall-medium {
+        animation: snowfall-medium 13s linear infinite;
+    }
+
+    .snowfall-slow {
+        animation: snowfall-slow 16s linear infinite;
+    }
+
+    @keyframes snowfall {
+        0% {
+            opacity: 1;
+            transform: translateY(-100vh) translate(0px) rotate(0deg);
+        }
+        80% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(100vh) translate(100px) rotate(1turn);
+        }
+    }
+
+    @keyframes snowfall-medium {
+        0% {
+            opacity: 1;
+            transform: translateY(-100vh) translate(0px) rotate(0deg);
+        }
+        80% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(100vh) translate(50px) rotate(180deg);
+        }
+    }
+
+    @keyframes snowfall-slow {
+        0% {
+            opacity: 1;
+            transform: translateY(-100vh) translate(0px) rotate(0deg);
+        }
+        80% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(100vh) translate(-150px) rotate(-1turn);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .snow-bg {
+            display: none;
+        }
+    }
+</style>

@@ -1,0 +1,26 @@
+---
+import type { SectionCardsContent } from "../i18n";
+
+interface Props {
+    content: SectionCardsContent;
+}
+
+const { content } = Astro.props;
+---
+
+<section class="section feature-section" aria-labelledby="feature-title">
+    <div class="section-heading compact">
+        <p class="eyebrow">{content.eyebrow}</p>
+        <h2 id="feature-title">{content.title}</h2>
+    </div>
+    <div class="feature-grid">
+        {
+            content.items.map((feature) => (
+                <article class="feature-card">
+                    <h3>{feature.title}</h3>
+                    <p>{feature.body}</p>
+                </article>
+            ))
+        }
+    </div>
+</section>

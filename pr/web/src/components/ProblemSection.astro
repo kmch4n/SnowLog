@@ -1,0 +1,29 @@
+---
+import type { ProblemContent } from "../i18n";
+
+interface Props {
+    content: ProblemContent;
+}
+
+const { content } = Astro.props;
+---
+
+<section class="section problem-section" aria-labelledby="problem-title">
+    <div class="section-heading problem-heading">
+        <p class="eyebrow">{content.eyebrow}</p>
+        <h2 id="problem-title">
+            {content.titleLines.map((line) => <span>{line}</span>)}
+        </h2>
+    </div>
+    <div class="problem-grid">
+        {
+            content.items.map((item, index) => (
+                <article>
+                    <span class="problem-number">{String(index + 1).padStart(2, "0")}</span>
+                    <h3>{item.title}</h3>
+                    <p>{item.body}</p>
+                </article>
+            ))
+        }
+    </div>
+</section>

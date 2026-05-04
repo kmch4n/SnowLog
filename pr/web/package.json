@@ -1,0 +1,16 @@
+{
+    "name": "snowlog-web",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "astro dev --host 0.0.0.0",
+        "build": "astro build",
+        "preview": "astro preview --host 0.0.0.0"
+    },
+    "dependencies": {
+        "@astrojs/sitemap": "^3.7.2",
+        "astro": "^6.2.1",
+        "typescript": "^5.9.2"
+    }
+}

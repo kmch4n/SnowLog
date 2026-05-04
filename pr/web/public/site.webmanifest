@@ -1,0 +1,17 @@
+{
+    "name": "SnowLog",
+    "short_name": "SnowLog",
+    "description": "Snow Video Review App",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#dff3ff",
+    "icons": [
+        {
+            "src": "/images/icon.png",
+            "sizes": "1024x1024",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

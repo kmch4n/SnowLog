@@ -1,0 +1,53 @@
+---
+import type { HeroContent, NavContent } from "../i18n";
+
+interface Props {
+    appStoreUrl: string;
+    content: HeroContent;
+    nav: NavContent;
+}
+
+const { appStoreUrl, content, nav } = Astro.props;
+---
+
+<header class="hero">
+    <nav class="top-nav" aria-label="Primary navigation">
+        <a class="brand" href={nav.homeHref} aria-label={nav.homeAria}>
+            <img src="/images/icon.png" alt="" width="34" height="34" />
+            <span>SnowLog</span>
+        </a>
+        <div class="nav-actions">
+            <a class="language-link" href={nav.alternateHref} aria-label={nav.alternateAria}>{nav.alternateLabel}</a>
+            <a class="nav-cta" href={appStoreUrl} aria-label={nav.appStoreAria}>App Store</a>
+        </div>
+    </nav>
+
+    <section class="hero-grid" aria-labelledby="hero-title">
+        <div class="hero-copy">
+            <p class="eyebrow">{content.eyebrow}</p>
+            <h1 id="hero-title">
+                {content.titleLines.map((line) => <span>{line}</span>)}
+            </h1>
+            <p class="hero-lead">{content.lead}</p>
+            <div class="hero-actions">
+                <a class="store-button" href={appStoreUrl} aria-label={content.appStoreAria}>
+                    <img src="/images/app-store-badge.svg" alt="Download on the App Store" />
+                </a>
+                <p class="hero-note">{content.note}</p>
+            </div>
+        </div>
+
+        <div class="hero-showcase" aria-hidden="true">
+            <div class="hero-icon">
+                <img
+                    src="/images/icon.png"
+                    alt=""
+                    width="320"
+                    height="320"
+                    loading="eager"
+                    fetchpriority="high"
+                />
+            </div>
+        </div>
+    </section>
+</header>
