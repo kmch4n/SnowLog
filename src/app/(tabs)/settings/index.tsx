@@ -2,7 +2,9 @@ import { useRouter, type Href } from "expo-router";
 import { useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { Icon } from "@/components/ui/Icon";
 import { Colors } from "@/constants/colors";
+import { IconNames } from "@/constants/icons";
 import { useTranslation } from "@/i18n/useTranslation";
 
 type SettingsRoute =
@@ -77,7 +79,15 @@ export default function SettingsScreen() {
                             <Text style={styles.rowLabel}>{item.label}</Text>
                             <Text style={styles.rowDescription}>{item.description}</Text>
                         </View>
-                        <Text style={styles.chevron}>›</Text>
+                        <Icon
+                            name={IconNames.chevronRight}
+                            size={22}
+                            color={Colors.textTertiary}
+                            weight="semibold"
+                            fallback="›"
+                            accessibilityLabel={t("a11y.iconNavigate")}
+                            style={styles.chevron}
+                        />
                     </TouchableOpacity>
                 ))}
             </View>
@@ -125,8 +135,6 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     chevron: {
-        fontSize: 22,
-        color: Colors.textTertiary,
         marginLeft: 8,
     },
 });

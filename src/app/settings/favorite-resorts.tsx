@@ -16,6 +16,8 @@ import {
     removeFavoriteResort,
 } from "@/database/repositories/favoriteResortRepository";
 import { Colors } from "@/constants/colors";
+import { IconNames } from "@/constants/icons";
+import { Icon } from "@/components/ui/Icon";
 import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { useTranslation } from "@/i18n/useTranslation";
 
@@ -104,7 +106,16 @@ export default function FavoriteResortsScreen() {
                 }
                 renderItem={({ item }) => (
                     <View style={styles.row}>
-                        <Text style={styles.rowText}>⭐ {item}</Text>
+                        <View style={styles.rowLabelGroup}>
+                            <Icon
+                                name={IconNames.starFill}
+                                size={16}
+                                color={Colors.morningGold}
+                                fallback="⭐"
+                                accessibilityLabel={t("a11y.iconFavorite")}
+                            />
+                            <Text style={styles.rowText}>{item}</Text>
+                        </View>
                         <TouchableOpacity
                             style={styles.deleteButton}
                             onPress={() => handleDelete(item)}
@@ -166,6 +177,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 14,
         borderRadius: 8,
+    },
+    rowLabelGroup: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
     },
     rowText: {
         flex: 1,

@@ -7,6 +7,8 @@ import {
 } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import { IconNames } from "@/constants/icons";
+import { Icon } from "@/components/ui/Icon";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { BulkImportGpsGroup } from "@/types";
 
@@ -54,7 +56,14 @@ export function GpsConfirmationDialog({
                             group.confirmed && styles.checkboxChecked,
                         ]}>
                             {group.confirmed && (
-                                <Text style={styles.checkmark}>✓</Text>
+                                <Icon
+                                    name={IconNames.checkmark}
+                                    size={14}
+                                    color={Colors.headerText}
+                                    weight="bold"
+                                    fallback="✓"
+                                    accessibilityLabel={t("a11y.iconCheckmarkSelected")}
+                                />
                             )}
                         </View>
                         <View style={styles.groupInfo}>
@@ -148,11 +157,6 @@ const styles = StyleSheet.create({
     checkboxChecked: {
         backgroundColor: Colors.alpineBlue,
         borderColor: Colors.alpineBlue,
-    },
-    checkmark: {
-        color: Colors.headerText,
-        fontSize: 14,
-        fontWeight: "700",
     },
     groupInfo: {
         flex: 1,

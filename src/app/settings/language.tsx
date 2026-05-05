@@ -1,6 +1,8 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { Icon } from "@/components/ui/Icon";
 import { Colors } from "@/constants/colors";
+import { IconNames } from "@/constants/icons";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { LocalePreference } from "@/i18n/types";
 
@@ -42,7 +44,16 @@ export default function LanguageSettingsScreen() {
                             activeOpacity={0.7}
                         >
                             <Text style={styles.rowLabel}>{t(option.labelKey)}</Text>
-                            {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                            {isSelected && (
+                                <Icon
+                                    name={IconNames.checkmark}
+                                    size={16}
+                                    color={Colors.alpineBlue}
+                                    weight="bold"
+                                    fallback="✓"
+                                    accessibilityLabel={t("a11y.iconCheckmarkSelected")}
+                                />
+                            )}
                         </TouchableOpacity>
                     );
                 })}
@@ -88,10 +99,5 @@ const styles = StyleSheet.create({
     rowLabel: {
         fontSize: 16,
         color: Colors.textPrimary,
-    },
-    checkmark: {
-        fontSize: 16,
-        color: Colors.alpineBlue,
-        fontWeight: "700",
     },
 });

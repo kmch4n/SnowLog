@@ -23,6 +23,8 @@ import {
 } from "react-native";
 
 import { Colors } from "@/constants/colors";
+import { IconNames } from "@/constants/icons";
+import { Icon } from "@/components/ui/Icon";
 import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
@@ -360,10 +362,22 @@ export default function VideoDetailScreen() {
                             returnKeyType="done"
                             numberOfLines={1}
                         />
-                        <TouchableOpacity onPress={toggleFavorite} hitSlop={8}>
-                            <Text style={video.isFavorite === 1 ? styles.starActive : styles.starInactive}>
-                                {video.isFavorite === 1 ? "★" : "☆"}
-                            </Text>
+                        <TouchableOpacity
+                            onPress={toggleFavorite}
+                            hitSlop={8}
+                            style={styles.starButton}
+                        >
+                            <Icon
+                                name={video.isFavorite === 1 ? IconNames.starFill : IconNames.starOutline}
+                                size={30}
+                                color={video.isFavorite === 1 ? Colors.morningGold : Colors.textTertiary}
+                                fallback={video.isFavorite === 1 ? "★" : "☆"}
+                                accessibilityLabel={t(
+                                    video.isFavorite === 1
+                                        ? "a11y.iconFavorite"
+                                        : "a11y.iconNotFavorite"
+                                )}
+                            />
                         </TouchableOpacity>
                         <Text style={styles.saveStatus}>
                             {titleSaveStatus === "saving"
@@ -639,15 +653,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "700",
     },
-    starActive: {
-        fontSize: 24,
-        color: Colors.morningGold,
-        marginLeft: 8,
-    },
-    starInactive: {
-        fontSize: 24,
-        color: Colors.textTertiary,
-        marginLeft: 8,
+    starButton: {
+        width: 44,
+        height: 44,
+        marginLeft: 4,
+        alignItems: "center",
+        justifyContent: "center",
     },
 });
 

@@ -1,7 +1,10 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "../constants/colors";
+import { IconNames } from "../constants/icons";
+import { useTranslation } from "../i18n/useTranslation";
 import type { Tag } from "../types";
+import { Icon } from "./ui/Icon";
 
 interface TagChipProps {
     tag: Tag;
@@ -13,6 +16,7 @@ interface TagChipProps {
  * onRemove を渡すと削除ボタンが表示される
  */
 export function TagChip({ tag, onRemove }: TagChipProps) {
+    const { t } = useTranslation();
     const tagColors = Colors.tag[tag.type as keyof typeof Colors.tag] ?? Colors.tag.custom;
 
     return (
@@ -20,7 +24,14 @@ export function TagChip({ tag, onRemove }: TagChipProps) {
             <Text style={[styles.label, { color: tagColors.text }]}>{tag.name}</Text>
             {onRemove && (
                 <TouchableOpacity onPress={onRemove} hitSlop={8} style={styles.removeButton}>
-                    <Text style={[styles.removeIcon, { color: tagColors.text }]}>×</Text>
+                    <Icon
+                        name={IconNames.xmark}
+                        size={14}
+                        color={tagColors.text}
+                        weight="semibold"
+                        fallback="×"
+                        accessibilityLabel={t("a11y.iconRemove")}
+                    />
                 </TouchableOpacity>
             )}
         </View>
@@ -41,9 +52,5 @@ const styles = StyleSheet.create({
     },
     removeButton: {
         marginLeft: 4,
-    },
-    removeIcon: {
-        fontSize: 14,
-        lineHeight: 16,
     },
 });

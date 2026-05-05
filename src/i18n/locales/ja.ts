@@ -122,6 +122,8 @@ export const ja = {
         empty: "この日の動画はありません",
         switchToWeek: "タップで週表示",
         switchToMonth: "タップで月表示",
+        previousPeriod: "前へ",
+        nextPeriod: "次へ",
         videoCount: "{{count}}件",
         videoCountShort: "{{count}}本",
         weekTitle: "{{year}}年{{month}}月 第{{week}}週",
@@ -511,6 +513,17 @@ export const ja = {
         unknown: "不明なエラーが発生しました",
         dbInitFailed: "DBの初期化に失敗しました",
         videoLoadFailed: "動画の取得に失敗しました。",
+    },
+    a11y: {
+        iconFavorite: "お気に入り",
+        iconNotFavorite: "お気に入りに追加",
+        iconPhotoMissing: "サムネイルなし",
+        iconCheckmarkSelected: "選択済み",
+        iconClose: "閉じる",
+        iconClear: "クリア",
+        iconRemove: "削除",
+        iconNavigate: "詳細を表示",
+        iconDelete: "削除する",
     },
 };
 

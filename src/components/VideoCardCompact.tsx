@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { SymbolView } from "expo-symbols";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ReanimatedSwipeable, {
     type SwipeableMethods,
@@ -7,6 +6,7 @@ import ReanimatedSwipeable, {
 import type { SharedValue } from "react-native-reanimated";
 
 import { Colors } from "../constants/colors";
+import { IconNames } from "../constants/icons";
 import {
     THUMBNAIL_MISSING_SENTINEL,
     resolveThumbnailUri,
@@ -14,6 +14,7 @@ import {
 import { useTranslation } from "../i18n/useTranslation";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
+import { Icon } from "./ui/Icon";
 
 const IOS_DESTRUCTIVE_RED = "#FF3B30";
 
@@ -68,11 +69,13 @@ export function VideoCardCompact({
                     accessibilityRole="button"
                     accessibilityLabel={t("common.delete")}
                 >
-                    <SymbolView
-                        name="trash"
+                    <Icon
+                        name={IconNames.trash}
                         size={20}
                         weight="semibold"
-                        tintColor={Colors.headerText}
+                        color={Colors.headerText}
+                        fallback="🗑"
+                        accessibilityLabel={t("a11y.iconDelete")}
                     />
                     <Text style={styles.deleteActionText}>{t("common.delete")}</Text>
                 </TouchableOpacity>
@@ -91,7 +94,16 @@ export function VideoCardCompact({
             {/* Selection checkbox */}
             {isSelectionMode && (
                 <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                    {isSelected && (
+                        <Icon
+                            name={IconNames.checkmark}
+                            size={14}
+                            color={Colors.headerText}
+                            weight="bold"
+                            fallback="✓"
+                            accessibilityLabel={t("a11y.iconCheckmarkSelected")}
+                        />
+                    )}
                 </View>
             )}
 
@@ -99,7 +111,13 @@ export function VideoCardCompact({
             <View style={styles.thumbnailContainer}>
                 {isThumbnailMissing ? (
                     <View style={[styles.thumbnail, styles.thumbnailMissing]}>
-                        <Text style={styles.thumbnailMissingIcon}>🖼️</Text>
+                        <Icon
+                            name={IconNames.photo}
+                            size={20}
+                            color={Colors.textTertiary}
+                            fallback="🖼️"
+                            accessibilityLabel={t("a11y.iconPhotoMissing")}
+                        />
                     </View>
                 ) : (
                     <Image
@@ -110,7 +128,13 @@ export function VideoCardCompact({
                 )}
                 {video.isFavorite === 1 && (
                     <View style={styles.favBadge}>
-                        <Text style={styles.favBadgeText}>★</Text>
+                        <Icon
+                            name={IconNames.starFill}
+                            size={10}
+                            color={Colors.morningGold}
+                            fallback="★"
+                            accessibilityLabel={t("a11y.iconFavorite")}
+                        />
                     </View>
                 )}
                 {isUnavailable && (
@@ -240,11 +264,6 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.alpineBlue,
         borderColor: Colors.alpineBlue,
     },
-    checkmark: {
-        color: Colors.headerText,
-        fontSize: 14,
-        fontWeight: "700",
-    },
     thumbnailContainer: {
         width: 72,
         height: 54,
@@ -262,10 +281,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
-    thumbnailMissingIcon: {
-        fontSize: 20,
-        opacity: 0.7,
-    },
     favBadge: {
         position: "absolute",
         top: 2,
@@ -274,10 +289,6 @@ const styles = StyleSheet.create({
         borderRadius: 3,
         paddingHorizontal: 3,
         paddingVertical: 0,
-    },
-    favBadgeText: {
-        color: Colors.morningGold,
-        fontSize: 10,
     },
     unavailableOverlay: {
         ...StyleSheet.absoluteFillObject,

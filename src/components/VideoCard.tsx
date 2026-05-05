@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "../constants/colors";
+import { IconNames } from "../constants/icons";
 import {
     THUMBNAIL_MISSING_SENTINEL,
     resolveThumbnailUri,
@@ -9,6 +10,7 @@ import { useTranslation } from "../i18n/useTranslation";
 import type { VideoWithTags } from "../types";
 import { formatDate, formatDuration } from "../utils/dateUtils";
 import { TagChip } from "./TagChip";
+import { Icon } from "./ui/Icon";
 
 interface VideoCardProps {
     video: VideoWithTags;
@@ -30,7 +32,13 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
             <View style={styles.thumbnailContainer}>
                 {isThumbnailMissing ? (
                     <View style={[styles.thumbnail, styles.thumbnailMissing]}>
-                        <Text style={styles.thumbnailMissingIcon}>🖼️</Text>
+                        <Icon
+                            name={IconNames.photo}
+                            size={32}
+                            color={Colors.textTertiary}
+                            fallback="🖼️"
+                            accessibilityLabel={t("a11y.iconPhotoMissing")}
+                        />
                         <Text style={styles.thumbnailMissingText}>
                             {t("components.videoCard.thumbnailMissing")}
                         </Text>
@@ -49,7 +57,13 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
                 {/* お気に入りバッジ */}
                 {video.isFavorite === 1 && (
                     <View style={styles.favBadge}>
-                        <Text style={styles.favBadgeText}>★</Text>
+                        <Icon
+                            name={IconNames.starFill}
+                            size={14}
+                            color={Colors.morningGold}
+                            fallback="★"
+                            accessibilityLabel={t("a11y.iconFavorite")}
+                        />
                     </View>
                 )}
                 {/* ファイル削除済みの警告 */}
@@ -130,10 +144,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 6,
     },
-    thumbnailMissingIcon: {
-        fontSize: 32,
-        opacity: 0.7,
-    },
     thumbnailMissingText: {
         fontSize: 12,
         color: Colors.textSecondary,
@@ -161,10 +171,6 @@ const styles = StyleSheet.create({
         borderRadius: 4,
         paddingHorizontal: 5,
         paddingVertical: 1,
-    },
-    favBadgeText: {
-        color: Colors.morningGold,
-        fontSize: 14,
     },
     unavailableOverlay: {
         ...StyleSheet.absoluteFillObject,

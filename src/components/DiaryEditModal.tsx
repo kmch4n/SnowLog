@@ -19,11 +19,13 @@ import {
     SNOW_CONDITION_OPTIONS,
     WEATHER_OPTIONS,
 } from "@/constants/diaryOptions";
+import { IconNames } from "@/constants/icons";
 import { useTranslation } from "@/i18n/useTranslation";
 import { formatDate } from "@/utils/dateUtils";
 import { DiaryOptionChips } from "./DiaryOptionChips";
 import { SkiResortSearch } from "./SkiResortSearch";
 import { GlassSurface } from "./ui/GlassSurface";
+import { Icon } from "./ui/Icon";
 import type { DiaryEntry } from "@/types";
 import type { DiaryEntryInsert } from "@/database/schema";
 
@@ -233,8 +235,19 @@ export function DiaryEditModal({
             >
                 {/* Header */}
                 <GlassSurface variant="panel" style={styles.header}>
-                    <TouchableOpacity onPress={handleClose} hitSlop={8}>
-                        <Text style={styles.closeButton}>✕</Text>
+                    <TouchableOpacity
+                        onPress={handleClose}
+                        hitSlop={8}
+                        style={styles.closeButton}
+                    >
+                        <Icon
+                            name={IconNames.xmark}
+                            size={18}
+                            color={Colors.textSecondary}
+                            weight="semibold"
+                            fallback="✕"
+                            accessibilityLabel={t("a11y.iconClose")}
+                        />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>{displayDate}</Text>
                     <View style={styles.headerSpacer} />
@@ -421,8 +434,6 @@ const styles = StyleSheet.create({
         borderBottomColor: Colors.border,
     },
     closeButton: {
-        fontSize: 18,
-        color: Colors.textSecondary,
         paddingHorizontal: 4,
     },
     headerTitle: {

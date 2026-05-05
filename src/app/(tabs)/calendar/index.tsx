@@ -14,7 +14,9 @@ import { CalendarMonthGrid } from "@/components/CalendarMonthGrid";
 import { CalendarWeekStrip } from "@/components/CalendarWeekStrip";
 import { DiaryCard } from "@/components/DiaryCard";
 import { DiaryEditModal } from "@/components/DiaryEditModal";
+import { Icon } from "@/components/ui/Icon";
 import { Colors } from "@/constants/colors";
+import { IconNames } from "@/constants/icons";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useCalendarEnhanced } from "@/hooks/useCalendarEnhanced";
 import { useDiaryEntry } from "@/hooks/useDiaryEntry";
@@ -101,8 +103,16 @@ export default function CalendarScreen() {
                 <TouchableOpacity
                     style={styles.navButton}
                     onPress={isMonthView ? prevMonth : prevWeek}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("calendar.previousPeriod")}
                 >
-                    <Text style={styles.navArrow}>‹</Text>
+                    <Icon
+                        name={IconNames.chevronLeft}
+                        size={22}
+                        color={Colors.alpineBlue}
+                        weight="semibold"
+                        fallback="‹"
+                    />
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={toggleViewMode} activeOpacity={0.7}>
@@ -121,8 +131,16 @@ export default function CalendarScreen() {
                 <TouchableOpacity
                     style={styles.navButton}
                     onPress={isMonthView ? nextMonth : nextWeek}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("calendar.nextPeriod")}
                 >
-                    <Text style={styles.navArrow}>›</Text>
+                    <Icon
+                        name={IconNames.chevronRight}
+                        size={22}
+                        color={Colors.alpineBlue}
+                        weight="semibold"
+                        fallback="›"
+                    />
                 </TouchableOpacity>
             </View>
 
@@ -247,11 +265,6 @@ const styles = StyleSheet.create({
         height: 40,
         justifyContent: "center",
         alignItems: "center",
-    },
-    navArrow: {
-        fontSize: 28,
-        color: Colors.alpineBlue,
-        lineHeight: 32,
     },
     monthTitle: {
         fontSize: 17,

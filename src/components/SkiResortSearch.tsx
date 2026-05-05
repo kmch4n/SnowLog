@@ -10,10 +10,12 @@ import {
 } from "react-native";
 
 import { Colors } from "../constants/colors";
+import { IconNames } from "../constants/icons";
 import { getFavoriteResorts } from "../database/repositories/favoriteResortRepository";
 import { useTranslation } from "../i18n/useTranslation";
 import SKI_RESORTS from "../constants/skiResorts.json";
 import type { SkiResort } from "../types";
+import { Icon } from "./ui/Icon";
 
 interface SkiResortSearchProps {
     value: string | null;
@@ -107,7 +109,14 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
                 />
                 {query.length > 0 && (
                     <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
-                        <Text style={styles.clearText}>×</Text>
+                        <Icon
+                            name={IconNames.xmark}
+                            size={18}
+                            color={Colors.textTertiary}
+                            weight="semibold"
+                            fallback="×"
+                            accessibilityLabel={t("a11y.iconClear")}
+                        />
                     </TouchableOpacity>
                 )}
             </View>
@@ -127,7 +136,15 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
                             style={styles.favoriteChip}
                             onPress={() => handleFavoriteSelect(name)}
                         >
-                            <Text style={styles.favoriteChipText}>⭐ {name}</Text>
+                            <Icon
+                                name={IconNames.starFill}
+                                size={13}
+                                color={Colors.alpineBlue}
+                                weight="semibold"
+                                fallback="⭐"
+                                accessibilityLabel={t("a11y.iconFavorite")}
+                            />
+                            <Text style={styles.favoriteChipText}>{name}</Text>
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
@@ -182,10 +199,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 10,
     },
-    clearText: {
-        fontSize: 18,
-        color: Colors.textTertiary,
-    },
     favoriteScroll: {
         marginTop: 8,
     },
@@ -193,6 +206,9 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     favoriteChip: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
         backgroundColor: Colors.alpineBlueLight,
         borderRadius: 16,
         paddingHorizontal: 12,

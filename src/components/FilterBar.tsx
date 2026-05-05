@@ -10,12 +10,14 @@ import {
 import { useFocusEffect } from "expo-router";
 
 import { Colors } from "../constants/colors";
+import { IconNames } from "../constants/icons";
 import { getAllTags } from "../database/repositories/tagRepository";
 import { useTranslation } from "../i18n/useTranslation";
 import { endOfMonth, startOfMonth } from "../utils/dateUtils";
 import type { FilterOptions, Tag } from "../types";
 import { SkiResortSearch } from "./SkiResortSearch";
 import { TagChip } from "./TagChip";
+import { Icon } from "./ui/Icon";
 
 interface FilterBarProps {
     filter: FilterOptions;
@@ -161,7 +163,14 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                 />
                 {searchDraft.length > 0 && (
                     <TouchableOpacity style={styles.searchClear} onPress={clearSearch}>
-                        <Text style={styles.searchClearText}>×</Text>
+                        <Icon
+                            name={IconNames.xmark}
+                            size={18}
+                            color={Colors.textTertiary}
+                            weight="semibold"
+                            fallback="×"
+                            accessibilityLabel={t("a11y.iconClear")}
+                        />
                     </TouchableOpacity>
                 )}
             </View>
@@ -267,11 +276,6 @@ const styles = StyleSheet.create({
         height: 24,
         justifyContent: "center",
         alignItems: "center",
-    },
-    searchClearText: {
-        fontSize: 18,
-        color: Colors.textTertiary,
-        fontWeight: "600",
     },
     resortRow: {
         marginBottom: 8,
