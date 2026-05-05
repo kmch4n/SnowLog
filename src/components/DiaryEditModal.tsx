@@ -23,6 +23,7 @@ import { useTranslation } from "@/i18n/useTranslation";
 import { formatDate } from "@/utils/dateUtils";
 import { DiaryOptionChips } from "./DiaryOptionChips";
 import { SkiResortSearch } from "./SkiResortSearch";
+import { GlassSurface } from "./ui/GlassSurface";
 import type { DiaryEntry } from "@/types";
 import type { DiaryEntryInsert } from "@/database/schema";
 
@@ -231,13 +232,13 @@ export function DiaryEditModal({
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
                 {/* Header */}
-                <View style={styles.header}>
+                <GlassSurface variant="panel" style={styles.header}>
                     <TouchableOpacity onPress={handleClose} hitSlop={8}>
                         <Text style={styles.closeButton}>✕</Text>
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>{displayDate}</Text>
                     <View style={styles.headerSpacer} />
-                </View>
+                </GlassSurface>
 
                 <ScrollView
                     style={styles.flex}
@@ -418,7 +419,6 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: Colors.border,
-        backgroundColor: Colors.freshSnow,
     },
     closeButton: {
         fontSize: 18,

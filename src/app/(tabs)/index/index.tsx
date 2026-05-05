@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { BulkActionToolbar } from "@/components/BulkActionToolbar";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { Colors } from "@/constants/colors";
 import {
@@ -435,9 +436,17 @@ export default function HomeScreen() {
 
             {/* インポートFAB (hidden during selection mode) */}
             {!isSelectionMode && (
-                <TouchableOpacity style={styles.fab} onPress={handleImportPress}>
-                    <Text style={styles.fabText}>{t("home.importFab")}</Text>
-                </TouchableOpacity>
+                <View style={styles.fabShadow}>
+                    <GlassSurface variant="fab" style={styles.fab}>
+                        <TouchableOpacity
+                            style={styles.fabTouch}
+                            onPress={handleImportPress}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.fabText}>{t("home.importFab")}</Text>
+                        </TouchableOpacity>
+                    </GlassSurface>
+                </View>
             )}
 
             {/* Bulk action toolbar */}
@@ -555,19 +564,24 @@ const styles = StyleSheet.create({
         textAlign: "center",
         lineHeight: 20,
     },
-    fab: {
+    fabShadow: {
         position: "absolute",
         bottom: 100,
         alignSelf: "center",
-        backgroundColor: Colors.alpineBlue,
         borderRadius: 28,
-        paddingHorizontal: 24,
-        paddingVertical: 14,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.2,
         shadowRadius: 6,
         elevation: 5,
+    },
+    fab: {
+        borderRadius: 28,
+        overflow: "hidden",
+    },
+    fabTouch: {
+        paddingHorizontal: 24,
+        paddingVertical: 14,
     },
     fabText: {
         color: Colors.headerText,

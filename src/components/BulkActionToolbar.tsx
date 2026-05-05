@@ -8,6 +8,7 @@ import {
 
 import { Colors } from "../constants/colors";
 import { useTranslation } from "../i18n/useTranslation";
+import { GlassSurface } from "./ui/GlassSurface";
 
 interface BulkActionToolbarProps {
     selectedCount: number;
@@ -31,7 +32,7 @@ export function BulkActionToolbar({
     const { t } = useTranslation();
 
     return (
-        <View style={styles.container}>
+        <GlassSurface variant="toolbar" style={styles.container}>
             {isProcessing ? (
                 <View style={styles.processingRow}>
                     <ActivityIndicator size="small" color={Colors.alpineBlue} />
@@ -70,7 +71,7 @@ export function BulkActionToolbar({
                     </View>
                 </>
             )}
-        </View>
+        </GlassSurface>
     );
 }
 
@@ -80,7 +81,6 @@ const styles = StyleSheet.create({
         bottom: 80,
         left: 0,
         right: 0,
-        backgroundColor: Colors.freshSnow,
         borderTopWidth: 1,
         borderTopColor: Colors.borderLight,
         paddingHorizontal: 16,
