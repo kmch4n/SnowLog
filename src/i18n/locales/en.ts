@@ -163,7 +163,6 @@ export const en: Translations = {
             favoriteResorts: "Favorite resorts",
             calendar: "Calendar",
             duplicateCandidates: "Duplicate candidates",
-            language: "Language",
             export: "Export",
         },
         descriptions: {
@@ -172,7 +171,6 @@ export const en: Translations = {
             favoriteResorts: "Quick-pick frequently used ski resorts",
             calendar: "Change week start and default view",
             duplicateCandidates: "Review and clean up potential duplicates",
-            language: "Switch the in-app language",
             export: "Export the entire library to JSON",
         },
         techniques: {
@@ -264,13 +262,6 @@ export const en: Translations = {
                 resortExact: "Same resort name",
                 mixed: "Match conditions differ across videos",
             },
-        },
-        language: {
-            title: "Language",
-            description: "Choose the in-app display language. \"Use device language\" follows the OS setting.",
-            optionDevice: "Use device language",
-            optionJa: "日本語",
-            optionEn: "English",
         },
         export: {
             title: "Export",

@@ -12,8 +12,7 @@ type SettingsRoute =
     | "/settings/techniques"
     | "/settings/favorite-resorts"
     | "/settings/tags"
-    | "/settings/duplicate-candidates"
-    | "/settings/language";
+    | "/settings/duplicate-candidates";
 
 interface SettingsItem {
     label: string;
@@ -51,11 +50,6 @@ export default function SettingsScreen() {
                 label: t("settings.menu.duplicateCandidates"),
                 description: t("settings.descriptions.duplicateCandidates"),
                 route: "/settings/duplicate-candidates",
-            },
-            {
-                label: t("settings.menu.language"),
-                description: t("settings.descriptions.language"),
-                route: "/settings/language",
             },
         ],
         [t]

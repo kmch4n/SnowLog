@@ -161,7 +161,6 @@ export const ja = {
             favoriteResorts: "お気に入りスキー場",
             calendar: "カレンダー",
             duplicateCandidates: "重複の候補",
-            language: "言語",
             export: "エクスポート",
         },
         descriptions: {
@@ -170,7 +169,6 @@ export const ja = {
             favoriteResorts: "よく使うスキー場をクイックピックに登録します",
             calendar: "週始まりや既定ビューを変更します",
             duplicateCandidates: "重複の可能性がある動画を確認・整理します",
-            language: "アプリの表示言語を切り替えます",
             export: "ライブラリ全体を JSON でエクスポートします",
         },
         techniques: {
@@ -262,13 +260,6 @@ export const ja = {
                 resortExact: "スキー場名が一致",
                 mixed: "一致条件は動画ごとに異なります",
             },
-        },
-        language: {
-            title: "言語",
-            description: "アプリの表示言語を選びます。デバイスに従う場合は OS の言語設定を尊重します。",
-            optionDevice: "デバイスに従う",
-            optionJa: "日本語",
-            optionEn: "English",
         },
         export: {
             title: "エクスポート",

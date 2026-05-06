@@ -2,27 +2,23 @@ import { useMemo, useSyncExternalStore } from "react";
 
 import {
     getCurrentLocale,
-    getCurrentPreference,
     getLocaleVersion,
-    setLocalePreference,
     subscribeToLocale,
     t,
 } from "./index";
-import type { LocalePreference, SupportedLocale } from "./types";
+import type { SupportedLocale } from "./types";
 
 interface UseTranslationReturn {
     t: (key: string, params?: Record<string, unknown>) => string;
     locale: SupportedLocale;
-    preference: LocalePreference;
-    setPreference: (next: LocalePreference) => Promise<void>;
 }
 
 /**
  * Read translations and the current locale.
  *
- * Components subscribe to a module-level version counter so they re-render
- * the moment any caller changes the language preference, even if they live
- * in a different navigation stack.
+ * The locale is resolved once from the device language at module init. The
+ * subscription plumbing is kept so callers can re-render if a future change
+ * surface needs to push locale updates.
  */
 export function useTranslation(): UseTranslationReturn {
     const version = useSyncExternalStore(
@@ -38,7 +34,5 @@ export function useTranslation(): UseTranslationReturn {
     return {
         t: translate,
         locale: getCurrentLocale(),
-        preference: getCurrentPreference(),
-        setPreference: setLocalePreference,
     };
 }

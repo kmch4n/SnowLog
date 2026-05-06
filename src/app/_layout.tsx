@@ -21,7 +21,6 @@ import {
     getVideosWithSuspiciousCapturedAt,
     updateVideoCapturedAt,
 } from "@/database/repositories/videoRepository";
-import { loadInitialLocale } from "@/i18n";
 import { useTranslation } from "@/i18n/useTranslation";
 import { getAssetInfo, isSyntheticAssetId } from "@/services/mediaService";
 import {
@@ -118,7 +117,6 @@ export default function RootLayout() {
     const colorScheme = useColorScheme();
     const { t } = useTranslation();
     const { success, error } = useMigrations(db, migrations);
-    const [localeReady, setLocaleReady] = useState(false);
     const [thumbnailPhase, setThumbnailPhase] =
         useState<ThumbnailMigrationPhase>("pending");
     const [thumbnailProgress, setThumbnailProgress] = useState({
@@ -133,10 +131,6 @@ export default function RootLayout() {
         let cancelled = false;
         (async () => {
             try {
-                await loadInitialLocale();
-                if (cancelled) return;
-                setLocaleReady(true);
-
                 const needed = await isThumbnailMigrationNeeded();
                 if (cancelled) return;
                 if (!needed) {
@@ -150,7 +144,6 @@ export default function RootLayout() {
             } catch {
                 // Never let migration failure hard-block the app — proceed to UI
             } finally {
-                if (!cancelled) setLocaleReady(true);
                 if (!cancelled) setThumbnailPhase("done");
             }
         })();
@@ -178,7 +171,7 @@ export default function RootLayout() {
         );
     }
 
-    if (!success || !localeReady) {
+    if (!success) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator size="large" color={Colors.alpineBlue} />
@@ -273,15 +266,6 @@ export default function RootLayout() {
                         name="settings/duplicate-candidates"
                         options={{
                             title: t("settings.duplicateCandidates.title"),
-                            headerStyle: { backgroundColor: Colors.headerBg },
-                            headerTintColor: Colors.headerText,
-                            headerTitleStyle: { fontWeight: "700" },
-                        }}
-                    />
-                    <Stack.Screen
-                        name="settings/language"
-                        options={{
-                            title: t("settings.language.title"),
                             headerStyle: { backgroundColor: Colors.headerBg },
                             headerTintColor: Colors.headerText,
                             headerTitleStyle: { fontWeight: "700" },
