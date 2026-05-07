@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { db, tags, videoTags } from "../index";
 import type { Tag, TagType } from "../../types";
@@ -23,20 +23,16 @@ export async function insertTag(data: TagInsert): Promise<void> {
 
 /** 名前と種別でタグを取得する（存在しなければ作成して返す） */
 export async function getOrCreateTag(name: string, type: TagType): Promise<Tag> {
-    const existing = await db
+    await db.insert(tags).values({ name, type }).onConflictDoNothing();
+    const result = await db
         .select()
         .from(tags)
         .where(and(eq(tags.name, name), eq(tags.type, type)))
         .limit(1);
-    if (existing[0]) return asTag(existing[0]);
-
-    await db.insert(tags).values({ name, type });
-    const created = await db
-        .select()
-        .from(tags)
-        .where(and(eq(tags.name, name), eq(tags.type, type)))
-        .limit(1);
-    return asTag(created[0]!);
+    if (!result[0]) {
+        throw new Error(`Failed to upsert tag (name=${name}, type=${type})`);
+    }
+    return asTag(result[0]);
 }
 
 /** タグ種別でタグ一覧を取得する */
@@ -60,7 +56,11 @@ export async function getTagsForVideo(videoId: string): Promise<Tag[]> {
 
     if (rows.length === 0) return [];
     const tagIds = rows.map((r) => r.tagId);
-    const result = await db.select().from(tags).where(inArray(tags.id, tagIds));
+    const result = await db
+        .select()
+        .from(tags)
+        .where(inArray(tags.id, tagIds))
+        .orderBy(asc(tags.id));
     return result.map(asTag);
 }
 
