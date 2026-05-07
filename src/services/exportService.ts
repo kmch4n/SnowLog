@@ -1,5 +1,6 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
+import Constants from "expo-constants";
 
 import { getAllVideos } from "../database/repositories/videoRepository";
 import { getAllTags, getTagsForVideo } from "../database/repositories/tagRepository";
@@ -13,7 +14,6 @@ import { parseTechniques } from "../utils/parseTechniques";
 
 /** Bump when the export payload shape changes */
 const SCHEMA_VERSION = 1;
-const APP_VERSION = "1.0.0";
 
 /**
  * Export all user data as a full-backup JSON and open the system share sheet.
@@ -48,7 +48,7 @@ export async function exportAllToJSON(): Promise<void> {
 
     const exportData = {
         schemaVersion: SCHEMA_VERSION,
-        appVersion: APP_VERSION,
+        appVersion: Constants.expoConfig?.version ?? "unknown",
         exportedAt: new Date().toISOString(),
         videos: videosWithTags.map((v) => ({
             id: v.id,
