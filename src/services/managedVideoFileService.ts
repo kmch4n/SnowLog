@@ -4,6 +4,10 @@ import { t } from "../i18n";
 
 const MANAGED_VIDEO_DIR = `${FileSystem.documentDirectory}videos/`;
 
+export function getManagedVideoDirectoryUri(): string {
+    return MANAGED_VIDEO_DIR;
+}
+
 function isSupportedManagedVideoUri(sourceUri: string): boolean {
     return sourceUri.startsWith("file://") || sourceUri.startsWith("content://");
 }

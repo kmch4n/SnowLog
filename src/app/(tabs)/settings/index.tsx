@@ -1,11 +1,13 @@
 import { useRouter, type Href } from "expo-router";
-import { useMemo } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Icon } from "@/components/ui/Icon";
 import { Colors } from "@/constants/colors";
 import { IconNames } from "@/constants/icons";
 import { useTranslation } from "@/i18n/useTranslation";
+import { hapticError, hapticSuccess, hapticWarning } from "@/services/hapticsService";
+import { cleanupOrphanedFiles } from "@/services/orphanedFileCleanupService";
 
 type SettingsRoute =
     | "/settings/calendar"
@@ -23,6 +25,7 @@ interface SettingsItem {
 export default function SettingsScreen() {
     const router = useRouter();
     const { t } = useTranslation();
+    const [isCleaning, setIsCleaning] = useState(false);
 
     const items = useMemo<SettingsItem[]>(
         () => [
@@ -55,6 +58,49 @@ export default function SettingsScreen() {
         [t]
     );
 
+    async function runManualCleanup(): Promise<void> {
+        if (isCleaning) return;
+        setIsCleaning(true);
+        try {
+            const result = await cleanupOrphanedFiles();
+            hapticSuccess();
+            Alert.alert(
+                t("settings.storageCleanup.completedTitle"),
+                result.deletedFiles > 0
+                    ? t("settings.storageCleanup.completedBody", {
+                        count: result.deletedFiles,
+                    })
+                    : t("settings.storageCleanup.noFilesBody")
+            );
+        } catch {
+            hapticError();
+            Alert.alert(
+                t("settings.storageCleanup.failedTitle"),
+                t("settings.storageCleanup.failedBody")
+            );
+        } finally {
+            setIsCleaning(false);
+        }
+    }
+
+    function confirmManualCleanup(): void {
+        if (isCleaning) return;
+        hapticWarning();
+        Alert.alert(
+            t("settings.storageCleanup.confirmTitle"),
+            t("settings.storageCleanup.confirmBody"),
+            [
+                { text: t("common.cancel"), style: "cancel" },
+                {
+                    text: t("settings.storageCleanup.action"),
+                    onPress: () => {
+                        runManualCleanup().catch(() => {});
+                    },
+                },
+            ]
+        );
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.section}>
@@ -85,6 +131,39 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                 ))}
             </View>
+            <View style={[styles.section, styles.maintenanceSection]}>
+                <TouchableOpacity
+                    style={[
+                        styles.row,
+                        styles.rowFirst,
+                        styles.rowLast,
+                        isCleaning && styles.rowDisabled,
+                    ]}
+                    onPress={confirmManualCleanup}
+                    activeOpacity={0.7}
+                    disabled={isCleaning}
+                >
+                    <View style={styles.rowContent}>
+                        <Text style={styles.rowLabel}>
+                            {isCleaning
+                                ? t("settings.storageCleanup.cleaning")
+                                : t("settings.menu.storageCleanup")}
+                        </Text>
+                        <Text style={styles.rowDescription}>
+                            {t("settings.descriptions.storageCleanup")}
+                        </Text>
+                    </View>
+                    <Icon
+                        name={IconNames.trash}
+                        size={22}
+                        color={Colors.textTertiary}
+                        weight="semibold"
+                        fallback="×"
+                        accessibilityLabel={t("settings.menu.storageCleanup")}
+                        style={styles.chevron}
+                    />
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -101,12 +180,18 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.border,
     },
+    maintenanceSection: {
+        marginTop: 16,
+    },
     row: {
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: Colors.freshSnow,
         paddingHorizontal: 16,
         paddingVertical: 14,
+    },
+    rowDisabled: {
+        opacity: 0.6,
     },
     rowFirst: {
         borderTopLeftRadius: 12,

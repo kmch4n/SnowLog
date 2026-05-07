@@ -20,6 +20,10 @@ const THUMBNAIL_ABSOLUTE_DIR = `${FileSystem.documentDirectory}${THUMBNAIL_RELAT
 /** Sentinel stored in the DB when a thumbnail is confirmed missing and unrecoverable. */
 export const THUMBNAIL_MISSING_SENTINEL = "";
 
+export function getThumbnailDirectoryUri(): string {
+    return THUMBNAIL_ABSOLUTE_DIR;
+}
+
 /** サムネイルディレクトリが存在しない場合は作成する */
 async function ensureThumbnailDir(): Promise<void> {
     const dirInfo = await FileSystem.getInfoAsync(THUMBNAIL_ABSOLUTE_DIR);

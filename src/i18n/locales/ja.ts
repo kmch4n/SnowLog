@@ -162,6 +162,7 @@ export const ja = {
             calendar: "カレンダー",
             duplicateCandidates: "重複の候補",
             export: "エクスポート",
+            storageCleanup: "不要ファイルを削除",
         },
         descriptions: {
             techniques: "動画の滑走種別を管理します",
@@ -170,6 +171,7 @@ export const ja = {
             calendar: "週始まりや既定ビューを変更します",
             duplicateCandidates: "重複の可能性がある動画を確認・整理します",
             export: "ライブラリ全体を JSON でエクスポートします",
+            storageCleanup: "使われていないサムネイルや管理動画ファイルを削除します",
         },
         techniques: {
             title: "滑走種別の管理",
@@ -272,6 +274,17 @@ export const ja = {
             webUnsupportedBody: "エクスポート機能はiOSアプリでのみ利用できます。",
             success: "エクスポートを完了しました",
             failed: "エクスポートに失敗しました",
+        },
+        storageCleanup: {
+            action: "削除する",
+            cleaning: "削除中...",
+            confirmTitle: "不要ファイルを削除",
+            confirmBody: "SnowLog 内に残った不要ファイルを削除します。\n元の写真アプリの動画は削除されません。",
+            completedTitle: "削除しました",
+            completedBody: "{{count}}件の不要ファイルを削除しました。",
+            noFilesBody: "削除する不要ファイルはありませんでした。",
+            failedTitle: "削除に失敗しました",
+            failedBody: "不要ファイルを削除できませんでした。時間をおいてもう一度試してください。",
         },
     },
     videoDetail: {

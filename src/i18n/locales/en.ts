@@ -164,6 +164,7 @@ export const en: Translations = {
             calendar: "Calendar",
             duplicateCandidates: "Duplicate candidates",
             export: "Export",
+            storageCleanup: "Delete unused files",
         },
         descriptions: {
             techniques: "Manage video technique categories",
@@ -172,6 +173,7 @@ export const en: Translations = {
             calendar: "Change week start and default view",
             duplicateCandidates: "Review and clean up potential duplicates",
             export: "Export the entire library to JSON",
+            storageCleanup: "Delete unused thumbnails and managed video files",
         },
         techniques: {
             title: "Manage techniques",
@@ -274,6 +276,17 @@ export const en: Translations = {
             webUnsupportedBody: "Export is available only in the iOS app.",
             success: "Export completed",
             failed: "Export failed",
+        },
+        storageCleanup: {
+            action: "Delete",
+            cleaning: "Deleting...",
+            confirmTitle: "Delete unused files",
+            confirmBody: "SnowLog will delete unused files left inside the app.\nVideos in Photos will not be deleted.",
+            completedTitle: "Deleted",
+            completedBody: "Deleted {{count}} unused file(s).",
+            noFilesBody: "There were no unused files to delete.",
+            failedTitle: "Delete failed",
+            failedBody: "Could not delete unused files. Please try again later.",
         },
     },
     videoDetail: {

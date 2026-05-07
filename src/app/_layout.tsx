@@ -23,6 +23,7 @@ import {
 } from "@/database/repositories/videoRepository";
 import { useTranslation } from "@/i18n/useTranslation";
 import { getAssetInfo, isSyntheticAssetId } from "@/services/mediaService";
+import { cleanupOrphanedFiles } from "@/services/orphanedFileCleanupService";
 import {
     isThumbnailMigrationNeeded,
     runThumbnailMigration,
@@ -158,6 +159,7 @@ export default function RootLayout() {
         // Defer capturedAt repair until after the app is interactive
         const task = InteractionManager.runAfterInteractions(() => {
             repairInvalidCapturedAt().catch(() => {});
+            cleanupOrphanedFiles().catch(() => {});
         });
         return () => task.cancel();
     }, [thumbnailPhase]);
