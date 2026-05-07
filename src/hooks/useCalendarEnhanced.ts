@@ -17,6 +17,10 @@ import type {
     WeekStartDay,
 } from "@/types";
 
+function isWeekStartDay(value: string): value is WeekStartDay {
+    return value === "monday" || value === "sunday";
+}
+
 /**
  * 拡張カレンダーフック
  * - 月表示 / 週表示の切り替え
@@ -33,7 +37,9 @@ export function useCalendarEnhanced() {
     const [weekOffset, setWeekOffset] = useState(0);
 
     const [weekStartDay] = useAppPreference("weekStartDay", "monday");
-    const typedWeekStartDay = weekStartDay as WeekStartDay;
+    const typedWeekStartDay: WeekStartDay = isWeekStartDay(weekStartDay)
+        ? weekStartDay
+        : "monday";
 
     // --- フィルター ---
 
