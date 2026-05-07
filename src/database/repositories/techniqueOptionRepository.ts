@@ -24,11 +24,13 @@ export async function deleteTechniqueOption(id: number): Promise<void> {
 }
 
 /** Persist a new sort order for all technique options */
-export async function reorderTechniqueOptions(orderedIds: number[]): Promise<void> {
-    for (let i = 0; i < orderedIds.length; i++) {
-        await db
-            .update(techniqueOptions)
-            .set({ sortOrder: i })
-            .where(eq(techniqueOptions.id, orderedIds[i]));
-    }
+export function reorderTechniqueOptions(orderedIds: number[]): void {
+    db.transaction((tx) => {
+        for (let i = 0; i < orderedIds.length; i++) {
+            tx.update(techniqueOptions)
+                .set({ sortOrder: i })
+                .where(eq(techniqueOptions.id, orderedIds[i]))
+                .run();
+        }
+    });
 }
