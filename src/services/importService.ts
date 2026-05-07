@@ -1,6 +1,6 @@
 import { randomUUID } from "expo-crypto";
 
-import { insertVideo } from "../database/repositories/videoRepository";
+import { deleteVideo, insertVideo } from "../database/repositories/videoRepository";
 import { setTagsForVideo } from "../database/repositories/tagRepository";
 import { getCurrentLocale, t } from "../i18n";
 import {
@@ -94,6 +94,7 @@ export async function importVideo(
                 await setTagsForVideo(videoId, metadata.tagIds);
             }
         } catch (error) {
+            await deleteVideo(videoId).catch(() => {});
             await deleteThumbnail(thumbnailUri).catch(() => {});
             if (isSyntheticImport) {
                 await deleteManagedVideoFile(videoId, asset.filename).catch(() => {});
