@@ -37,6 +37,12 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
     const [favorites, setFavorites] = useState<string[]>([]);
     const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    const selectedMasterResort = useMemo<SkiResort | null>(() => {
+        const normalizedQuery = query.trim();
+        if (!normalizedQuery) return null;
+        return (SKI_RESORTS as SkiResort[]).find((r) => r.name === normalizedQuery) ?? null;
+    }, [query]);
+
     // 親から value が変化したとき（clearAll など）に内部状態を同期する
     useEffect(() => {
         setQuery(value ?? "");
@@ -97,9 +103,27 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
 
     return (
         <View style={styles.container}>
-            <View style={styles.inputRow}>
+            <View style={[
+                styles.inputRow,
+                selectedMasterResort && styles.inputRowSelected,
+            ]}>
+                {selectedMasterResort && (
+                    <View style={styles.selectedBadge}>
+                        <Icon
+                            name={IconNames.checkmark}
+                            size={13}
+                            color={Colors.headerText}
+                            weight="bold"
+                            fallback="✓"
+                            accessibilityLabel={t("a11y.iconCheckmarkSelected")}
+                        />
+                    </View>
+                )}
                 <TextInput
-                    style={styles.input}
+                    style={[
+                        styles.input,
+                        selectedMasterResort && styles.inputSelected,
+                    ]}
                     value={query}
                     onChangeText={(text) => {
                         setQuery(text);
@@ -119,7 +143,7 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
                         <Icon
                             name={IconNames.xmark}
                             size={18}
-                            color={Colors.textTertiary}
+                            color={selectedMasterResort ? Colors.alpineBlue : Colors.textTertiary}
                             weight="semibold"
                             fallback="×"
                             accessibilityLabel={t("a11y.iconClear")}
@@ -218,11 +242,31 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         backgroundColor: Colors.freshSnow,
     },
+    inputRowSelected: {
+        borderColor: Colors.alpineBlue,
+        borderWidth: 2,
+        backgroundColor: Colors.alpineBlueLight,
+    },
+    selectedBadge: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: Colors.alpineBlue,
+        justifyContent: "center",
+        alignItems: "center",
+        marginLeft: 10,
+    },
     input: {
         flex: 1,
         paddingHorizontal: 12,
         paddingVertical: 10,
         fontSize: 15,
+        color: Colors.textPrimary,
+    },
+    inputSelected: {
+        paddingLeft: 8,
+        color: Colors.alpineBlue,
+        fontWeight: "700",
     },
     clearButton: {
         paddingHorizontal: 12,
