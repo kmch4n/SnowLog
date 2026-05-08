@@ -18,9 +18,24 @@ interface TagChipProps {
 export function TagChip({ tag, onRemove }: TagChipProps) {
     const { t } = useTranslation();
     const tagColors = Colors.tag[tag.type as keyof typeof Colors.tag] ?? Colors.tag.custom;
+    const isCustom = tag.type === "custom";
 
     return (
-        <View style={[styles.chip, { backgroundColor: tagColors.bg }]}>
+        <View
+            style={[
+                styles.chip,
+                { backgroundColor: tagColors.bg },
+                isCustom && [styles.customChip, { borderColor: tagColors.text }],
+            ]}
+        >
+            {isCustom && (
+                <View
+                    style={[
+                        styles.customAccent,
+                        { backgroundColor: tagColors.text },
+                    ]}
+                />
+            )}
             <Text style={[styles.label, { color: tagColors.text }]}>{tag.name}</Text>
             {onRemove && (
                 <TouchableOpacity onPress={onRemove} hitSlop={8} style={styles.removeButton}>
@@ -45,6 +60,18 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         paddingHorizontal: 10,
         paddingVertical: 3,
+    },
+    customChip: {
+        borderRadius: 6,
+        borderWidth: 1,
+        gap: 5,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+    },
+    customAccent: {
+        width: 3,
+        height: 13,
+        borderRadius: 2,
     },
     label: {
         fontSize: 12,

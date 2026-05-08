@@ -13,7 +13,7 @@ import {
 } from "../services/thumbnailService";
 import { useTranslation } from "../i18n/useTranslation";
 import type { VideoWithTags } from "../types";
-import { formatDate, formatDuration } from "../utils/dateUtils";
+import { formatDate, formatDurationLabel } from "../utils/dateUtils";
 import { Icon } from "./ui/Icon";
 
 const IOS_DESTRUCTIVE_RED = "#FF3B30";
@@ -47,6 +47,12 @@ export function VideoCardCompact({
     const { t, locale } = useTranslation();
     const isUnavailable = video.isFileAvailable === 0;
     const isThumbnailMissing = video.thumbnailUri === THUMBNAIL_MISSING_SENTINEL;
+    const visibleTechniques = video.techniques?.slice(0, 2) ?? [];
+    const nonTechniqueTags = video.tags?.filter((tag) => tag.type !== "technique") ?? [];
+    const visibleTags = nonTechniqueTags.slice(0, 2);
+    const hiddenChipCount =
+        Math.max((video.techniques?.length ?? 0) - visibleTechniques.length, 0)
+        + Math.max(nonTechniqueTags.length - visibleTags.length, 0);
 
     const renderRightActions = useCallback(
         (
@@ -150,7 +156,7 @@ export function VideoCardCompact({
                     {video.title ?? video.filename}
                 </Text>
                 <Text style={styles.date}>
-                    {formatDate(video.capturedAt, locale)} · {formatDuration(video.duration, locale)}
+                    {formatDate(video.capturedAt, locale)} · {formatDurationLabel(video.duration, locale)}
                 </Text>
                 {showResort && video.skiResortName && (
                     <Text style={styles.resort} numberOfLines={1}>
@@ -158,43 +164,50 @@ export function VideoCardCompact({
                     </Text>
                 )}
 
-                {/* 滑走種別（最大2件） */}
-                {video.techniques && video.techniques.length > 0 && (
+                {(visibleTechniques.length > 0 || visibleTags.length > 0) && (
                     <View style={styles.chipRow}>
-                        {video.techniques.slice(0, 2).map((t) => (
-                            <View key={t} style={styles.techniqueChip}>
-                                <Text style={styles.techniqueChipText}>{t}</Text>
+                        {visibleTechniques.map((technique) => (
+                            <View key={technique} style={styles.techniqueChip}>
+                                <Text style={styles.techniqueChipText}>{technique}</Text>
                             </View>
                         ))}
-                        {video.techniques.length > 2 && (
-                            <Text style={styles.moreText}>+{video.techniques.length - 2}</Text>
-                        )}
-                    </View>
-                )}
-
-                {/* タグ（technique 以外、最大2件） */}
-                {video.tags && video.tags.filter((t) => t.type !== "technique").length > 0 && (() => {
-                    const nonTechniqueTags = video.tags.filter((t) => t.type !== "technique");
-                    return (
-                        <View style={styles.chipRow}>
-                            {nonTechniqueTags.slice(0, 2).map((tag) => (
+                        {visibleTags.map((tag) => {
+                            const tagColors = Colors.tag[tag.type as keyof typeof Colors.tag] ?? Colors.tag.custom;
+                            return (
                                 <View
                                     key={tag.id}
-                                    style={[styles.tagChip, Colors.tag[tag.type as keyof typeof Colors.tag] && { backgroundColor: Colors.tag[tag.type as keyof typeof Colors.tag].bg }]}
+                                    style={[
+                                        styles.tagChip,
+                                        {
+                                            backgroundColor: tagColors.bg,
+                                            borderColor: tagColors.text,
+                                        },
+                                    ]}
                                 >
+                                    {tag.type === "custom" && (
+                                        <View
+                                            style={[
+                                                styles.tagAccent,
+                                                { backgroundColor: tagColors.text },
+                                            ]}
+                                        />
+                                    )}
                                     <Text
-                                        style={[styles.tagChipText, Colors.tag[tag.type as keyof typeof Colors.tag] && { color: Colors.tag[tag.type as keyof typeof Colors.tag].text }]}
+                                        style={[
+                                            styles.tagChipText,
+                                            { color: tagColors.text },
+                                        ]}
                                     >
                                         {tag.name}
                                     </Text>
                                 </View>
-                            ))}
-                            {nonTechniqueTags.length > 2 && (
-                                <Text style={styles.moreText}>+{nonTechniqueTags.length - 2}</Text>
-                            )}
-                        </View>
-                    );
-                })()}
+                            );
+                        })}
+                        {hiddenChipCount > 0 && (
+                            <Text style={styles.moreText}>+{hiddenChipCount}</Text>
+                        )}
+                    </View>
+                )}
             </View>
         </TouchableOpacity>
     );
@@ -338,9 +351,18 @@ const styles = StyleSheet.create({
     },
     tagChip: {
         backgroundColor: Colors.tag.custom.bg,
-        borderRadius: 4,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
+        borderRadius: 5,
+        borderWidth: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 5,
+        paddingVertical: 1,
+    },
+    tagAccent: {
+        width: 3,
+        height: 12,
+        borderRadius: 2,
     },
     tagChipText: {
         fontSize: 11,

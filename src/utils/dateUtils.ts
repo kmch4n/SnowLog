@@ -103,6 +103,29 @@ export function formatDuration(
 }
 
 /**
+ * 動画カード向けに秒数を短い単位表記へ変換する
+ * 例: 19 → "19秒", 79 → "1分19秒"
+ */
+export function formatDurationLabel(
+    seconds: number,
+    locale: SupportedLocale = "ja"
+): string {
+    const roundedSeconds = Math.max(0, Math.round(seconds));
+    const minutes = Math.floor(roundedSeconds / 60);
+    const remainingSeconds = roundedSeconds % 60;
+
+    if (locale === "en") {
+        return minutes > 0
+            ? `${minutes}m ${remainingSeconds}s`
+            : `${remainingSeconds}s`;
+    }
+
+    return minutes > 0
+        ? `${minutes}分${remainingSeconds}秒`
+        : `${remainingSeconds}秒`;
+}
+
+/**
  * Unix timestamp（秒）を "YYYY-MM-DD" 形式の文字列に変換する
  * カレンダーの日付マーカー比較に使用
  */

@@ -8,7 +8,7 @@ import {
 } from "../services/thumbnailService";
 import { useTranslation } from "../i18n/useTranslation";
 import type { VideoWithTags } from "../types";
-import { formatDate, formatDuration } from "../utils/dateUtils";
+import { formatDate, formatDurationLabel } from "../utils/dateUtils";
 import { TagChip } from "./TagChip";
 import { Icon } from "./ui/Icon";
 
@@ -52,7 +52,9 @@ export function VideoCard({ video, onPress }: VideoCardProps) {
                 )}
                 {/* 再生時間バッジ */}
                 <View style={styles.durationBadge}>
-                    <Text style={styles.durationText}>{formatDuration(video.duration, locale)}</Text>
+                    <Text style={styles.durationText}>
+                        {formatDurationLabel(video.duration, locale)}
+                    </Text>
                 </View>
                 {/* お気に入りバッジ */}
                 {video.isFavorite === 1 && (
