@@ -25,17 +25,9 @@ export function TagChip({ tag, onRemove }: TagChipProps) {
             style={[
                 styles.chip,
                 { backgroundColor: tagColors.bg },
-                isCustom && [styles.customChip, { borderColor: tagColors.text }],
+                isCustom && styles.customChip,
             ]}
         >
-            {isCustom && (
-                <View
-                    style={[
-                        styles.customAccent,
-                        { backgroundColor: tagColors.text },
-                    ]}
-                />
-            )}
             <Text style={[styles.label, { color: tagColors.text }]}>{tag.name}</Text>
             {onRemove && (
                 <TouchableOpacity onPress={onRemove} hitSlop={8} style={styles.removeButton}>
@@ -62,16 +54,9 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
     },
     customChip: {
-        borderRadius: 6,
-        borderWidth: 1,
-        gap: 5,
-        paddingHorizontal: 7,
+        borderRadius: 4,
+        paddingHorizontal: 6,
         paddingVertical: 2,
-    },
-    customAccent: {
-        width: 3,
-        height: 13,
-        borderRadius: 2,
     },
     label: {
         fontSize: 12,

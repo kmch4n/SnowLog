@@ -184,14 +184,6 @@ export function VideoCardCompact({
                                         },
                                     ]}
                                 >
-                                    {tag.type === "custom" && (
-                                        <View
-                                            style={[
-                                                styles.tagAccent,
-                                                { backgroundColor: tagColors.text },
-                                            ]}
-                                        />
-                                    )}
                                     <Text
                                         style={[
                                             styles.tagChipText,
@@ -351,18 +343,11 @@ const styles = StyleSheet.create({
     },
     tagChip: {
         backgroundColor: Colors.tag.custom.bg,
-        borderRadius: 5,
-        borderWidth: 1,
+        borderRadius: 4,
         flexDirection: "row",
         alignItems: "center",
-        gap: 4,
-        paddingHorizontal: 5,
-        paddingVertical: 1,
-    },
-    tagAccent: {
-        width: 3,
-        height: 12,
-        borderRadius: 2,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
     },
     tagChipText: {
         fontSize: 11,
