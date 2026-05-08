@@ -377,6 +377,12 @@ export const ja = {
             body: "この動画は既にインポートされています。編集画面を開きますか？",
             openEdit: "編集する",
         },
+        sameDayResortPrompt: {
+            title: "同じ日の動画にも設定しますか？",
+            body: "同じ日に撮影された未設定動画 {{count}}本にも「{{resortName}}」を設定できます。",
+            apply: "まとめて設定",
+            keepCurrent: "この動画だけ",
+        },
         importFailed: "インポートに失敗しました",
         webUnsupportedTitle: "iOSアプリでご利用ください",
         webUnsupportedBody: "動画のインポートはiOSアプリでのみ利用できます。\nEAS Build でアプリをビルドしてお試しください。",
@@ -409,6 +415,7 @@ export const ja = {
             title: "スキー場を設定しますか？",
             description: "GPS から近くのスキー場を検出しました。動画にスキー場名を設定する場合はチェックを残してください。",
             distanceLabel: "{{count}}本 · {{distance}}km",
+            sameDayTarget: "同日の未設定動画 {{count}}本にも適用",
             noGps: "GPS情報なし: {{count}}本（後で個別に設定できます）",
             apply: "設定する",
             skip: "スキップ",
@@ -481,6 +488,7 @@ export const ja = {
         skiResortSearch: {
             placeholder: "スキー場名を入力",
             favoritesHeader: "お気に入り",
+            sameDayHeader: "同じ日の候補",
             recentHeader: "最近使った",
             allHeader: "全て",
             empty: "該当するスキー場が見つかりません",

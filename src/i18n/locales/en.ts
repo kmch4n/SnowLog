@@ -379,6 +379,12 @@ export const en: Translations = {
             body: "This video has already been imported. Open the editor?",
             openEdit: "Edit",
         },
+        sameDayResortPrompt: {
+            title: "Apply to same-day videos?",
+            body: "You can also set \"{{resortName}}\" on {{count}} same-day unassigned video(s).",
+            apply: "Apply to all",
+            keepCurrent: "This video only",
+        },
         importFailed: "Import failed",
         webUnsupportedTitle: "Use the iOS app",
         webUnsupportedBody: "Video import is available only in the iOS app.\nBuild the app with EAS Build and try again.",
@@ -411,6 +417,7 @@ export const en: Translations = {
             title: "Apply detected resort?",
             description: "We detected nearby ski resorts from GPS metadata. Keep the boxes checked to apply the resort name.",
             distanceLabel: "{{count}} videos · {{distance}}km",
+            sameDayTarget: "Also applies to {{count}} same-day unassigned video(s)",
             noGps: "No GPS metadata: {{count}} videos. You can set resorts individually later.",
             apply: "Apply",
             skip: "Skip",
@@ -483,6 +490,7 @@ export const en: Translations = {
         skiResortSearch: {
             placeholder: "Enter resort name",
             favoritesHeader: "Favorites",
+            sameDayHeader: "Same-day suggestions",
             recentHeader: "Recent",
             allHeader: "All resorts",
             empty: "No matching resorts",

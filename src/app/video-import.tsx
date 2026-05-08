@@ -23,8 +23,10 @@ import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
 import {
+    getUnassignedVideoIdsForCapturedDays,
     getExistingAssetIds,
     getVideoByAssetId,
+    updateSkiResortForUnassignedVideos,
     updateSkiResortForVideos,
 } from "@/database/repositories/videoRepository";
 import { t as translate } from "@/i18n";
@@ -37,13 +39,14 @@ import {
 import { setPendingBulkImportSummary } from "@/services/bulkImportSummaryService";
 import { importVideo, type ImportableAsset } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
+import { useSkiResortSuggestions } from "@/hooks/useSkiResortSuggestions";
 import { randomUUID } from "expo-crypto";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
 import {
     estimateBulkImportRemainingMs,
     formatRemainingTime,
 } from "@/utils/bulkImportProgressUtils";
-import { formatDate, formatDateTime, formatDuration, parseExifDateTime } from "@/utils/dateUtils";
+import { formatDate, formatDateTime, formatDuration, parseExifDateTime, toDateKey } from "@/utils/dateUtils";
 import { findNearbySkiResorts } from "@/utils/geoUtils";
 import * as FileSystem from "expo-file-system/legacy";
 
@@ -101,6 +104,7 @@ export default function VideoImportScreen() {
     const [selectedAsset, setSelectedAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
     const [title, setTitle] = useState("");
     const [skiResortName, setSkiResortName] = useState<string | null>(null);
+    const [isSkiResortFromGpsSuggestion, setIsSkiResortFromGpsSuggestion] = useState(false);
     const [techniques, setTechniques] = useState<string[]>([]);
     const [tagIds, setTagIds] = useState<number[]>([]);
     const [memo, setMemo] = useState("");
@@ -236,6 +240,66 @@ export default function VideoImportScreen() {
         []
     );
 
+    // 撮影日時を取得（EXIF → MediaLibrary creationTime の順でフォールバック）
+    const creationMs = (selectedAsset?.exif?.DateTimeOriginal
+        ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
+        : null) ?? assetCreationTime;
+    const capturedAt = creationMs != null ? Math.floor(creationMs / 1000) : null;
+
+    const resortSuggestionGroups = useSkiResortSuggestions({
+        capturedAt,
+        currentValue: skiResortName,
+    });
+
+    const promptApplySameDayResort = useCallback(
+        async (
+            resortName: string,
+            sourceCapturedAt: number,
+            sourceVideoId: string
+        ): Promise<void> => {
+            const targetVideoIds = await getUnassignedVideoIdsForCapturedDays(
+                [sourceCapturedAt],
+                [sourceVideoId]
+            );
+            if (targetVideoIds.length === 0) return;
+
+            await new Promise<void>((resolve) => {
+                Alert.alert(
+                    t("import.sameDayResortPrompt.title"),
+                    t("import.sameDayResortPrompt.body", {
+                        count: targetVideoIds.length,
+                        resortName,
+                    }),
+                    [
+                        {
+                            text: t("import.sameDayResortPrompt.keepCurrent"),
+                            style: "cancel",
+                            onPress: () => resolve(),
+                        },
+                        {
+                            text: t("import.sameDayResortPrompt.apply"),
+                            onPress: async () => {
+                                try {
+                                    await updateSkiResortForUnassignedVideos(targetVideoIds, resortName);
+                                    hapticSuccess();
+                                } catch (error) {
+                                    hapticError();
+                                    Alert.alert(
+                                        t("import.bulk.applyResortFailed"),
+                                        error instanceof Error ? error.message : t("common.unknownError")
+                                    );
+                                } finally {
+                                    resolve();
+                                }
+                            },
+                        },
+                    ]
+                );
+            });
+        },
+        [t]
+    );
+
     /** カメラロールから動画を選択する */
     const handlePickVideo = useCallback(async () => {
         const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -301,6 +365,8 @@ export default function VideoImportScreen() {
 
         await cleanupStagedFile();
         setSelectedAsset(asset);
+        setSkiResortName(null);
+        setIsSkiResortFromGpsSuggestion(false);
         setGpsSuggestions([]);
         setAssetCreationTime(null);
         setResolvedAssetUri(null);
@@ -377,11 +443,24 @@ export default function VideoImportScreen() {
                 localUri: resolvedAssetUri,
             };
 
-            await importVideo(
+            const importedVideoId = await importVideo(
                 mediaAsset,
                 { title: title.trim() || null, skiResortName, memo, tagIds, techniques },
                 { sourceUri: resolvedAssetUri }
             );
+
+            const sourceCapturedAt = Math.floor(mediaAsset.creationTime / 1000);
+            if (
+                isSkiResortFromGpsSuggestion &&
+                skiResortName &&
+                Number.isFinite(sourceCapturedAt)
+            ) {
+                await promptApplySameDayResort(
+                    skiResortName,
+                    sourceCapturedAt,
+                    importedVideoId
+                );
+            }
 
             await cleanupStagedFile();
             hapticSuccess();
@@ -404,6 +483,8 @@ export default function VideoImportScreen() {
         memo,
         tagIds,
         techniques,
+        isSkiResortFromGpsSuggestion,
+        promptApplySameDayResort,
         router,
         cleanupStagedFile,
         t,
@@ -412,27 +493,61 @@ export default function VideoImportScreen() {
     // ── 一括インポート ──
 
     /** GPS グループを構築する */
-    const buildGpsGroups = useCallback((items: BulkImportItem[]): BulkImportGpsGroup[] => {
-        const map = new Map<string, { distanceKm: number; videoIds: string[] }>();
+    const buildGpsGroups = useCallback(async (items: BulkImportItem[]): Promise<BulkImportGpsGroup[]> => {
+        const map = new Map<string, { distanceKm: number; videoIds: string[]; capturedAtValues: number[] }>();
+        const resortNamesByDay = new Map<string, Set<string>>();
+        const detectedVideoIds = items
+            .filter((item) => item.status === "success" && item.detectedResort && item.videoId)
+            .map((item) => item.videoId!);
+
+        for (const item of items) {
+            if (item.status === "success" && item.detectedResort && item.videoId && item.capturedAt != null) {
+                const dateKey = toDateKey(item.capturedAt);
+                const resortNames = resortNamesByDay.get(dateKey) ?? new Set<string>();
+                resortNames.add(item.detectedResort);
+                resortNamesByDay.set(dateKey, resortNames);
+            }
+        }
+
         for (const item of items) {
             if (item.status === "success" && item.detectedResort && item.videoId) {
                 const entry = map.get(item.detectedResort);
                 if (entry) {
                     entry.videoIds.push(item.videoId);
+                    if (item.capturedAt != null) {
+                        entry.capturedAtValues.push(item.capturedAt);
+                    }
                 } else {
                     map.set(item.detectedResort, {
                         distanceKm: item.detectedResortDistance ?? 0,
                         videoIds: [item.videoId],
+                        capturedAtValues: item.capturedAt != null ? [item.capturedAt] : [],
                     });
                 }
             }
         }
-        return Array.from(map.entries()).map(([resortName, data]) => ({
-            resortName,
-            distanceKm: data.distanceKm,
-            videoIds: data.videoIds,
-            confirmed: true,
-        }));
+
+        const groups: BulkImportGpsGroup[] = [];
+        for (const [resortName, data] of map.entries()) {
+            const eligibleCapturedAtValues = data.capturedAtValues.filter((capturedAtValue) => {
+                const resortNames = resortNamesByDay.get(toDateKey(capturedAtValue));
+                return resortNames?.size === 1;
+            });
+            const sameDayUnassignedVideoIds = await getUnassignedVideoIdsForCapturedDays(
+                eligibleCapturedAtValues,
+                detectedVideoIds
+            );
+
+            groups.push({
+                resortName,
+                distanceKm: data.distanceKm,
+                videoIds: data.videoIds,
+                sameDayUnassignedVideoIds,
+                confirmed: true,
+            });
+        }
+
+        return groups;
     }, []);
 
     /** Store the summary, then return to Home where the alert is shown. */
@@ -547,6 +662,7 @@ export default function VideoImportScreen() {
 
                         item.status = "success";
                         item.videoId = videoId;
+                        item.capturedAt = Math.floor(creationTime / 1000);
 
                         // GPS スキー場検出
                         if (assetInfo?.location) {
@@ -593,7 +709,7 @@ export default function VideoImportScreen() {
             }
 
             // GPS グループ構築
-            const gpsGroups = buildGpsGroups(items);
+            const gpsGroups = await buildGpsGroups(items);
             const successCount = items.filter((i) => i.status === "success").length;
             const noGpsCount = items.filter(
                 (i) => i.status === "success" && !i.detectedResort
@@ -694,6 +810,10 @@ export default function VideoImportScreen() {
             const confirmedGroups = bulkGpsGroups.filter((g) => g.confirmed);
             for (const group of confirmedGroups) {
                 await updateSkiResortForVideos(group.videoIds, group.resortName);
+                await updateSkiResortForUnassignedVideos(
+                    group.sameDayUnassignedVideoIds,
+                    group.resortName
+                );
             }
         } catch (e) {
             Alert.alert(
@@ -713,12 +833,6 @@ export default function VideoImportScreen() {
         const totalSuccess = bulkGpsGroups.reduce((sum, g) => sum + g.videoIds.length, 0) + bulkNoGpsCount;
         showBulkSummary(totalSuccess, bulkSkippedCount, bulkErrorCount);
     }, [bulkGpsGroups, bulkNoGpsCount, bulkSkippedCount, bulkErrorCount, showBulkSummary]);
-
-    // 撮影日時を取得（EXIF → MediaLibrary creationTime の順でフォールバック）
-    const creationMs = (selectedAsset?.exif?.DateTimeOriginal
-        ? parseExifDateTime(selectedAsset.exif.DateTimeOriginal)
-        : null) ?? assetCreationTime;
-    const capturedAt = creationMs != null ? Math.floor(creationMs / 1000) : null;
 
     // 準備中 → ピッカー完了直後のiCloudダウンロード待ち画面
     if (bulkPhase === "preparing") {
@@ -884,6 +998,7 @@ export default function VideoImportScreen() {
                                         style={styles.gpsBannerChip}
                                         onPress={() => {
                                             setSkiResortName(s.name);
+                                            setIsSkiResortFromGpsSuggestion(true);
                                             setGpsSuggestions([]);
                                         }}
                                     >
@@ -894,7 +1009,14 @@ export default function VideoImportScreen() {
                             </ScrollView>
                         </View>
                     )}
-                    <SkiResortSearch value={skiResortName} onSelect={setSkiResortName} />
+                    <SkiResortSearch
+                        value={skiResortName}
+                        onSelect={(name) => {
+                            setSkiResortName(name);
+                            setIsSkiResortFromGpsSuggestion(false);
+                        }}
+                        suggestionGroups={resortSuggestionGroups}
+                    />
                 </View>
 
                 {/* 滑走種別 */}

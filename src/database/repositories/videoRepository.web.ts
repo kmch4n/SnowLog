@@ -140,3 +140,56 @@ export async function getAllVideos(): Promise<VideoWithTags[]> {
 export async function updateVideoCapturedAt(_id: string, _capturedAt: number): Promise<void> {
     return;
 }
+
+export async function updateSkiResortForVideos(
+    _videoIds: string[],
+    _skiResortName: string
+): Promise<void> {
+    return;
+}
+
+export async function updateSkiResortForUnassignedVideos(
+    _videoIds: string[],
+    _skiResortName: string
+): Promise<void> {
+    return;
+}
+
+export async function getUnassignedVideoIdsForCapturedDays(
+    _capturedAtValues: number[],
+    _excludeVideoIds: string[] = []
+): Promise<string[]> {
+    return [];
+}
+
+export async function getSkiResortNamesForCapturedDay(
+    capturedAt: number,
+    excludeVideoId?: string
+): Promise<string[]> {
+    const target = new Date(capturedAt * 1000);
+    const names = MOCK_VIDEOS
+        .filter((video) => video.id !== excludeVideoId)
+        .filter((video) => {
+            const date = new Date(video.capturedAt * 1000);
+            return (
+                date.getFullYear() === target.getFullYear() &&
+                date.getMonth() === target.getMonth() &&
+                date.getDate() === target.getDate()
+            );
+        })
+        .map((video) => video.skiResortName)
+        .filter((name): name is string => name != null && name.trim().length > 0);
+
+    return [...new Set(names)];
+}
+
+export async function getRecentSkiResortNames(limit = 3): Promise<string[]> {
+    const names: string[] = [];
+    for (const video of [...MOCK_VIDEOS].sort((a, b) => b.capturedAt - a.capturedAt)) {
+        const name = video.skiResortName?.trim();
+        if (!name || names.includes(name)) continue;
+        names.push(name);
+        if (names.length >= limit) break;
+    }
+    return names;
+}

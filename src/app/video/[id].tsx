@@ -29,6 +29,7 @@ import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
+import { useSkiResortSuggestions } from "@/hooks/useSkiResortSuggestions";
 import { useTranslation } from "@/i18n/useTranslation";
 import { formatDateTime, formatDuration, formatDurationDecimal } from "@/utils/dateUtils";
 
@@ -49,6 +50,11 @@ export default function VideoDetailScreen() {
     const { t, locale } = useTranslation();
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const { video, isLoading, error, refresh, updateTitle, updateTechniques, updateMemo, updateSkiResort, updateTags, toggleFavorite, removeVideo } = useVideoDetail(id);
+    const resortSuggestionGroups = useSkiResortSuggestions({
+        capturedAt: video?.capturedAt ?? null,
+        excludeVideoId: video?.id,
+        currentValue: video?.skiResortName,
+    });
 
     const scrollViewRef = useRef<ScrollView>(null);
     const shouldScrollMemoIntoViewRef = useRef(false);
@@ -418,6 +424,7 @@ export default function VideoDetailScreen() {
                         <SkiResortSearch
                             value={video.skiResortName}
                             onSelect={handleSaveSkiResort}
+                            suggestionGroups={resortSuggestionGroups}
                         />
                     </View>
                 </View>

@@ -74,6 +74,7 @@ export interface BulkImportItem {
     status: "pending" | "importing" | "success" | "skipped" | "error";
     error?: string;
     videoId?: string;
+    capturedAt?: number;
     detectedResort?: string;
     detectedResortDistance?: number;
 }
@@ -83,6 +84,7 @@ export interface BulkImportGpsGroup {
     resortName: string;
     distanceKm: number;
     videoIds: string[];
+    sameDayUnassignedVideoIds: string[];
     confirmed: boolean;
 }
 

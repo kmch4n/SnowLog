@@ -74,6 +74,13 @@ export function GpsConfirmationDialog({
                                     distance: group.distanceKm.toFixed(1),
                                 })}
                             </Text>
+                            {group.sameDayUnassignedVideoIds.length > 0 && (
+                                <Text style={styles.groupSubMeta}>
+                                    {t("import.gpsConfirm.sameDayTarget", {
+                                        count: group.sameDayUnassignedVideoIds.length,
+                                    })}
+                                </Text>
+                            )}
                         </View>
                     </TouchableOpacity>
                 ))}
@@ -170,6 +177,12 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: Colors.textSecondary,
         marginTop: 2,
+    },
+    groupSubMeta: {
+        fontSize: 12,
+        color: Colors.alpineBlue,
+        marginTop: 2,
+        fontWeight: "600",
     },
     noGpsText: {
         fontSize: 13,

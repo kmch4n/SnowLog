@@ -16,10 +16,12 @@ import { useTranslation } from "../i18n/useTranslation";
 import SKI_RESORTS from "../constants/skiResorts.json";
 import type { SkiResort } from "../types";
 import { Icon } from "./ui/Icon";
+import type { SkiResortSuggestionGroup } from "../hooks/useSkiResortSuggestions";
 
 interface SkiResortSearchProps {
     value: string | null;
     onSelect: (name: string | null) => void;
+    suggestionGroups?: SkiResortSuggestionGroup[];
 }
 
 const MAX_RESULTS = 20;
@@ -28,7 +30,7 @@ const MAX_RESULTS = 20;
  * スキー場名のインクリメンタル検索コンポーネント
  * src/constants/skiResorts.json のマスターデータからフィルタリングする
  */
-export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
+export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiResortSearchProps) {
     const { t } = useTranslation();
     const [query, setQuery] = useState(value ?? "");
     const [isFocused, setIsFocused] = useState(false);
@@ -88,6 +90,11 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
         onSelect(name);
     }
 
+    function handleSuggestionSelect(name: string) {
+        setQuery(name);
+        onSelect(name);
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.inputRow}>
@@ -120,6 +127,28 @@ export function SkiResortSearch({ value, onSelect }: SkiResortSearchProps) {
                     </TouchableOpacity>
                 )}
             </View>
+
+            {!query && suggestionGroups.map((group) => (
+                <View key={group.key} style={styles.contextSuggestionGroup}>
+                    <Text style={styles.contextSuggestionLabel}>{group.label}</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.contextSuggestionContent}
+                        keyboardShouldPersistTaps="always"
+                    >
+                        {group.names.map((name) => (
+                            <TouchableOpacity
+                                key={name}
+                                style={styles.contextSuggestionChip}
+                                onPress={() => handleSuggestionSelect(name)}
+                            >
+                                <Text style={styles.contextSuggestionChipText}>{name}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+            ))}
 
             {/* お気に入りチップ（query が空のときのみ表示） */}
             {!query && favorites.length > 0 && (
@@ -198,6 +227,31 @@ const styles = StyleSheet.create({
     clearButton: {
         paddingHorizontal: 12,
         paddingVertical: 10,
+    },
+    contextSuggestionGroup: {
+        marginTop: 8,
+        gap: 6,
+    },
+    contextSuggestionLabel: {
+        fontSize: 12,
+        color: Colors.textSecondary,
+        fontWeight: "700",
+    },
+    contextSuggestionContent: {
+        gap: 6,
+    },
+    contextSuggestionChip: {
+        backgroundColor: Colors.freshSnow,
+        borderRadius: 16,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderWidth: 1,
+        borderColor: Colors.alpineBlueLight,
+    },
+    contextSuggestionChipText: {
+        fontSize: 13,
+        color: Colors.alpineBlue,
+        fontWeight: "600",
     },
     favoriteScroll: {
         marginTop: 8,

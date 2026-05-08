@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, like, lte, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, isNull, like, lte, ne, notInArray, or } from "drizzle-orm";
 
 import { db, videoTags, videos } from "../index";
 import type { FilterOptions } from "../../types";
@@ -7,6 +7,30 @@ import type { VideoInsert } from "../schema";
 /** Escape SQL LIKE special characters */
 function escapeLike(text: string): string {
     return text.replace(/[%_]/g, "\\$&");
+}
+
+function getLocalDayBounds(unixTimestamp: number): { start: number; end: number } {
+    const date = new Date(unixTimestamp * 1000);
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+    const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+    return {
+        start: Math.floor(start.getTime() / 1000),
+        end: Math.floor(end.getTime() / 1000),
+    };
+}
+
+function getUniqueDayBounds(capturedAtValues: number[]): { start: number; end: number }[] {
+    const map = new Map<string, { start: number; end: number }>();
+    for (const capturedAt of capturedAtValues) {
+        if (!Number.isFinite(capturedAt)) continue;
+        const bounds = getLocalDayBounds(capturedAt);
+        map.set(`${bounds.start}:${bounds.end}`, bounds);
+    }
+    return Array.from(map.values());
+}
+
+function buildUnassignedResortCondition() {
+    return or(isNull(videos.skiResortName), eq(videos.skiResortName, ""))!;
 }
 
 /**
@@ -152,6 +176,87 @@ export async function updateSkiResortForVideos(
         .update(videos)
         .set({ skiResortName, updatedAt: Math.floor(Date.now() / 1000) })
         .where(inArray(videos.id, videoIds));
+}
+
+/** 複数動画のうち、スキー場未設定の動画だけを一括更新する */
+export async function updateSkiResortForUnassignedVideos(
+    videoIds: string[],
+    skiResortName: string
+): Promise<void> {
+    if (videoIds.length === 0) return;
+    await db
+        .update(videos)
+        .set({ skiResortName, updatedAt: Math.floor(Date.now() / 1000) })
+        .where(and(inArray(videos.id, videoIds), buildUnassignedResortCondition()));
+}
+
+/** 指定した撮影日と同じ日で、スキー場未設定の動画IDを取得する */
+export async function getUnassignedVideoIdsForCapturedDays(
+    capturedAtValues: number[],
+    excludeVideoIds: string[] = []
+): Promise<string[]> {
+    const bounds = getUniqueDayBounds(capturedAtValues);
+    if (bounds.length === 0) return [];
+
+    const dayConditions = bounds.map((b) =>
+        and(gte(videos.capturedAt, b.start), lte(videos.capturedAt, b.end))!
+    );
+    const conditions = [
+        or(...dayConditions)!,
+        buildUnassignedResortCondition(),
+    ];
+    if (excludeVideoIds.length > 0) {
+        conditions.push(notInArray(videos.id, excludeVideoIds));
+    }
+
+    const rows = await db
+        .select({ id: videos.id })
+        .from(videos)
+        .where(and(...conditions));
+
+    return rows.map((row) => row.id);
+}
+
+/** 指定した撮影日と同じ日に登録済みのスキー場名を取得する */
+export async function getSkiResortNamesForCapturedDay(
+    capturedAt: number,
+    excludeVideoId?: string
+): Promise<string[]> {
+    const bounds = getLocalDayBounds(capturedAt);
+    const rows = await db
+        .select({ skiResortName: videos.skiResortName, capturedAt: videos.capturedAt })
+        .from(videos)
+        .where(
+            and(
+                gte(videos.capturedAt, bounds.start),
+                lte(videos.capturedAt, bounds.end),
+                excludeVideoId ? notInArray(videos.id, [excludeVideoId]) : undefined
+            )
+        )
+        .orderBy(desc(videos.capturedAt));
+
+    return [...new Set(rows
+        .map((row) => row.skiResortName)
+        .filter((name): name is string => name != null && name.trim().length > 0))];
+}
+
+/** 最近使われたスキー場名を新しい順で取得する */
+export async function getRecentSkiResortNames(limit = 3): Promise<string[]> {
+    const rows = await db
+        .select({ skiResortName: videos.skiResortName })
+        .from(videos)
+        .where(and(isNotNull(videos.skiResortName), ne(videos.skiResortName, "")))
+        .orderBy(desc(videos.capturedAt))
+        .limit(Math.max(limit * 5, limit));
+
+    const names: string[] = [];
+    for (const row of rows) {
+        const name = row.skiResortName?.trim();
+        if (!name || names.includes(name)) continue;
+        names.push(name);
+        if (names.length >= limit) break;
+    }
+    return names;
 }
 
 /** 複数動画のお気に入り状態を一括設定する */
