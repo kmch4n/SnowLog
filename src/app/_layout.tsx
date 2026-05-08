@@ -3,7 +3,16 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, InteractionManager, StyleSheet, Text, useColorScheme, View } from "react-native";
+import {
+    ActivityIndicator,
+    Alert,
+    InteractionManager,
+    Linking,
+    StyleSheet,
+    Text,
+    useColorScheme,
+    View,
+} from "react-native";
 
 import { ThumbnailMigrationScreen } from "@/components/ThumbnailMigrationScreen";
 import { Colors } from "@/constants/colors";
@@ -28,6 +37,10 @@ import {
     isThumbnailMigrationNeeded,
     runThumbnailMigration,
 } from "@/services/thumbnailMigrationService";
+import {
+    dismissOptionalUpdatePrompt,
+    getOptionalUpdateInfo,
+} from "@/services/updateCheckService";
 import { DEFAULT_TECHNIQUE_OPTIONS } from "@/constants/techniques";
 import migrations from "../../drizzle/migrations";
 
@@ -156,13 +169,47 @@ export default function RootLayout() {
 
     useEffect(() => {
         if (thumbnailPhase !== "done") return;
-        // Defer capturedAt repair until after the app is interactive
+        // Defer background maintenance until after the app is interactive.
         const task = InteractionManager.runAfterInteractions(() => {
             repairInvalidCapturedAt().catch(() => {});
             cleanupOrphanedFiles().catch(() => {});
+            getOptionalUpdateInfo()
+                .then((update) => {
+                    if (!update) return;
+
+                    const fallbackMessage = t("updatePrompt.body", {
+                        version: update.latestVersion,
+                    });
+
+                    Alert.alert(
+                        t("updatePrompt.title"),
+                        fallbackMessage,
+                        [
+                            {
+                                text: t("updatePrompt.later"),
+                                style: "cancel",
+                                onPress: () => {
+                                    dismissOptionalUpdatePrompt(
+                                        update.latestVersion
+                                    ).catch(() => {});
+                                },
+                            },
+                            {
+                                text: t("updatePrompt.openAppStore"),
+                                onPress: () => {
+                                    dismissOptionalUpdatePrompt(
+                                        update.latestVersion
+                                    ).catch(() => {});
+                                    Linking.openURL(update.appStoreUrl).catch(() => {});
+                                },
+                            },
+                        ]
+                    );
+                })
+                .catch(() => {});
         });
         return () => task.cancel();
-    }, [thumbnailPhase]);
+    }, [t, thumbnailPhase]);
 
     if (error) {
         return (

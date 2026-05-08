@@ -427,6 +427,12 @@ export const ja = {
         progress: "{{processed}} / {{total}} 件",
         preparing: "準備中...",
     },
+    updatePrompt: {
+        title: "アップデートがあります",
+        body: "SnowLog {{version}} が利用できます。",
+        later: "あとで",
+        openAppStore: "App Storeで見る",
+    },
     diary: {
         addButton: "+ 日記を書く",
         editButton: "日記を編集",

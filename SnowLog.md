@@ -81,6 +81,7 @@
 3. `capturedAt` が不正な動画レコードを修復
 4. サムネイル URI の相対パス移行（必要時のみ、後述）
 5. i18n の初期ロケール解決（`appPreferenceRepository` から永続化済みの言語設定を読み込み、未設定ならデバイスロケールにフォールバック）
+6. App Store 公開バージョンを参照した任意アップデート案内（後述）
 
 ### 5.1 滑走種別候補のシード
 
@@ -109,6 +110,16 @@
 - 値は `"ja" | "en" | "device"` の 3 種で、未設定または不正値は `"device"` 扱いになる。
 - `"device"` の場合は `expo-localization` の `getLocales()[0]?.languageCode` を参照し、`"ja"` ならそのまま、それ以外は `"en"` にフォールバックする。
 - 解決結果は `i18n-js` インスタンスの `locale` に反映され、画面起動前に確定する。
+
+### 5.5 任意アップデート案内
+
+- 起動後、UI 表示を妨げないよう `InteractionManager.runAfterInteractions()` の中で更新確認を実行する。
+- `src/services/updateCheckService.ts` が App Store Lookup API (`https://itunes.apple.com/lookup?id=6761445679&country=jp`) を取得し、返却された `version` と現在の `expo.version` を比較する。
+- remote version が現在の version より新しい場合のみ、`Alert` で任意アップデートを案内する。
+- 案内には「あとで」と「App Storeで見る」を表示し、`trackViewUrl` が返ればそれを開く。取得できない場合は固定の App Store URL にフォールバックする。
+- 同じ App Store version に対して「あとで」または App Store 遷移を選んだ場合、`app_preferences` の `dismissed_update_prompt_version` に保存し、同一 version では再表示しない。
+- オフライン、timeout、App Store 側の一時エラー、レスポンス不正は全て無視し、アプリ起動や通常利用をブロックしない。
+- 最新 version の正は App Store metadata とし、`pr/web` や `snowlog.kmchan.jp` に更新確認用 JSON は配置しない。
 
 ---
 

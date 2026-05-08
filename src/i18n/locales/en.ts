@@ -429,6 +429,12 @@ export const en: Translations = {
         progress: "{{processed}} / {{total}}",
         preparing: "Preparing...",
     },
+    updatePrompt: {
+        title: "Update available",
+        body: "SnowLog {{version}} is available.",
+        later: "Later",
+        openAppStore: "View on App Store",
+    },
     diary: {
         addButton: "+ Write diary",
         editButton: "Edit diary entry",
