@@ -356,6 +356,7 @@ export const en: Translations = {
         cancel: "Cancel",
         preparingTitle: "Preparing the video...",
         preparingSubtitle: "Fetching from iCloud may take a moment.",
+        preparingElapsed: "Elapsed time: {{time}}",
         importingBlocked: {
             title: "Import in progress",
             body: "Please wait until the operation finishes.",

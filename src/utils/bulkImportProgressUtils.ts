@@ -52,3 +52,10 @@ export function formatRemainingTime(ms: number, t: Translate): string {
 
     return t("import.bulk.remainingMinutes", { count: Math.ceil(seconds / 60) });
 }
+
+export function formatElapsedMmSs(ms: number): string {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}

@@ -44,6 +44,7 @@ import { randomUUID } from "expo-crypto";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
 import {
     estimateBulkImportRemainingMs,
+    formatElapsedMmSs,
     formatRemainingTime,
 } from "@/utils/bulkImportProgressUtils";
 import { formatDate, formatDateTime, formatDuration, parseExifDateTime, toDateKey } from "@/utils/dateUtils";
@@ -134,6 +135,9 @@ export default function VideoImportScreen() {
     const bulkStartedAtRef = useRef<number | null>(null);
     const bulkCurrentItemStartedAtRef = useRef<number | null>(null);
     const bulkCompletedElapsedMsRef = useRef(0);
+    const [preparingElapsedMs, setPreparingElapsedMs] = useState(0);
+    const [showPreparingUI, setShowPreparingUI] = useState(false);
+    const preparingStartedAtRef = useRef<number | null>(null);
 
     const resetBulkImportState = useCallback(() => {
         setBulkPhase("idle");
@@ -150,6 +154,9 @@ export default function VideoImportScreen() {
         bulkStartedAtRef.current = null;
         bulkCurrentItemStartedAtRef.current = null;
         bulkCompletedElapsedMsRef.current = 0;
+        preparingStartedAtRef.current = null;
+        setPreparingElapsedMs(0);
+        setShowPreparingUI(false);
     }, []);
 
     const cleanupStagedFile = useCallback(async () => {
@@ -222,6 +229,24 @@ export default function VideoImportScreen() {
         }, 1000);
         return () => clearInterval(timer);
     }, [bulkPhase, bulkProgress]);
+
+    useEffect(() => {
+        if (bulkPhase !== "preparing") {
+            setShowPreparingUI(false);
+            setPreparingElapsedMs(0);
+            return undefined;
+        }
+        const startedAt = preparingStartedAtRef.current ?? Date.now();
+        preparingStartedAtRef.current = startedAt;
+        const showTimer = setTimeout(() => setShowPreparingUI(true), 500);
+        const tickTimer = setInterval(() => {
+            setPreparingElapsedMs(Date.now() - startedAt);
+        }, 250);
+        return () => {
+            clearTimeout(showTimer);
+            clearInterval(tickTimer);
+        };
+    }, [bulkPhase]);
 
     const handleRequestBulkStop = useCallback(() => {
         bulkStopRequestedRef.current = true;
@@ -743,17 +768,23 @@ export default function VideoImportScreen() {
         bulkCompletionExitRef.current = false;
         bulkStopRequestedRef.current = false;
         setIsBulkStopRequested(false);
+        preparingStartedAtRef.current = Date.now();
         setBulkPhase("preparing");
 
         let pickerResult: ImagePicker.ImagePickerResult;
         try {
+            // Defer iCloud downloads to the per-asset importing loop so the
+            // preparing phase no longer blocks invisibly. Relies on
+            // expo-image-picker (SDK 55) honoring shouldDownloadFromNetwork
+            // when videoExportPreset is Passthrough; other presets force a
+            // download regardless of this flag.
             pickerResult = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ["videos"],
                 allowsMultipleSelection: true,
                 selectionLimit: BULK_SELECTION_LIMIT,
                 orderedSelection: true,
                 exif: true,
-                shouldDownloadFromNetwork: true,
+                shouldDownloadFromNetwork: false,
                 videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
             });
         } catch (error) {
@@ -836,12 +867,20 @@ export default function VideoImportScreen() {
 
     // 準備中 → ピッカー完了直後のiCloudダウンロード待ち画面
     if (bulkPhase === "preparing") {
+        if (!showPreparingUI) {
+            return <View style={styles.preparingContainer} />;
+        }
         return (
             <View style={styles.preparingContainer}>
                 <ActivityIndicator size="large" color={Colors.alpineBlue} />
                 <Text style={styles.preparingTitle}>{t("import.preparingTitle")}</Text>
                 <Text style={styles.preparingSubtitle}>
                     {t("import.preparingSubtitle")}
+                </Text>
+                <Text style={styles.preparingElapsed}>
+                    {t("import.preparingElapsed", {
+                        time: formatElapsedMmSs(preparingElapsedMs),
+                    })}
                 </Text>
                 <TouchableOpacity
                     style={[
@@ -1264,6 +1303,12 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
         textAlign: "center",
         lineHeight: 20,
+    },
+    preparingElapsed: {
+        fontSize: 13,
+        color: Colors.textTertiary,
+        textAlign: "center",
+        fontVariant: ["tabular-nums"],
     },
     preparingStopButton: {
         minWidth: 160,

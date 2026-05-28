@@ -354,6 +354,7 @@ export const ja = {
         cancel: "キャンセル",
         preparingTitle: "動画を準備しています...",
         preparingSubtitle: "iCloudから動画を取得する場合、\n少し時間がかかることがあります。",
+        preparingElapsed: "経過時間: {{time}}",
         importingBlocked: {
             title: "インポート中",
             body: "処理が完了するまでお待ちください。",
