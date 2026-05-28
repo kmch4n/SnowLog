@@ -6,6 +6,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native
 import { Stack } from "expo-router";
 import { useColorScheme } from "react-native";
 
+import { ErrorBoundaryScreen } from "@/components/ErrorBoundaryScreen";
 import { Colors } from "@/constants/colors";
 import { useTranslation } from "@/i18n/useTranslation";
 
@@ -83,5 +84,22 @@ export default function RootLayout() {
                 />
             </Stack>
         </ThemeProvider>
+    );
+}
+
+export function ErrorBoundary({
+    error,
+    retry,
+}: {
+    error: Error;
+    retry: () => Promise<void>;
+}) {
+    return (
+        <ErrorBoundaryScreen
+            error={error}
+            retry={() => {
+                void retry();
+            }}
+        />
     );
 }

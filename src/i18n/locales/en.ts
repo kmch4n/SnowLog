@@ -533,6 +533,11 @@ export const en: Translations = {
         unknown: "An unknown error occurred",
         dbInitFailed: "Failed to initialize the database",
         videoLoadFailed: "Failed to load videos.",
+        boundary: {
+            title: "Something went wrong",
+            body: "An unexpected error occurred. Tap retry to continue.",
+            retry: "Retry",
+        },
     },
     a11y: {
         iconFavorite: "Favorite",

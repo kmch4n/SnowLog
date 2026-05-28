@@ -531,6 +531,11 @@ export const ja = {
         unknown: "不明なエラーが発生しました",
         dbInitFailed: "DBの初期化に失敗しました",
         videoLoadFailed: "動画の取得に失敗しました。",
+        boundary: {
+            title: "問題が発生しました",
+            body: "予期しないエラーが発生しました。リトライしてください。",
+            retry: "リトライ",
+        },
     },
     a11y: {
         iconFavorite: "お気に入り",

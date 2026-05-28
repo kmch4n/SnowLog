@@ -22,4 +22,9 @@ export const IconNames = {
         web: "chevron_right",
     },
     trash: { ios: "trash", android: "delete", web: "delete" },
+    warning: {
+        ios: "exclamationmark.triangle.fill",
+        android: "warning",
+        web: "warning",
+    },
 } as const satisfies Record<string, IconName>;

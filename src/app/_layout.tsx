@@ -14,6 +14,7 @@ import {
     View,
 } from "react-native";
 
+import { ErrorBoundaryScreen } from "@/components/ErrorBoundaryScreen";
 import { ThumbnailMigrationScreen } from "@/components/ThumbnailMigrationScreen";
 import { Colors } from "@/constants/colors";
 import { db } from "@/database";
@@ -323,6 +324,23 @@ export default function RootLayout() {
                 </Stack>
             </ThemeProvider>
         </GestureHandlerRootView>
+    );
+}
+
+export function ErrorBoundary({
+    error,
+    retry,
+}: {
+    error: Error;
+    retry: () => Promise<void>;
+}) {
+    return (
+        <ErrorBoundaryScreen
+            error={error}
+            retry={() => {
+                void retry();
+            }}
+        />
     );
 }
 
