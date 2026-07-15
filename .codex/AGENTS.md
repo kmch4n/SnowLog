@@ -29,6 +29,10 @@ User-facing strings must go through `useTranslation()` from `@/i18n/useTranslati
 Automated coverage is thin, so manual verification carries the load. Before opening a PR, run `npm run lint` and manually verify the affected flow in Expo, especially iOS. For database changes, regenerate migrations, start with a clean local database, and verify import, edit, dashboard, and search flows. Check Web separately when touching `*.web.tsx` behavior.
 
 ## Commit & Pull Request Guidelines
+Agents may run `git add`, `git commit`, `git push`, and GitHub write actions at any time, without asking first. **This overrides the stricter "explicit instruction" policy in the global `~/.codex/AGENTS.md` and `~/.codex/commit_message.md` — inside SnowLog, this file wins.** Destructive operations (`reset --hard`, force push, branch delete) still require an explicit instruction. See `.memory/agent-rules.md` for the rationale.
+
+Split your work into focused commits: one logical change per commit, never bundling unrelated changes. Prefer several small commits over one large one.
+
 Recent commits use gitmoji-style subjects such as `[✨] Add seasonal dashboard tab` and `[🐛] Fix timestamp handling`. Keep commit titles in English, present tense, and ideally within 72 characters. PRs should stay focused, explain user impact, link related issues, and include screenshots or recordings for UI changes. Add short manual test steps when touching import, settings, or migration flows.
 
 ## Security & Configuration Tips

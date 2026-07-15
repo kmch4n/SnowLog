@@ -5,7 +5,8 @@ SnowLog のバージョンアップを進めるときは、この手順に従っ
 
 ## 基本方針
 
-- 実装・ファイル編集・Git 操作・GitHub 書き込みは、ユーザーが明示的に依頼した場合だけ実行する。
+- Git 操作（add / commit / push）・GitHub 書き込み・tag 作成・GitHub Release 公開は、事前承認なしに任意のタイミングで実行してよい。`reset --hard` / force push / ブランチ削除などの破壊的操作だけは明示依頼を待つ。詳細は `.memory/agent-rules.md`。
+- 承認は不要だが、release は外部公開を伴うので**公開物（release message / App Store 文面 / version 番号）の内容は作成後にユーザーへ提示する**。止めて待つのではなく、報告として出す。
 - release 作業では、必ず過去 release からの差分を念入りに確認する。
 - 直近 tag だけでなく、必要に応じて過去 release note、closed Issue、commit log、現在の差分を照合する。
 - 変更内容は「ユーザーに見える変更」「不具合修正」「内部改善」「ドキュメント更新」に分けて整理する。
@@ -124,4 +125,4 @@ App Store の「このバージョンの新機能」は、日本語で短く、�
 - app / docs / App Store 文面 / Web サイト / GitHub Release の version と説明が一致している。
 - 過去 release からの差分確認が release message に反映されている。
 - 検証コマンドの結果がユーザーに報告されている。
-- commit / tag / push / GitHub Release 作成は、ユーザーの明示依頼がある場合だけ完了している。
+- commit / tag / push / GitHub Release 作成が完了し、公開した内容がユーザーに報告されている。
