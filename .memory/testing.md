@@ -30,21 +30,19 @@ node --test "scripts/tests/*.test.cjs"
 
 glob をクォートで囲むこと。**`node --test scripts/tests/` のようなディレクトリ指定は Node 25 / Windows で `MODULE_NOT_FOUND` になり動かない**（2026-07-15 に確認）。
 
-## 現状 main で 1 件失敗している（2026-07-15 時点）
+## 全 18 件 pass（2026-07-16 時点）
 
-```
-tests 18 / pass 17 / fail 1
-```
+かつて `homeSwipeDelete.test.cjs` の「iOS-style icon and compact system red surface」ケースが
+main で 1 件落ち続けていた。原因は**テストの陳腐化**（動作の退行ではない）。
+`b908ad3` がスワイプ削除とテストを同時に追加した当時、`VideoCardCompact.tsx` は `expo-symbols` を直接 import しており、
+テストはその正確なスナップショットだった。翌日 `d8cb778` がアイコンを `@/components/ui/Icon` ラッパー経由に refactor した際、
+`scripts/tests/` を 1 行も更新しなかったための取り残し。
 
-失敗しているのは `homeSwipeDelete.test.cjs` の
-「home swipe delete action uses an iOS-style icon and compact system red surface」。
+これを 2026-07-16 に解消した（コミット `aa9134c`）。ただし**期待値を Icon ラッパーに追随させるだけでは同じ罠を張り直す**
+（`import { Icon } from "./ui/Icon"` を期待させても `@/` エイリアスに変えた瞬間また落ちる）。
+そのためテストは「有効な契約」だけに絞り、**「窓口を迂回していないか」の検査は lint に移した**（次節）。
 
-**原因はテストの陳腐化であって、動作の退行ではない。** このテストは `src/components/VideoCardCompact.tsx` が
-`import { SymbolView } from "expo-symbols"` を直接 import し `name="trash"` / `tintColor={...}` を書いていることを期待しているが、
-同コンポーネントは `@/components/ui/Icon` ラッパー経由（`name={IconNames.trash}` / `color={Colors.headerText}`）に refactor 済み。
-アイコン表示も赤い削除面も実際には壊れていない。テスト側の期待値を Icon ラッパーに追随させれば直る。
-
-そのため**「テストが 1 件落ちている」＝自分の変更が壊した、とは限らない**。変更前のベースラインを取ってから判断すること。
+教訓: テストが落ちたら、まず自分の変更が原因か、それとも既存の取り残しかを、ベースラインを取って切り分けること。
 
 ## テストの性質は 2 種類ある — 一括りにしないこと
 
@@ -62,6 +60,23 @@ tests 18 / pass 17 / fail 1
 
 リファクタでこの 2 本が落ちたら、まず**テストが実装の変更に追随していないだけではないか**を疑う。
 実際 `homeSwipeDelete` の失敗はこれ（上記）。一方、振る舞い検証の 3 本が落ちたら**本物の退行を疑ってよい**。
+
+## アーキテクチャ上の単一窓口は lint で守る（テストではない）
+
+`expo-symbols` は `src/components/ui/Icon.tsx`、`expo-haptics` は `src/services/hapticsService.ts` からのみ
+import してよい、という規約がある（`.claude/CLAUDE.md` に明文化）。これを機械的に守るのは**テストではなく `eslint.config.js` の
+`no-restricted-imports`**（2026-07-16 追加、コミット `95711da`）。
+
+なぜ lint か:
+- `npm run lint` は PR 前必須の既存ゲート。`node --test` は npm script すら無く気づかれにくい（上記）。窓口ガードは気づかれる方に置く。
+- 正規表現でソースを grep する方式は引用符やクォート種別・`import type` を取りこぼす。lint は AST を見るので漏れない。
+- エディタに即座に赤線が出る。
+
+実装メモ: flat config で同じ `no-restricted-imports` キーのブロックを重ねると**マージではなく上書き**になる。
+そのため base で両パッケージを禁止し、窓口ファイルごとに override（自分が担当するパッケージだけ許可）を置いている。
+`import type` も意図的に禁止（型も Icon.tsx 経由に集約済み。`src/constants/icons.ts` 参照）。
+
+新しく「このモジュール経由でのみ使う」窓口を作ったら、テストを書くのではなくここに 1 エントリ足すのが正着。
 
 ## 純粋関数のテスト基盤は既にある（Issue #38 の前提は古い）
 

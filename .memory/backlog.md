@@ -15,7 +15,6 @@ status: active
 ## Issue 化されていない項目
 
 - **`src/app/video-import.tsx` の分割** — 約 1,333 行で、規約の ~500〜700 行を大きく超過。アプリの中核機能なので分割は慎重に。
-- **`homeSwipeDelete.test.cjs` の期待値更新** — main で 1 件失敗中。動作の退行ではなくテストの陳腐化。詳細は [testing.md](testing.md)。
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
