@@ -99,6 +99,6 @@ Schema is canonical in `src/database/schema.ts`. The non-obvious bits:
 
 ## Testing
 
-`scripts/tests/` holds 5 `node:test` files (18 cases). No `test` npm script — run them with `node --test "scripts/tests/*.test.cjs"` (quote the glob; a directory argument fails on Node 25 / Windows). They assert on **source text via regex**, not behavior, so a refactor can break them while the app still works. One case in `homeSwipeDelete.test.cjs` fails on `main` as of 2026-07-15 — take a baseline before blaming your change. See `.memory/testing.md`.
+`scripts/tests/` holds 5 `node:test` files (18 cases). No `test` npm script — run them with `node --test "scripts/tests/*.test.cjs"` (quote the glob; a directory argument fails on Node 25 / Windows). Three (`versionUtils`, `bulkImportProgressUtils`, `videoListEquality`) compile the target `.ts` with `tsc` and assert on real behavior; two (`homeSwipeDelete`, `videoDetailKeyboardAccessory`) match **source text via regex**, so a refactor can break them while the app still works. See `.memory/testing.md`. The `expo-symbols` / `expo-haptics` choke points are enforced by `no-restricted-imports` in `eslint.config.js`, not by these tests.
 
 Manual verification on iOS sim remains primary. After schema, import, export, or dashboard changes, run the full flow: migrate → import → search → export. Re-check Web only when touching `.web.tsx` paths. Run `npm run lint` before a PR.
