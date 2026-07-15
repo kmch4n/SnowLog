@@ -54,7 +54,7 @@ Because CLAUDE.md and AGENTS.md are separate files, they drift. Rules that both 
 src/app/         Routes. (tabs)/, settings/, video/[id], video-import
 src/components/  UI (FilterBar, VideoCard*, Diary*, Calendar*, dashboard/*, ThumbnailMigrationScreen, ...)
 src/hooks/       useVideos, useDashboard, useCalendarEnhanced, useDiaryEntry, useSelectionMode, useAppPreference, useTranslation, ...
-src/services/    importService, mediaService, thumbnailService, exportService, duplicateDetectionService, videoDeletionService, managedVideoFileService, hapticsService, bulkImportSummaryService, thumbnailMigrationService, orphanedFileCleanupService
+src/services/    importService, mediaService, thumbnailService, exportService, duplicateDetectionService, videoDeletionService, managedVideoFileService, hapticsService, bulkImportSummaryService, thumbnailMigrationService, orphanedFileCleanupService, updateCheckService
 src/database/    schema.ts + repositories/
 src/i18n/        index.ts, useTranslation.ts, types.ts, locales/{ja,en}.ts
 src/constants/   colors, icons, techniques, diaryOptions, skiResorts.json (378 resorts). `theme.ts` + Expo template companions are unused — see open cleanup issue.
@@ -62,14 +62,15 @@ src/utils/       dateUtils, geoUtils, calendarUtils, parseTechniques, searchRout
 src/types/       Runtime types (Video, VideoWithTags, FilterOptions, DayInfo, DiaryEntry, Season, DashboardStats, ...)
 drizzle/         Generated migrations — never edit manually; regenerate via `npm run db:generate`
 locales/         ja.json, en.json — iOS InfoPlist permission strings (see "iOS permissions" gotcha below)
-scripts/         patchImageUtilsCache.js (postinstall / eas-build-post-install)
+scripts/         patchImageUtilsCache.js (postinstall / eas-build-post-install) + tests/ (see Testing)
+pr/web/          Astro landing page. Separate project with its own node_modules, tracked in git
 ```
 
 **Web shims**: native-dependent modules (repos, services, native-only screens) need a `.web.ts` / `.web.tsx` companion. Don't import a native-only module from a web-reachable path without one.
 
 ## Non-obvious wiring (the gotchas)
 
-- **Boot order in `src/app/_layout.tsx`** — Drizzle `useMigrations` runs first. On success: differential `seedTechniqueOptions`, then the thumbnail URI migration (gated by `app_preferences.thumbnail_migration_version`, renders a blocking `ThumbnailMigrationScreen` while running). After the thumbnail phase resolves to `done`, `InteractionManager.runAfterInteractions` triggers `repairInvalidCapturedAt` and `cleanupOrphanedFiles` in the background; the Stack (wrapped in `GestureHandlerRootView` + `ThemeProvider`) renders in parallel. Locale is resolved once at module init in `src/i18n/index.ts` and is never re-read. Don't reorder without checking each step's preconditions.
+- **Boot order in `src/app/_layout.tsx`** — Drizzle `useMigrations` runs first. On success: differential `seedTechniqueOptions`, then the thumbnail URI migration (gated by `app_preferences.thumbnail_migration_version`, renders a blocking `ThumbnailMigrationScreen` while running). After the thumbnail phase resolves to `done`, `InteractionManager.runAfterInteractions` triggers three background jobs: `repairInvalidCapturedAt`, `cleanupOrphanedFiles`, and `getOptionalUpdateInfo` (`updateCheckService` — hits the App Store Lookup API and may raise the optional-update `Alert`). The Stack (wrapped in `GestureHandlerRootView` + `ThemeProvider`) renders in parallel. Locale is resolved once at module init in `src/i18n/index.ts` and is never re-read. Don't reorder without checking each step's preconditions.
 - **Bulk import summary handoff** — on completion `importService` calls `bulkImportSummaryService.setPendingBulkImportSummary({success, skipped, error})`. The home screen drains it via `consumePendingBulkImportSummary` on focus and surfaces the alert. Do **not** show the summary from the import modal directly.
 - **i18n is device-locale-only (no runtime switching)** — `src/i18n/index.ts` reads `expo-localization.getLocales()[0]?.languageCode` once at module init, normalises non-`ja` to `en`, and pins `i18n-js`'s locale to that value. `useTranslation()` returns `{ t, locale }` only — there is no preference / setter API, no persisted `locale` key, and the in-app language picker was removed in `bab0b45`. Users change language by changing iOS system language. The `useSyncExternalStore` plumbing in `useTranslation.ts` is currently inert (open cleanup issue). Type parity between `locales/ja.ts` and `locales/en.ts` is still enforced by `Translations = typeof ja`.
 - **Haptics — always via `services/hapticsService.ts`** (`hapticLight/Medium/Selection/Success/Warning/Error`). The `safeFire` wrapper swallows `UnavailabilityError` from `expo-haptics` so a stale dev-client binary cannot crash callers. Don't import `expo-haptics` directly elsewhere.
