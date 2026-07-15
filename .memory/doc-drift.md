@@ -32,19 +32,13 @@ status: active
 
 **アップグレード利用者への影響:** 言語ピッカーがあった頃のユーザーの `app_preferences` テーブルには、未使用の `locale` 行が残っている可能性がある。実害は無いがクリーンアップ候補。
 
-## 2. 「自動テストは無い」は誤り → 2026-07-15 に修正済み
-
-`.codex/AGENTS.md`（「There is no automated test suite yet.」）と `.claude/CLAUDE.md`（「No automated tests」）が
-テストの存在を否定していたが、実際には `scripts/tests/` に `node:test` ベースのテストが 5 本ある。
-両ファイルとも 2026-07-15 に実態へ修正した。詳細と実行方法は [testing.md](testing.md) を参照。
-
-## 3. `orphanedFileCleanupService` がドキュメントに存在しない
+## 2. `orphanedFileCleanupService` がドキュメントに存在しない
 
 `src/services/orphanedFileCleanupService.ts` と、設定画面の「不要ファイルを削除」行、起動時のクリーンアップ処理が
 `SnowLog.md`（§5 起動処理 / §7.7 設定メニュー / §9.3 サービス表 / §10 メディア保存ポリシー）に記載されていない。
 `SnowLog.md §7.7` は削除済みの「言語設定」を含む 6 項目のままだが、実際は 5 つの遷移行 + 保守行 1 つ。
 詳細と修正範囲は Issue [#57](https://github.com/kmch4n/SnowLog/issues/57) にまとまっている。
 
-## 4. ファイルサイズ規約の逸脱
+## 3. ファイルサイズ規約の逸脱
 
 `.claude/CLAUDE.md` と `.codex/AGENTS.md` はファイルを ~500〜700 行に収めるよう定めているが、`src/app/video-import.tsx` は約 1,333 行あり大きく超えている。規約違反として認識されており、分割候補。

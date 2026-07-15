@@ -6,9 +6,13 @@ status: active
 
 # テストの実態と実行方法
 
-## テストは存在する（ドキュメントの記述は誤り）
+## テストは存在するが `npm test` では走らない
 
-`.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いているが、**`scripts/tests/` に `node:test` ベースのテストが 5 ファイル・18 ケースある**。
+**`scripts/tests/` に `node:test` ベースのテストが 5 ファイル・18 ケースある。**
+
+かつて `.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
+2026-07-15 に両方とも実態へ修正済み。**現在はどちらの記述も正しい**ので、乖離として扱わなくてよい。
+気づきにくさの原因は、いまはドキュメントではなく次の点にある。
 
 - `bulkImportProgressUtils.test.cjs`
 - `homeSwipeDelete.test.cjs`
