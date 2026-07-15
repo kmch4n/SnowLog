@@ -21,16 +21,12 @@ test("home video cards expose a trailing swipe delete action", () => {
     assert.match(homeSource, /isSwipeDeleteDisabled=\{isBulkProcessing \|\| deletingVideoId !== null\}/);
 });
 
-test("home swipe delete action uses an iOS-style icon and compact system red surface", () => {
+test("home swipe delete action uses a trash icon on the iOS destructive red surface", () => {
     const cardSource = readFileSync(compactCardPath, "utf8");
 
-    assert.match(cardSource, /import \{ SymbolView \} from "expo-symbols"/);
-    assert.match(cardSource, /name="trash"/);
-    assert.match(cardSource, /tintColor=\{Colors\.headerText\}/);
-    assert.match(cardSource, /IOS_DESTRUCTIVE_RED/);
-    assert.match(cardSource, /width: 80/);
-    assert.match(cardSource, /flexDirection: "column"/);
-    assert.match(cardSource, /fontWeight: "600"/);
+    assert.match(cardSource, /name=\{IconNames\.trash\}/);
+    assert.match(cardSource, /IOS_DESTRUCTIVE_RED = "#FF3B30"/);
+    assert.match(cardSource, /deleteAction: \{[^}]*backgroundColor: IOS_DESTRUCTIVE_RED/);
 });
 
 test("home swipe delete confirms before using the cleanup deletion path", () => {
