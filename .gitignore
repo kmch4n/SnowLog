@@ -56,9 +56,11 @@ app-example
 *.aab
 
 # AI
-.codex/
+# Agent instructions (.claude/CLAUDE.md, .codex/AGENTS.md) are tracked on purpose,
+# so Claude Code, Codex, and humans share one set of rules. See .memory/README.md.
+# Personal, machine-local overrides stay out.
+.claude/settings.local.json
 .gemini/
-.claude/
 .playwright-mcp/
 
 # Memo
