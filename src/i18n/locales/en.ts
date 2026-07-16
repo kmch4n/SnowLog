@@ -373,7 +373,7 @@ export const en: Translations = {
         pickFailed: "Failed to pick a video",
         iCloudFailed: {
             title: "Could not download from iCloud",
-            body: "Check your network connection and try again.",
+            body: "Check your network connection and try again.\n\n{{detail}}",
         },
         alreadyImported: {
             title: "Already imported",

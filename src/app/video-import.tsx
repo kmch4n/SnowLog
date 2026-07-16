@@ -39,6 +39,7 @@ import {
 import { setPendingBulkImportSummary } from "@/services/bulkImportSummaryService";
 import { importVideo, type ImportableAsset } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
+import { isPhotosLibraryError } from "@/utils/photosErrors";
 import { useSkiResortSuggestions } from "@/hooks/useSkiResortSuggestions";
 import { randomUUID } from "expo-crypto";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
@@ -353,10 +354,10 @@ export default function VideoImportScreen() {
                     : typeof error === "string"
                         ? error
                         : t("common.unknownError");
-            if (message.includes("3164")) {
+            if (isPhotosLibraryError(error)) {
                 Alert.alert(
                     t("import.iCloudFailed.title"),
-                    t("import.iCloudFailed.body")
+                    t("import.iCloudFailed.body", { detail: message })
                 );
             } else {
                 Alert.alert(t("import.pickFailed"), message);
@@ -796,8 +797,19 @@ export default function VideoImportScreen() {
         } catch (error) {
             setBulkPhase("idle");
             const message =
-                error instanceof Error ? error.message : t("common.unknownError");
-            Alert.alert(t("import.pickFailed"), message);
+                error instanceof Error
+                    ? error.message
+                    : typeof error === "string"
+                        ? error
+                        : t("common.unknownError");
+            if (isPhotosLibraryError(error)) {
+                Alert.alert(
+                    t("import.iCloudFailed.title"),
+                    t("import.iCloudFailed.body", { detail: message })
+                );
+            } else {
+                Alert.alert(t("import.pickFailed"), message);
+            }
             return;
         }
 

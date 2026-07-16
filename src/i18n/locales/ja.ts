@@ -371,7 +371,7 @@ export const ja = {
         pickFailed: "動画の選択に失敗しました",
         iCloudFailed: {
             title: "iCloud 動画を取得できませんでした",
-            body: "ネットワークに接続されているか確認して、もう一度お試しください。",
+            body: "ネットワークに接続されているか確認して、もう一度お試しください。\n\n{{detail}}",
         },
         alreadyImported: {
             title: "インポート済み",
