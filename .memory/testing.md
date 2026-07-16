@@ -8,14 +8,17 @@ status: active
 
 ## テストは存在するが `npm test` では走らない
 
-**`scripts/tests/` に `node:test` ベースのテストが 5 ファイル・18 ケースある。**
+**`scripts/tests/` に `node:test` ベースのテストが 8 ファイル・49 ケースある**（2026-07-16 時点）。
 
 かつて `.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
 2026-07-15 に両方とも実態へ修正済み。**現在はどちらの記述も正しい**ので、乖離として扱わなくてよい。
 気づきにくさの原因は、いまはドキュメントではなく次の点にある。
 
 - `bulkImportProgressUtils.test.cjs`
+- `calendarUtils.test.cjs`
+- `dateUtils.test.cjs`
 - `homeSwipeDelete.test.cjs`
+- `parseTechniques.test.cjs`
 - `versionUtils.test.cjs`
 - `videoDetailKeyboardAccessory.test.cjs`
 - `videoListEquality.test.cjs`
@@ -30,7 +33,7 @@ node --test "scripts/tests/*.test.cjs"
 
 glob をクォートで囲むこと。**`node --test scripts/tests/` のようなディレクトリ指定は Node 25 / Windows で `MODULE_NOT_FOUND` になり動かない**（2026-07-15 に確認）。
 
-## 全 18 件 pass（2026-07-16 時点）
+## 全 49 件 pass（2026-07-16 時点）
 
 かつて `homeSwipeDelete.test.cjs` の「iOS-style icon and compact system red surface」ケースが
 main で 1 件落ち続けていた。原因は**テストの陳腐化**（動作の退行ではない）。
@@ -46,12 +49,13 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 
 ## テストの性質は 2 種類ある — 一括りにしないこと
 
-5 本は方式が異なる。**「SnowLog のテストはソース文字列を見ているだけ」は誤り**（2026-07-15 に実地確認）。
+方式が異なる。**「SnowLog のテストはソース文字列を見ているだけ」は誤り**（2026-07-15 に実地確認）。
+振る舞い検証が 6 本・正規表現が 2 本で、いまや前者が多数派。
 
 | 方式 | ファイル | 性質 |
 | --- | --- | --- |
-| **振る舞いを検証** | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる |
-| **ソース正規表現** | `homeSwipeDelete` / `videoDetailKeyboardAccessory` | `readFileSync` + `assert.match`。実装の書き方を固定するスナップショット |
+| **振る舞いを検証**（6 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる |
+| **ソース正規表現**（2 本） | `homeSwipeDelete` / `videoDetailKeyboardAccessory` | `readFileSync` + `assert.match`。実装の書き方を固定するスナップショット |
 
 正規表現方式の 2 本だけが次の弱点を持つ。
 
@@ -84,9 +88,51 @@ Issue [#38](https://github.com/kmch4n/SnowLog/issues/38) は「テスト基盤�
 **`versionUtils.test.cjs` が確立した「tsc でコンパイルして require する」パターンがそのまま使える**。
 新しいランナーの導入も、Expo / RN との設定調整も要らない。
 
-つまり #38 が挙げる `dateUtils` / `geoUtils` / `calendarUtils` / `parseTechniques`（いずれも 2026-07-15 時点でテスト無し）は、
-既存パターンを複製してテストファイルを足すだけで済む。Issue のラベルが `priority:low` なのは
-「基盤導入が重い」という前提に基づくので、着手判断のときはこの点を割り引くこと。
+2026-07-16 に #38 の 4 関数のうち 3 つを追加済み（`parseTechniques` / `calendarUtils` / `dateUtils`）。
+残りは `geoUtils` のみ（下記）。#38 は部分対応でオープンのまま。
+
+### コンパイル可否は「import の形」で決まる（重要）
+
+このパターンが素で通るかは、対象ファイルの import 形態で 4 段階に分かれる。**実測済み。**
+
+| import 形態 | 例 | 素の `tsc <file>` | require 先 |
+| --- | --- | --- | --- |
+| import なし | `parseTechniques.ts` | 通る | `out/parseTechniques.js`（平坦） |
+| **相対**の型 import | `dateUtils.ts`（`../types/dashboard`） | 通る | `out/utils/dateUtils.js`（**ネスト**） |
+| **エイリアス**の型 import | `calendarUtils.ts`（`@/types`） | **TS2307 で失敗** | 一時 tsconfig が必要 |
+| エイリアスの**値** import | `geoUtils.ts`（`@/constants/skiResorts.json`） | **失敗** | tsconfig + ランタイムフックが必要 |
+
+- 型 import でも**エイリアスなら素の tsc は解決できない**（`paths` が無いため）。`import type` だから安全、ではない。
+- 相対 import があると rootDir が `src/` に繰り上がり、emit が `out/utils/*.js` に**ネスト**する。
+  require パスを間違えやすい（既存の `videoListEquality.test.cjs` も `outDir/utils/...` を見ている）。
+- 一時 tsconfig を書く場合、**実 `tsconfig.json` を `extends` してはいけない**。
+  `expo/tsconfig.base` 由来の `moduleResolution: "bundler"` が `module: "commonjs"` と衝突し TS5095 で落ちる。
+  `baseUrl` + `@/*` paths だけを書いた**自己完結**の tsconfig にする。パスは**絶対**にすること
+  （相対は tsconfig の置き場所基準で解決され、repo を指さない）。実例は `calendarUtils.test.cjs`。
+
+### 日付系は TZ を固定する
+
+この開発機のローカルは Asia/Tokyo。**TZ を固定しないと現地では緑になり、UTC 環境で初めて割れる**——最悪の見落とし方。
+`calendarUtils.test.cjs` / `dateUtils.test.cjs` は先頭（最初の `Date` 生成より前）で
+`process.env.TZ = "Asia/Tokyo"` を設定している。Node は同一プロセス内の再代入を以後の `Date` に反映する（実測）。
+新しく日付系テストを足すときは、必ず `TZ=UTC node --test ...` でも緑になることを確認すること。
+
+`Intl` を使う関数（`formatDate` / `formatDateShort` / `formatDateTime`）は、TZ を固定しても
+**ICU のバージョンで書式が揺れる**。厳密なグリフ比較はせず、ロケール分岐と値の存在だけを見る。
+
+### geoUtils が残っている理由
+
+`geoUtils.ts` は `@/constants/skiResorts.json` を**エイリアス経由で値 import** するため、上表の最難関。
+仮に一時 tsconfig で型解決しても、**tsc は emit 時に specifier を書き換えない**ので出力に
+`require("@/constants/skiResorts.json")` が残り、Node が実行時に解決できない（実測）。取りうる案は 2 つ:
+
+- (A) テスト内治具: 自己完結 tsconfig + `Module._load` フックで `@/` を実ファイルへ橋渡し。ソース非改変だが約 20〜30 行の別種の治具
+- (B) `haversineKm` を無依存モジュールに抽出 + `findNearbySkiResorts` に resort 配列を引数注入。ソース改修。
+  GPS サジェスト経路（`useSkiResortSuggestions`）に実呼び出しがあり再検証が要る
+
+`haversineKm` は純数学で高価値（同一点 = ちょうど 0、対称性がビット完全一致——実測）。
+`findNearbySkiResorts` はモジュール定数 378 件依存で注入不可のため、(A) では不変条件
+（≤maxResults / 昇順 / threshold 内 / 遠方で空）しか検証できず、**sort→slice の順序改悪は検出できない**。
 
 ## 主要な検証手段は依然として手動
 
