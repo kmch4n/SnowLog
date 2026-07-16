@@ -773,18 +773,24 @@ export default function VideoImportScreen() {
 
         let pickerResult: ImagePicker.ImagePickerResult;
         try {
-            // Defer iCloud downloads to the per-asset importing loop so the
-            // preparing phase no longer blocks invisibly. Relies on
-            // expo-image-picker (SDK 55) honoring shouldDownloadFromNetwork
-            // when videoExportPreset is Passthrough; other presets force a
-            // download regardless of this flag.
+            // shouldDownloadFromNetwork must stay true. With Passthrough,
+            // expo-image-picker takes a fast path that streams the asset
+            // resource itself (MediaHandler.swift), and it honours this flag by
+            // setting PHAssetResourceRequestOptions.isNetworkAccessAllowed from
+            // it. Honouring it does not mean the picker returns an
+            // un-downloaded reference: on false, writeData throws
+            // PHPhotosErrorDomain for any video that lives only in iCloud. The
+            // "gracefully fall back" comment next to it does not cover that —
+            // the call is not wrapped, so the throw escapes and the whole pick
+            // fails. Deferring the download to the per-asset loop is therefore
+            // not possible here.
             pickerResult = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ["videos"],
                 allowsMultipleSelection: true,
                 selectionLimit: BULK_SELECTION_LIMIT,
                 orderedSelection: true,
                 exif: true,
-                shouldDownloadFromNetwork: false,
+                shouldDownloadFromNetwork: true,
                 videoExportPreset: ImagePicker.VideoExportPreset.Passthrough,
             });
         } catch (error) {
