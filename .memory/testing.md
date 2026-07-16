@@ -8,7 +8,7 @@ status: active
 
 ## テストは存在するが `npm test` では走らない
 
-**`scripts/tests/` に `node:test` ベースのテストが 8 ファイル・49 ケースある**（2026-07-16 時点）。
+**`scripts/tests/` に `node:test` ベースのテストが 9 ファイル・58 ケースある**（2026-07-16 時点）。
 
 かつて `.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
 2026-07-15 に両方とも実態へ修正済み。**現在はどちらの記述も正しい**ので、乖離として扱わなくてよい。
@@ -17,6 +17,7 @@ status: active
 - `bulkImportProgressUtils.test.cjs`
 - `calendarUtils.test.cjs`
 - `dateUtils.test.cjs`
+- `geoUtils.test.cjs`
 - `homeSwipeDelete.test.cjs`
 - `parseTechniques.test.cjs`
 - `versionUtils.test.cjs`
@@ -33,7 +34,7 @@ node --test "scripts/tests/*.test.cjs"
 
 glob をクォートで囲むこと。**`node --test scripts/tests/` のようなディレクトリ指定は Node 25 / Windows で `MODULE_NOT_FOUND` になり動かない**（2026-07-15 に確認）。
 
-## 全 49 件 pass（2026-07-16 時点）
+## 全 58 件 pass（2026-07-16 時点）
 
 かつて `homeSwipeDelete.test.cjs` の「iOS-style icon and compact system red surface」ケースが
 main で 1 件落ち続けていた。原因は**テストの陳腐化**（動作の退行ではない）。
@@ -50,11 +51,11 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 ## テストの性質は 2 種類ある — 一括りにしないこと
 
 方式が異なる。**「SnowLog のテストはソース文字列を見ているだけ」は誤り**（2026-07-15 に実地確認）。
-振る舞い検証が 6 本・正規表現が 2 本で、いまや前者が多数派。
+振る舞い検証が 7 本・正規表現が 2 本で、いまや前者が多数派。
 
 | 方式 | ファイル | 性質 |
 | --- | --- | --- |
-| **振る舞いを検証**（6 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる |
+| **振る舞いを検証**（7 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる |
 | **ソース正規表現**（2 本） | `homeSwipeDelete` / `videoDetailKeyboardAccessory` | `readFileSync` + `assert.match`。実装の書き方を固定するスナップショット |
 
 正規表現方式の 2 本だけが次の弱点を持つ。
@@ -64,6 +65,30 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 
 リファクタでこの 2 本が落ちたら、まず**テストが実装の変更に追随していないだけではないか**を疑う。
 実際 `homeSwipeDelete` の失敗はこれ（上記）。一方、振る舞い検証の 3 本が落ちたら**本物の退行を疑ってよい**。
+
+## assert を書いたら変異させて確かめる（緑は何も証明しない）
+
+このリポジトリで繰り返し起きた失敗なので明文化する。**通っている assert が、実装を壊しても通り続けることがある。**
+実例:
+
+- 旧 `homeSwipeDelete` の `/IOS_DESTRUCTIVE_RED/` は **const 宣言行にマッチ**していた。
+  色を `#00FF00` に変えても通る。「破壊的操作は赤」を守っているつもりで何も守っていなかった
+- 同 `/fontWeight: "600"/` は**3 箇所にマッチ**。対象の指定を消しても他がヒットして通る
+- `geoUtils` で「最寄り 5 件」を「≤maxResults / 昇順 / threshold 内」で検証しても、
+  **sort と slice を入れ替えた実装が 3 つとも通過**する（本来 11.7km の最寄りを落として 16.7km を先頭に返すのに）
+
+対策は 1 つだけ: **assert を足したら、それが守るはずの実装を実際に壊して、落ちることを目で見る。**
+落ちなければその assert は無効。「手法の限界」と書きたくなったら、まず assert の選び方を疑うこと
+（上記 geoUtils の件は限界ではなく、`deepEqual(top5, all.slice(0,5))` 1 行で殺せた）。
+
+変異させるときの注意:
+- **`sed` / `perl` の空振り（no-op）に注意。** 適用されたと思い込んで「捕捉できなかった」と誤結論した事故が 2 回ある。
+  `git diff` で適用を確認してから結果を読む
+- **極端な変異は偽の安心を与える。** 地球半径を 637 にすれば緩い assert でも落ちるが、
+  現実的な `6371 → 6378`（赤道半径との取り違え）は「400km 前後」のような緩い範囲を**すり抜ける**。
+  ありそうな実バグで変異させる
+- **通るのが正しい変異もある。** `geoUtils` の null 座標ガードは実データに該当が無く到達不能なので、
+  削除しても通る。これは assert の欠陥ではない
 
 ## アーキテクチャ上の単一窓口は lint で守る（テストではない）
 
@@ -88,8 +113,8 @@ Issue [#38](https://github.com/kmch4n/SnowLog/issues/38) は「テスト基盤�
 **`versionUtils.test.cjs` が確立した「tsc でコンパイルして require する」パターンがそのまま使える**。
 新しいランナーの導入も、Expo / RN との設定調整も要らない。
 
-2026-07-16 に #38 の 4 関数のうち 3 つを追加済み（`parseTechniques` / `calendarUtils` / `dateUtils`）。
-残りは `geoUtils` のみ（下記）。#38 は部分対応でオープンのまま。
+2026-07-16 に **#38 が挙げる 4 関数すべてにテストを追加済み**
+（`parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils`）。Vitest / Jest は導入していない。
 
 ### コンパイル可否は「import の形」で決まる（重要）
 
@@ -120,19 +145,22 @@ Issue [#38](https://github.com/kmch4n/SnowLog/issues/38) は「テスト基盤�
 `Intl` を使う関数（`formatDate` / `formatDateShort` / `formatDateTime`）は、TZ を固定しても
 **ICU のバージョンで書式が揺れる**。厳密なグリフ比較はせず、ロケール分岐と値の存在だけを見る。
 
-### geoUtils が残っている理由
+### エイリアス経由の**値** import を含むモジュールのテスト方法
 
-`geoUtils.ts` は `@/constants/skiResorts.json` を**エイリアス経由で値 import** するため、上表の最難関。
-仮に一時 tsconfig で型解決しても、**tsc は emit 時に specifier を書き換えない**ので出力に
-`require("@/constants/skiResorts.json")` が残り、Node が実行時に解決できない（実測）。取りうる案は 2 つ:
+`geoUtils.ts` の `import ... from "@/constants/skiResorts.json"` のような**値**の `@/` import は、
+型 import より一段難しい。**tsc は emit 時に specifier を書き換えない**ので、一時 tsconfig で型解決しても
+出力に `require("@/constants/skiResorts.json")` が残り、Node が実行時に解決できない。
 
-- (A) テスト内治具: 自己完結 tsconfig + `Module._load` フックで `@/` を実ファイルへ橋渡し。ソース非改変だが約 20〜30 行の別種の治具
-- (B) `haversineKm` を無依存モジュールに抽出 + `findNearbySkiResorts` に resort 配列を引数注入。ソース改修。
-  GPS サジェスト経路（`useSkiResortSuggestions`）に実呼び出しがあり再検証が要る
+**解決策: `outDir` を `<tmpRoot>/node_modules/@` にするだけ。**（`geoUtils.test.cjs` が実例）
 
-`haversineKm` は純数学で高価値（同一点 = ちょうど 0、対称性がビット完全一致——実測）。
-`findNearbySkiResorts` はモジュール定数 378 件依存で注入不可のため、(A) では不変条件
-（≤maxResults / 昇順 / threshold 内 / 遠方で空）しか検証できず、**sort→slice の順序改悪は検出できない**。
+tsc は JSON を outDir 側へ構造ごとコピーするので、emit 後は
+`<tmpRoot>/node_modules/@/utils/geoUtils.js` と `<tmpRoot>/node_modules/@/constants/skiResorts.json` が並ぶ。
+Node は親方向へ探索するとき basename が `node_modules` のディレクトリを候補にするため、
+`require("@/constants/skiResorts.json")` が**素の解決で通る**。`resolveJsonModule: true` も要る。
+
+つまり型 import 版（`calendarUtils.test.cjs`）との差分は実質 **2 行**。
+**`Module._resolveFilename` などのフックを書く必要はない**（一度そう設計したが不要と判明）。
+今後 `src/utils/` に `@/` 値 import を持つモジュールが増えても、このレシピがそのまま効く。
 
 ## 主要な検証手段は依然として手動
 

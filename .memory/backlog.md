@@ -15,9 +15,6 @@ status: active
 ## Issue 化されていない項目
 
 - **`src/app/video-import.tsx` の分割** — 約 1,333 行で、規約の ~500〜700 行を大きく超過。アプリの中核機能なので分割は慎重に。
-- **`geoUtils` のテスト（Issue [#38](https://github.com/kmch4n/SnowLog/issues/38) の残り）** — 他 3 関数は 2026-07-16 に追加済み。
-  `geoUtils` だけはエイリアス経由の値 import のため素のパターンが使えず、テスト内治具かソース抽出かの判断が要る。
-  詳細と実測済みの選択肢は [testing.md](testing.md) の「geoUtils が残っている理由」。
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
