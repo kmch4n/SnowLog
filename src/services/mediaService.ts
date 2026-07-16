@@ -1,5 +1,7 @@
 import * as MediaLibrary from "expo-media-library";
 
+import { isPhotosLibraryError } from "../utils/photosErrors";
+
 /**
  * expo-media-library のラッパー
  * フォトライブラリへのアクセス・動画取得を担う
@@ -51,32 +53,15 @@ export async function getAssetInfo(
     try {
         return await MediaLibrary.getAssetInfoAsync(assetId, options);
     } catch {
-        // iCloud 専用アセット (PHPhotosErrorDomain 3164) 等のネイティブエラーを握りつぶす
+        // iCloud 専用アセット等のネイティブエラーを握りつぶす
         return null;
     }
 }
 
-function isNetworkAccessRequiredError(error: unknown): boolean {
-    if (typeof error === "string") {
-        return error.includes("3164");
-    }
-    if (typeof error === "object" && error !== null) {
-        const message = (error as { message?: string }).message;
-        if (message && message.includes("3164")) {
-            return true;
-        }
-        const code = (error as { code?: string }).code;
-        if (code === "PHPhotosErrorDomain" || code === "E_PHOTOS_ERROR") {
-            return true;
-        }
-    }
-    return false;
-}
-
 /**
  * iCloud 動画にも対応するアセット情報取得（自動ダウンロードリトライ付き）
- * まず shouldDownloadFromNetwork: false で試み、3164 エラー時に true でリトライする。
- * ユーザー操作起点の箇所（インポート・詳細画面）で使用する。
+ * まず shouldDownloadFromNetwork: false で試み、Photos 由来のエラーなら
+ * true でリトライする。ユーザー操作起点の箇所（インポート・詳細画面）で使用する。
  */
 export async function getAssetInfoWithDownload(
     assetId: string
@@ -86,7 +71,7 @@ export async function getAssetInfoWithDownload(
             shouldDownloadFromNetwork: false,
         });
     } catch (error) {
-        if (!isNetworkAccessRequiredError(error)) {
+        if (!isPhotosLibraryError(error)) {
             return null;
         }
     }
