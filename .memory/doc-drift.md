@@ -49,7 +49,8 @@ status: active
 
 - `exportAllToJSON()`（`src/services/exportService.ts:21`）の呼び出し元は **`src/app/video/[id].web.tsx` のみ** — Web 検証スタブのヘッダーボタンで、iOS からは到達できない。
 - 設定画面（`src/app/(tabs)/settings/index.tsx`）の `SettingsRoute` は calendar / techniques / favorite-resorts / tags / duplicate-candidates の 5 つ + ストレージ整理行のみで、エクスポート行は無い。
-- 上記 i18n 文言はどのコンポーネントからも参照されていない死んだ文字列。
+- 死んでいる i18n 文言は `settings.menu.export`（ja.ts:164）と `settings.descriptions.export`（ja.ts:173）の 2 つ。`settings.export.*` ブロックは web 経路（`video/[id].web.tsx`）と `exportService` 自身から参照されており生きている（未参照は `title` / `description` / `buttonLabel` / `success` のみ）。
+- なお `video/[id].web.tsx` の import は web では `exportService.web.ts`（未対応 Alert）に解決されるため、ネイティブ実装の `exportAllToJSON()` は**どのプラットフォームからも到達不能**。
 - **インポート（JSON 復元）は未実装**。`readAsStringAsync` / `DocumentPicker` / `getDocumentAsync` / `importFromJSON` は全て 0 ヒットで、`expo-document-picker` の依存も無い。`src/services/importService.ts` は名前に反して写真ライブラリからの動画取り込み。
 
 結果として、現状の実装では機種変更時のデータ移行ができない。エクスポートは将来実装予定。
