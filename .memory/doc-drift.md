@@ -31,6 +31,7 @@ status: active
 **正しく書けている場所:** `.claude/CLAUDE.md` は「i18n is device-locale-only (no runtime switching)」と正確に記述している。仕様を確認するときはこちらを見る。
 
 **アップグレード利用者への影響:** 言語ピッカーがあった頃のユーザーの `app_preferences` テーブルには、未使用の `app_locale` 行（旧 `src/i18n/types.ts` の `LOCALE_PREFERENCE_KEY`）が残っている可能性がある。キー名は `locale` ではない。クリーンアップのマイグレーションは存在せず、`exportService.ts` が `getAllPreferences()` で全 preference を書き出すため、この残存行はバックアップ JSON にも混入する。
+作業は Issue [#64](https://github.com/kmch4n/SnowLog/issues/64) で管理。**同 Issue の修正案は `key = 'locale'` を削除すると書いているが、それでは 1 行も消えない**（訂正コメント済み）。
 
 ## 2. `orphanedFileCleanupService` がドキュメントに存在しない
 
@@ -52,6 +53,7 @@ status: active
 - **インポート（JSON 復元）は未実装**。`readAsStringAsync` / `DocumentPicker` / `getDocumentAsync` / `importFromJSON` は全て 0 ヒットで、`expo-document-picker` の依存も無い。`src/services/importService.ts` は名前に反して写真ライブラリからの動画取り込み。
 
 結果として、現状の実装では機種変更時のデータ移行ができない。エクスポートは将来実装予定。
+作業は Issue [#72](https://github.com/kmch4n/SnowLog/issues/72) で管理。
 
 ## 4. `NSPhotoLibraryAddUsageDescription` の説明文が実態と一致しない
 
@@ -62,6 +64,7 @@ status: active
 実際には `MediaLibrary.createAssetAsync` / `saveToLibraryAsync` / `addAssetsToAlbumAsync` は src 全体で 0 ヒットで、
 写真ライブラリへの書き込み経路は存在しない（`mediaService.ts` が使うのは読み取り系のみ）。
 App Store 審査で実態と乖離した権限説明になるため、文言修正または権限自体の削除を検討する。
+作業は Issue [#73](https://github.com/kmch4n/SnowLog/issues/73) で管理。
 
 ## 5. `schema.ts` のコメント『動画ファイルのコピーは保持しない（参照方式）』は不正確
 
