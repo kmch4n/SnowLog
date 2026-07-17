@@ -371,7 +371,7 @@ export const privacyContent: Record<Locale, PrivacyContent> = {
             {
                 title: "はじめに",
                 paragraphs: [
-                    "SnowLog（以下「本アプリ」）は、Kotaro Sasagawa（以下「開発者」）が個人で開発・提供するiOS向けアプリケーションです。本ポリシーは、本アプリが扱うデータの種類、保存場所、利用目的を明らかにします。",
+                    "SnowLog（以下「本アプリ」）は、kmch4n（以下「開発者」）が個人で開発・提供するiOS向けアプリケーションです。本ポリシーは、本アプリが扱うデータの種類、保存場所、利用目的を明らかにします。",
                 ],
             },
             {
@@ -447,7 +447,7 @@ export const privacyContent: Record<Locale, PrivacyContent> = {
             {
                 title: "Introduction",
                 paragraphs: [
-                    "SnowLog is an iOS application personally developed and provided by Kotaro Sasagawa. This policy explains what data the app handles, where that data is stored, and how it is used.",
+                    "SnowLog is an iOS application personally developed and provided by kmch4n. This policy explains what data the app handles, where that data is stored, and how it is used.",
                 ],
             },
             {
