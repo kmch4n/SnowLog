@@ -8,7 +8,7 @@ import ScreenshotShowcase from "./ScreenshotShowcase.astro";
 import SiteFooter from "./SiteFooter.astro";
 import SnowBackground from "./SnowBackground.astro";
 import StatStrip from "./StatStrip.astro";
-import { appStoreUrl, localePaths, type HomeContent } from "../i18n";
+import { appStoreUrl, homePath, type HomeContent } from "../i18n";
 import "../styles/global.css";
 
 interface Props {
@@ -17,11 +17,8 @@ interface Props {
 
 const { content } = Astro.props;
 const siteUrl = Astro.site?.href ?? "https://snowlog.kmchan.jp/";
-const canonical = new URL(content.path, siteUrl).href;
+const canonical = new URL(homePath, siteUrl).href;
 const ogImage = new URL("/images/icon.png", siteUrl).href;
-const alternateJa = new URL(localePaths.ja, siteUrl).href;
-const alternateEn = new URL(localePaths.en, siteUrl).href;
-const xDefault = new URL("/", siteUrl).href;
 
 const jsonLd = {
     "@context": "https://schema.org",
@@ -30,7 +27,7 @@ const jsonLd = {
     description: content.description,
     operatingSystem: "iOS 16+",
     applicationCategory: "LifestyleApplication",
-    inLanguage: ["ja", "en"],
+    inLanguage: "ja",
     url: canonical,
     image: ogImage,
     downloadUrl: appStoreUrl,
@@ -47,22 +44,19 @@ const jsonLd = {
 ---
 
 <!doctype html>
-<html lang={content.lang}>
+<html lang="ja">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <meta name="description" content={content.description} />
         <link rel="canonical" href={canonical} />
-        <link rel="alternate" hreflang="ja" href={alternateJa} />
-        <link rel="alternate" hreflang="en" href={alternateEn} />
-        <link rel="alternate" hreflang="x-default" href={xDefault} />
 
         <meta property="og:title" content={content.title} />
         <meta property="og:description" content={content.description} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonical} />
         <meta property="og:site_name" content="SnowLog" />
-        <meta property="og:locale" content={content.ogLocale} />
+        <meta property="og:locale" content="ja_JP" />
         <meta property="og:image" content={ogImage} />
 
         <meta name="twitter:card" content="summary" />
@@ -99,6 +93,6 @@ const jsonLd = {
             <OfflinePrivacySection appStoreUrl={appStoreUrl} content={content.privacyPanel} />
             <FaqSection content={content.faq} />
         </main>
-        <SiteFooter appStoreUrl={appStoreUrl} content={content.footer} locale={content.locale} />
+        <SiteFooter appStoreUrl={appStoreUrl} content={content.footer} />
     </body>
 </html>

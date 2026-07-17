@@ -2,6 +2,7 @@
     "name": "SnowLog",
     "short_name": "SnowLog",
     "description": "Snow Video Review App",
+    "lang": "ja",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",

@@ -1,13 +1,12 @@
 ---
-import { githubUrl, privacyPaths, type FooterContent, type Locale } from "../i18n";
+import { githubUrl, privacyPath, type FooterContent } from "../i18n";
 
 interface Props {
     appStoreUrl: string;
     content: FooterContent;
-    locale: Locale;
 }
 
-const { appStoreUrl, content, locale } = Astro.props;
+const { appStoreUrl, content } = Astro.props;
 const currentYear = new Date().getFullYear();
 ---
 
@@ -35,7 +34,7 @@ const currentYear = new Date().getFullYear();
             </svg>
             <span>{content.github}</span>
         </a>
-        <a href={privacyPaths[locale]}>{content.privacy}</a>
+        <a href={privacyPath}>{content.privacy}</a>
     </nav>
     <p class="footer-copyright">Copyright © {currentYear} kmch4n. All rights reserved.</p>
 </footer>

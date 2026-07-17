@@ -1,7 +1,7 @@
 ---
 import SiteFooter from "./SiteFooter.astro";
 import SnowBackground from "./SnowBackground.astro";
-import { appStoreUrl, githubUrl, privacyPaths, type PrivacyContent } from "../i18n";
+import { appStoreUrl, githubUrl, privacyPath, type PrivacyContent } from "../i18n";
 import "../styles/global.css";
 
 interface Props {
@@ -10,22 +10,16 @@ interface Props {
 
 const { content } = Astro.props;
 const siteUrl = Astro.site?.href ?? "https://snowlog.kmchan.jp/";
-const canonical = new URL(content.path, siteUrl).href;
-const alternateJa = new URL(privacyPaths.ja, siteUrl).href;
-const alternateEn = new URL(privacyPaths.en, siteUrl).href;
-const xDefault = new URL("/privacy/", siteUrl).href;
+const canonical = new URL(privacyPath, siteUrl).href;
 ---
 
 <!doctype html>
-<html lang={content.lang}>
+<html lang="ja">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <meta name="description" content={content.description} />
         <link rel="canonical" href={canonical} />
-        <link rel="alternate" hreflang="ja" href={alternateJa} />
-        <link rel="alternate" hreflang="en" href={alternateEn} />
-        <link rel="alternate" hreflang="x-default" href={xDefault} />
         <meta name="theme-color" content="#dff3ff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#0b1720" media="(prefers-color-scheme: dark)" />
         <link rel="icon" href="/images/icon.png" />
@@ -48,9 +42,6 @@ const xDefault = new URL("/privacy/", siteUrl).href;
                     <span>SnowLog</span>
                 </a>
                 <div class="nav-actions">
-                    <a class="language-link" href={content.nav.alternateHref} aria-label={content.nav.alternateAria}>
-                        {content.nav.alternateLabel}
-                    </a>
                     <a class="nav-cta" href={appStoreUrl} aria-label={content.nav.appStoreAria}>App Store</a>
                 </div>
             </nav>
@@ -82,6 +73,6 @@ const xDefault = new URL("/privacy/", siteUrl).href;
             </article>
         </main>
 
-        <SiteFooter appStoreUrl={appStoreUrl} content={content.footer} locale={content.locale} />
+        <SiteFooter appStoreUrl={appStoreUrl} content={content.footer} />
     </body>
 </html>

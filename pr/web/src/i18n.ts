@@ -1,14 +1,9 @@
 import type { ImageMetadata } from "astro";
 
-export type Locale = "ja" | "en";
-
 export interface NavContent {
     homeAria: string;
     homeHref: string;
     appStoreAria: string;
-    alternateHref: string;
-    alternateLabel: string;
-    alternateAria: string;
 }
 
 export interface HeroContent {
@@ -82,12 +77,8 @@ export interface FooterContent {
 }
 
 export interface HomeContent {
-    locale: Locale;
-    lang: string;
-    path: string;
     title: string;
     description: string;
-    ogLocale: string;
     nav: NavContent;
     hero: HeroContent;
     statsAria: string;
@@ -107,9 +98,6 @@ export interface PrivacySection {
 }
 
 export interface PrivacyContent {
-    locale: Locale;
-    lang: string;
-    path: string;
     title: string;
     description: string;
     heading: string;
@@ -125,14 +113,5 @@ export interface PrivacyContent {
 export const appStoreUrl = "https://apps.apple.com/jp/app/snowlog-snow-video-review-app/id6761445679";
 export const githubUrl = "https://github.com/kmch4n/SnowLog";
 
-export const localePaths: Record<Locale, string> = {
-    ja: "/ja/",
-    en: "/en/",
-};
-
-export const privacyPaths: Record<Locale, string> = {
-    ja: "/ja/privacy/",
-    en: "/en/privacy/",
-};
-
-export const defaultLocale: Locale = "ja";
+export const homePath = "/";
+export const privacyPath = "/privacy/";
