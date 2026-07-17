@@ -85,7 +85,7 @@ Schema is canonical in `src/database/schema.ts`. The non-obvious bits:
 - `videos.techniques` is JSON-encoded; parse via `parseTechniques`. Files stay in place (reference-based) — only thumbnails and managed copies live in `documentDirectory`.
 - `tags(name, type)` is unique (migration `0007`). `tag.type` ∈ `"technique" | "skier" | "custom"`.
 - `favorite_resorts.name` unique. `diary_entries.dateKey` (YYYY-MM-DD) unique — one entry per day.
-- `app_preferences` is a key-value store. Keys actually in use today: `capturedAt_repair_version`, `thumbnail_migration_version`, `home_sort_order`, `weekStartDay` (camelCase by historical accident — do not migrate to snake_case without a data migration). Upgraded users may still have a stale `locale` row from before the language picker was removed; cleanup is tracked in an open issue.
+- `app_preferences` is a key-value store. Keys actually in use today: `capturedAt_repair_version`, `thumbnail_migration_version`, `home_sort_order`, `weekStartDay` (camelCase by historical accident — do not migrate to snake_case without a data migration), `dismissed_update_prompt_version`. Upgraded users may still have a stale `app_locale` row from before the language picker was removed (`bab0b45`); there is no cleanup migration, and `exportService` dumps every preference, so the stale row also lands in the backup JSON.
 
 ## Commands
 

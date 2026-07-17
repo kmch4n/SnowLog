@@ -30,7 +30,7 @@ status: active
 
 **正しく書けている場所:** `.claude/CLAUDE.md` は「i18n is device-locale-only (no runtime switching)」と正確に記述している。仕様を確認するときはこちらを見る。
 
-**アップグレード利用者への影響:** 言語ピッカーがあった頃のユーザーの `app_preferences` テーブルには、未使用の `locale` 行が残っている可能性がある。実害は無いがクリーンアップ候補。
+**アップグレード利用者への影響:** 言語ピッカーがあった頃のユーザーの `app_preferences` テーブルには、未使用の `app_locale` 行（旧 `src/i18n/types.ts` の `LOCALE_PREFERENCE_KEY`）が残っている可能性がある。キー名は `locale` ではない。クリーンアップのマイグレーションは存在せず、`exportService.ts` が `getAllPreferences()` で全 preference を書き出すため、この残存行はバックアップ JSON にも混入する。
 
 ## 2. `orphanedFileCleanupService` がドキュメントに存在しない
 
@@ -39,6 +39,39 @@ status: active
 `SnowLog.md §7.7` は削除済みの「言語設定」を含む 6 項目のままだが、実際は 5 つの遷移行 + 保守行 1 つ。
 詳細と修正範囲は Issue [#57](https://github.com/kmch4n/SnowLog/issues/57) にまとまっている。
 
-## 3. ファイルサイズ規約の逸脱
+## 3. エクスポートが iOS から到達不能 —『設定からエクスポートできる』は誤り
+
+**古い記述:** `pr/web` の FAQ が「アプリ内設定から JSON でエクスポートし、新しい端末で読み込む」と案内していた（2026-07-17 に修正済み）。
+`src/i18n/locales/{ja,en}.ts` には `settings.menu.export`（「ライブラリ全体を JSON でエクスポートします」）と `settings.export.*` ブロックが残っている。
+
+**実態:**
+
+- `exportAllToJSON()`（`src/services/exportService.ts:21`）の呼び出し元は **`src/app/video/[id].web.tsx` のみ** — Web 検証スタブのヘッダーボタンで、iOS からは到達できない。
+- 設定画面（`src/app/(tabs)/settings/index.tsx`）の `SettingsRoute` は calendar / techniques / favorite-resorts / tags / duplicate-candidates の 5 つ + ストレージ整理行のみで、エクスポート行は無い。
+- 上記 i18n 文言はどのコンポーネントからも参照されていない死んだ文字列。
+- **インポート（JSON 復元）は未実装**。`readAsStringAsync` / `DocumentPicker` / `getDocumentAsync` / `importFromJSON` は全て 0 ヒットで、`expo-document-picker` の依存も無い。`src/services/importService.ts` は名前に反して写真ライブラリからの動画取り込み。
+
+結果として、現状の実装では機種変更時のデータ移行ができない。エクスポートは将来実装予定。
+
+## 4. `NSPhotoLibraryAddUsageDescription` の説明文が実態と一致しない
+
+`app.json`（および `locales/ja.json` / `locales/en.json`）の `NSPhotoLibraryAddUsageDescription` は
+「サムネイル画像の保存のため、フォトライブラリへの書き込みが必要です。」と述べているが、
+**サムネイルは写真ライブラリではなく `documentDirectory/thumbnails/` に保存される**（`src/services/thumbnailService.ts:17-18`）。
+
+実際には `MediaLibrary.createAssetAsync` / `saveToLibraryAsync` / `addAssetsToAlbumAsync` は src 全体で 0 ヒットで、
+写真ライブラリへの書き込み経路は存在しない（`mediaService.ts` が使うのは読み取り系のみ）。
+App Store 審査で実態と乖離した権限説明になるため、文言修正または権限自体の削除を検討する。
+
+## 5. `schema.ts` のコメント『動画ファイルのコピーは保持しない（参照方式）』は不正確
+
+`src/database/schema.ts:5` のコメントに反して、`managedVideoFileService.persistManagedVideoFile()`
+（`src/services/managedVideoFileService.ts:39-58`）が `${FileSystem.documentDirectory}videos/` へ動画本体を `copyAsync` する。
+
+発動条件は `isSyntheticAssetId(asset.id)`（assetId が `"synthetic:"` 始まり = 写真ライブラリのアセットとして扱えない動画）の場合のみで、
+`src/services/importService.ts:56-58` が唯一の呼び出し箇所。通常の写真ライブラリ動画は参照のみで正しい。
+コピーは動画削除時（`videoDeletionService.ts:27-28`）とアンインストール時に消える。
+
+## 6. ファイルサイズ規約の逸脱
 
 `.claude/CLAUDE.md` と `.codex/AGENTS.md` はファイルを ~500〜700 行に収めるよう定めているが、`src/app/video-import.tsx` は約 1,333 行あり大きく超えている。規約違反として認識されており、分割候補。
