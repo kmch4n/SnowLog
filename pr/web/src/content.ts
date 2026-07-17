@@ -18,9 +18,9 @@ const footer: HomeContent["footer"] = {
 };
 
 export const homeContent: HomeContent = {
-title: "SnowLog - Snow Video Review App",
-description: "SnowLogは、スキー・スノーボードの滑走動画をゲレンデ、技術、日付で整理して振り返るためのiOSアプリです。",
-nav,
+    title: "SnowLog - Snow Video Review App",
+    description: "SnowLogは、スキー・スノーボードの滑走動画をゲレンデ、技術、日付で整理して振り返るためのiOSアプリです。",
+    nav,
     hero: {
         eyebrow: "Snow Video Review App",
         titleLines: ["滑走動画を、練習ログへ。"],
