@@ -29,14 +29,12 @@ const footerByLocale: Record<Locale, HomeContent["footer"]> = {
         appStore: "App Store",
         github: "GitHub",
         privacy: "Privacy",
-        support: "Contact",
     },
     en: {
         ariaLabel: "Footer navigation",
         appStore: "App Store",
         github: "GitHub",
         privacy: "Privacy",
-        support: "Contact",
     },
 };
 
@@ -361,7 +359,7 @@ export const privacyContent: Record<Locale, PrivacyContent> = {
         eyebrow: "Privacy Policy",
         lastUpdatedLabel: "最終更新日",
         lastUpdated: "2026-05-04",
-        contactRevealLabel: "連絡先を表示",
+        contactLinkLabel: "GitHubリポジトリ",
         nav: {
             ...navByLocale.ja,
             alternateHref: privacyPaths.en,
@@ -421,7 +419,7 @@ export const privacyContent: Record<Locale, PrivacyContent> = {
             },
             {
                 title: "お問い合わせ",
-                paragraphs: ["本ポリシーに関するお問い合わせは、以下のメールアドレスまでご連絡ください。"],
+                paragraphs: ["本ポリシーに関するお問い合わせは、GitHubリポジトリよりご連絡ください。"],
             },
         ],
         footer: footerByLocale.ja,
@@ -437,7 +435,7 @@ export const privacyContent: Record<Locale, PrivacyContent> = {
         eyebrow: "Privacy Policy",
         lastUpdatedLabel: "Last updated",
         lastUpdated: "2026-05-04",
-        contactRevealLabel: "Show contact",
+        contactLinkLabel: "GitHub repository",
         nav: {
             ...navByLocale.en,
             alternateHref: privacyPaths.ja,
@@ -497,7 +495,7 @@ export const privacyContent: Record<Locale, PrivacyContent> = {
             },
             {
                 title: "Contact",
-                paragraphs: ["For questions about this policy, please contact the following email address."],
+                paragraphs: ["For questions about this policy, please get in touch through the GitHub repository."],
             },
         ],
         footer: footerByLocale.en,

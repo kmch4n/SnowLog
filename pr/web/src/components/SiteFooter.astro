@@ -1,5 +1,4 @@
 ---
-import ContactReveal from "./ContactReveal.astro";
 import { githubUrl, privacyPaths, type FooterContent, type Locale } from "../i18n";
 
 interface Props {
@@ -37,7 +36,6 @@ const currentYear = new Date().getFullYear();
             <span>{content.github}</span>
         </a>
         <a href={privacyPaths[locale]}>{content.privacy}</a>
-        <ContactReveal label={content.support} className="footer-contact" />
     </nav>
     <p class="footer-copyright">Copyright © {currentYear} kmch4n. All rights reserved.</p>
 </footer>

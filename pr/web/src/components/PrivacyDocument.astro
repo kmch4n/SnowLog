@@ -1,8 +1,7 @@
 ---
-import ContactReveal from "./ContactReveal.astro";
 import SiteFooter from "./SiteFooter.astro";
 import SnowBackground from "./SnowBackground.astro";
-import { appStoreUrl, privacyPaths, type PrivacyContent } from "../i18n";
+import { appStoreUrl, githubUrl, privacyPaths, type PrivacyContent } from "../i18n";
 import "../styles/global.css";
 
 interface Props {
@@ -78,7 +77,7 @@ const xDefault = new URL("/privacy/", siteUrl).href;
                 }
 
                 <section>
-                    <ContactReveal label={content.contactRevealLabel} className="legal-contact" />
+                    <a class="text-link legal-contact" href={githubUrl}>{content.contactLinkLabel}</a>
                 </section>
             </article>
         </main>

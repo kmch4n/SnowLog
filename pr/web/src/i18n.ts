@@ -79,7 +79,6 @@ export interface FooterContent {
     appStore: string;
     github: string;
     privacy: string;
-    support: string;
 }
 
 export interface HomeContent {
@@ -117,7 +116,7 @@ export interface PrivacyContent {
     eyebrow: string;
     lastUpdatedLabel: string;
     lastUpdated: string;
-    contactRevealLabel: string;
+    contactLinkLabel: string;
     nav: NavContent;
     sections: PrivacySection[];
     footer: FooterContent;
@@ -125,9 +124,6 @@ export interface PrivacyContent {
 
 export const appStoreUrl = "https://apps.apple.com/jp/app/snowlog-snow-video-review-app/id6761445679";
 export const githubUrl = "https://github.com/kmch4n/SnowLog";
-export const supportEmailText = "kmchan [at] kmchan.jp";
-export const supportEmailUser = "kmchan";
-export const supportEmailDomain = "kmchan.jp";
 
 export const localePaths: Record<Locale, string> = {
     ja: "/ja/",

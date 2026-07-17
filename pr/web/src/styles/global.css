@@ -880,69 +880,8 @@ details p {
     text-decoration: underline;
 }
 
-.contact-reveal {
-    align-items: center;
-    background: rgba(255, 255, 255, 0.58);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    color: var(--muted);
-    cursor: pointer;
-    display: inline-flex;
-    font: inherit;
-    font-size: 0.9rem;
-    font-weight: 800;
-    gap: 10px;
-    min-height: 38px;
-    padding: 7px 12px;
-    white-space: nowrap;
-}
-
-.contact-reveal__label {
-    color: var(--blue-dark);
-}
-
-.contact-reveal__value {
-    filter: blur(4px);
-    opacity: 0.64;
-    transform: translateY(0);
-    transition:
-        filter 180ms ease,
-        opacity 180ms ease;
-    user-select: none;
-}
-
-.contact-reveal[data-revealed="true"] .contact-reveal__value {
-    filter: blur(0);
-    opacity: 1;
-    user-select: text;
-}
-
 .legal-contact {
     margin-top: 8px;
-}
-
-.footer-contact {
-    background: transparent;
-    border: 0;
-    color: var(--muted);
-    font-size: 1rem;
-    gap: 7px;
-    min-height: auto;
-    padding: 0;
-}
-
-.footer-contact .contact-reveal__label {
-    color: var(--muted);
-}
-
-.footer-contact .contact-reveal__value {
-    max-width: 8.8rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.footer-contact[data-revealed="true"] .contact-reveal__value {
-    max-width: none;
 }
 
 .gateway-page {
