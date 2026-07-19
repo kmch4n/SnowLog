@@ -7,7 +7,15 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+    FadeIn,
+    FadeOut,
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CalendarMonthGrid } from "@/components/CalendarMonthGrid";
@@ -17,6 +25,8 @@ import { DiaryEditModal } from "@/components/DiaryEditModal";
 import { Icon } from "@/components/ui/Icon";
 import { Colors } from "@/constants/colors";
 import { IconNames } from "@/constants/icons";
+import { SPRING_MOMENTUM } from "@/constants/motion";
+import { hapticLight } from "@/services/hapticsService";
 import { VideoCardCompact } from "@/components/VideoCardCompact";
 import { useCalendarEnhanced } from "@/hooks/useCalendarEnhanced";
 import { useDiaryEntry } from "@/hooks/useDiaryEntry";
@@ -43,6 +53,16 @@ function formatPanelTitle(month: number, day: number, locale: "ja" | "en"): stri
  * 月次/週次カレンダーで動画の撮影日を確認し、日付タップで当日の動画一覧を表示する
  */
 const NATIVE_TAB_BAR_HEIGHT = 50;
+
+// 月↔週スワイプ切替のコミット判定しきい値
+const VIEW_TOGGLE_VELOCITY_COMMIT = 300; // px/s
+const VIEW_TOGGLE_DISTANCE_COMMIT = 60; // px
+
+/** 境界に近づくほど追従を減衰させる（ハードストップさせない） */
+function rubberband(value: number, dimension: number, constant = 0.55): number {
+    "worklet";
+    return (value * dimension * constant) / (dimension + constant * Math.abs(value));
+}
 
 export default function CalendarScreen() {
     const router = useRouter();
@@ -85,6 +105,50 @@ export default function CalendarScreen() {
     }, [refreshDiary, refreshDiaryKeys]);
 
     const isMonthView = viewMode === "month";
+
+    // --- 月↔週スワイプ切替（月表示: 上スワイプで週へ / 週表示: 下スワイプで月へ） ---
+
+    const dragY = useSharedValue(0);
+
+    const commitViewToggle = useCallback(() => {
+        hapticLight();
+        toggleViewMode();
+    }, [toggleViewMode]);
+
+    const viewTogglePan = useMemo(
+        () =>
+            Gesture.Pan()
+                // 縦方向の意図が明確になってから activate する（日付タップと共存させる）
+                .activeOffsetY([-12, 12])
+                .onChange((e) => {
+                    const inDirection = isMonthView
+                        ? e.translationY < 0
+                        : e.translationY > 0;
+                    // 有効方向はヒントとして追従、逆方向は強めに抵抗する
+                    dragY.value = rubberband(e.translationY, inDirection ? 160 : 48);
+                })
+                .onEnd((e) => {
+                    const shouldCommit = isMonthView
+                        ? e.velocityY < -VIEW_TOGGLE_VELOCITY_COMMIT ||
+                          e.translationY < -VIEW_TOGGLE_DISTANCE_COMMIT
+                        : e.velocityY > VIEW_TOGGLE_VELOCITY_COMMIT ||
+                          e.translationY > VIEW_TOGGLE_DISTANCE_COMMIT;
+                    if (shouldCommit) {
+                        runOnJS(commitViewToggle)();
+                    }
+                    // 指の velocity を引き継いで着地させる
+                    dragY.value = withSpring(0, {
+                        ...SPRING_MOMENTUM,
+                        velocity: e.velocityY,
+                    });
+                }),
+        [isMonthView, commitViewToggle, dragY]
+    );
+
+    const calendarDragStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: dragY.value }],
+        opacity: 1 - Math.min(Math.abs(dragY.value) / 240, 0.35),
+    }));
 
     // 選択日のパネルタイトル
     const panelTitle = selectedDay !== null
@@ -144,38 +208,42 @@ export default function CalendarScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* カレンダーグリッド（ビュー切替アニメーション付き） */}
+            {/* カレンダーグリッド（ビュー切替アニメーション + スワイプ切替付き） */}
             <View style={styles.calendarContainer}>
-                {isMonthView ? (
-                    <Animated.View
-                        key="month"
-                        entering={FadeIn.duration(200)}
-                        exiting={FadeOut.duration(150)}
-                    >
-                        <CalendarMonthGrid
-                            year={year}
-                            month={month}
-                            selectedDay={selectedDay}
-                            dayInfoMap={dayInfoMap}
-                            weekStartDay={weekStartDay}
-                            onSelectDay={setSelectedDay}
-                        />
+                <GestureDetector gesture={viewTogglePan}>
+                    <Animated.View style={calendarDragStyle}>
+                        {isMonthView ? (
+                            <Animated.View
+                                key="month"
+                                entering={FadeIn.duration(200)}
+                                exiting={FadeOut.duration(150)}
+                            >
+                                <CalendarMonthGrid
+                                    year={year}
+                                    month={month}
+                                    selectedDay={selectedDay}
+                                    dayInfoMap={dayInfoMap}
+                                    weekStartDay={weekStartDay}
+                                    onSelectDay={setSelectedDay}
+                                />
+                            </Animated.View>
+                        ) : (
+                            <Animated.View
+                                key="week"
+                                entering={FadeIn.duration(200)}
+                                exiting={FadeOut.duration(150)}
+                            >
+                                <CalendarWeekStrip
+                                    weekDates={weekDates}
+                                    selectedDay={selectedDay}
+                                    dayInfoMap={dayInfoMap}
+                                    weekStartDay={weekStartDay}
+                                    onSelectDay={setSelectedDay}
+                                />
+                            </Animated.View>
+                        )}
                     </Animated.View>
-                ) : (
-                    <Animated.View
-                        key="week"
-                        entering={FadeIn.duration(200)}
-                        exiting={FadeOut.duration(150)}
-                    >
-                        <CalendarWeekStrip
-                            weekDates={weekDates}
-                            selectedDay={selectedDay}
-                            dayInfoMap={dayInfoMap}
-                            weekStartDay={weekStartDay}
-                            onSelectDay={setSelectedDay}
-                        />
-                    </Animated.View>
-                )}
+                </GestureDetector>
             </View>
 
             {/* 選択日のヘッダー + 日記カード */}
@@ -198,6 +266,7 @@ export default function CalendarScreen() {
         isMonthView, year, month, selectedDay, dayInfoMap, weekStartDay,
         weekDates, weekTitle, panelTitle, selectedDateVideos.length, diary,
         prevMonth, nextMonth, prevWeek, nextWeek, toggleViewMode, setSelectedDay,
+        viewTogglePan, calendarDragStyle,
         t, locale,
     ]);
 
