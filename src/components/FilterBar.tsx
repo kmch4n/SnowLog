@@ -18,6 +18,7 @@ import type { FilterOptions, Tag } from "../types";
 import { SkiResortSearch } from "./SkiResortSearch";
 import { TagChip } from "./TagChip";
 import { Icon } from "./ui/Icon";
+import { PressableScale } from "./ui/PressableScale";
 
 interface FilterBarProps {
     filter: FilterOptions;
@@ -196,7 +197,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                     {allTags.map((tag) => {
                         const active = filter.tagIds?.includes(tag.id) ?? false;
                         return (
-                            <TouchableOpacity key={tag.id} onPress={() => toggleTag(tag.id)}>
+                            <PressableScale key={tag.id} onPress={() => toggleTag(tag.id)}>
                                 <View
                                     style={[
                                         styles.tagItem,
@@ -205,7 +206,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                                 >
                                     <TagChip tag={tag} />
                                 </View>
-                            </TouchableOpacity>
+                            </PressableScale>
                         );
                     })}
                 </ScrollView>
@@ -221,7 +222,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                 {DATE_PRESETS.map((preset) => {
                     const active = activePreset === preset.key;
                     return (
-                        <TouchableOpacity
+                        <PressableScale
                             key={preset.key}
                             style={[styles.presetChip, active && styles.presetChipActive]}
                             onPress={() => handlePresetPress(preset.key)}
@@ -229,7 +230,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                             <Text style={[styles.presetText, active && styles.presetTextActive]}>
                                 {t(`search.datePresets.${preset.key}`)}
                             </Text>
-                        </TouchableOpacity>
+                        </PressableScale>
                     );
                 })}
             </ScrollView>

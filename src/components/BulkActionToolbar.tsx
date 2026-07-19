@@ -2,13 +2,13 @@ import {
     ActivityIndicator,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View,
 } from "react-native";
 
 import { Colors } from "../constants/colors";
 import { useTranslation } from "../i18n/useTranslation";
 import { GlassSurface } from "./ui/GlassSurface";
+import { PressableScale } from "./ui/PressableScale";
 
 interface BulkActionToolbarProps {
     selectedCount: number;
@@ -45,29 +45,26 @@ export function BulkActionToolbar({
                     </Text>
 
                     <View style={styles.actions}>
-                        <TouchableOpacity
+                        <PressableScale
                             style={styles.actionButton}
                             onPress={onToggleFavorite}
-                            activeOpacity={0.7}
                         >
                             <Text style={styles.favoriteText}>{t("bulkToolbar.favorite")}</Text>
-                        </TouchableOpacity>
+                        </PressableScale>
 
-                        <TouchableOpacity
+                        <PressableScale
                             style={styles.actionButton}
                             onPress={onDelete}
-                            activeOpacity={0.7}
                         >
                             <Text style={styles.deleteText}>{t("bulkToolbar.delete")}</Text>
-                        </TouchableOpacity>
+                        </PressableScale>
 
-                        <TouchableOpacity
+                        <PressableScale
                             style={styles.actionButton}
                             onPress={onCancel}
-                            activeOpacity={0.7}
                         >
                             <Text style={styles.cancelText}>{t("bulkToolbar.cancel")}</Text>
-                        </TouchableOpacity>
+                        </PressableScale>
                     </View>
                 </>
             )}

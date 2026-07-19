@@ -1,5 +1,6 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
+import { PressableScale } from "@/components/ui/PressableScale";
 import { Colors } from "@/constants/colors";
 import type { DiaryOption } from "@/constants/diaryOptions";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -61,11 +62,10 @@ export function DiaryOptionChips<T extends string | number>(
             {options.map((opt) => {
                 const isSelected = selectedSet.has(opt.value);
                 return (
-                    <TouchableOpacity
+                    <PressableScale
                         key={String(opt.value)}
                         onPress={() => handlePress(opt.value)}
                         style={[styles.chip, isSelected && styles.chipSelected]}
-                        activeOpacity={0.7}
                     >
                         <Text
                             style={[
@@ -76,7 +76,7 @@ export function DiaryOptionChips<T extends string | number>(
                             {showIcon && opt.icon ? `${opt.icon} ` : ""}
                             {resolveLabel(opt)}
                         </Text>
-                    </TouchableOpacity>
+                    </PressableScale>
                 );
             })}
         </View>
