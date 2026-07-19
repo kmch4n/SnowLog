@@ -8,6 +8,7 @@ import {
     getWeekDateRange,
     getWeekDates,
     getWeekNumber,
+    getWeekOffsetForDate,
 } from "@/utils/calendarUtils";
 import { endOfMonth, startOfMonth, toDateKey } from "@/utils/dateUtils";
 import type {
@@ -200,9 +201,31 @@ export function useCalendarEnhanced() {
     }, []);
 
     const toggleViewMode = useCallback(() => {
-        setViewMode((m) => (m === "month" ? "week" : "month"));
+        if (viewMode === "month") {
+            // 月→週: 選択日（無ければ表示月内の今日、それも無ければ月初）を含む週へ
+            const now = new Date();
+            const isDisplayedMonth =
+                now.getFullYear() === year && now.getMonth() + 1 === month;
+            const target = selectedDay !== null
+                ? new Date(year, month - 1, selectedDay)
+                : isDisplayedMonth
+                    ? now
+                    : new Date(year, month - 1, 1);
+            setWeekOffset(getWeekOffsetForDate(now, target, typedWeekStartDay));
+            setViewMode("week");
+        } else {
+            // 週→月: 選択日があればその日、なければ週の先頭日が属する月へ
+            const anchor = selectedDay !== null
+                ? weekDates.find((d) => d.getDate() === selectedDay) ?? weekDates[0]
+                : weekDates[0];
+            if (anchor) {
+                setYear(anchor.getFullYear());
+                setMonth(anchor.getMonth() + 1);
+            }
+            setViewMode("month");
+        }
         setSelectedDay(null);
-    }, []);
+    }, [viewMode, selectedDay, year, month, weekDates, typedWeekStartDay]);
 
     return {
         // 共通

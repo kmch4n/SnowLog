@@ -64,6 +64,7 @@ const {
     getWeekDates,
     getWeekDateRange,
     getWeekNumber,
+    getWeekOffsetForDate,
     isSaturdayColumn,
     isSundayColumn,
 } = require(path.join(outDir, "utils", "calendarUtils.js"));
@@ -147,6 +148,29 @@ test("getWeekNumber reports the 1-based week of the month", () => {
     assert.equal(getWeekNumber(new Date(2026, 1, 1), "sunday"), 1);
     assert.equal(getWeekNumber(new Date(2026, 1, 28), "sunday"), 4);
     assert.equal(getWeekNumber(new Date(2026, 1, 22), "sunday"), 4);
+});
+
+test("getWeekOffsetForDate counts whole weeks between the two dates' weeks", () => {
+    // 2026-02-25 is a Wednesday; its Monday-start week is 02-23..03-01.
+    const ref = new Date(2026, 1, 25);
+    assert.equal(getWeekOffsetForDate(ref, new Date(2026, 1, 23), "monday"), 0); // same week Monday
+    assert.equal(getWeekOffsetForDate(ref, new Date(2026, 2, 1), "monday"), 0); // same week Sunday
+    assert.equal(getWeekOffsetForDate(ref, new Date(2026, 2, 2), "monday"), 1); // next Monday
+    assert.equal(getWeekOffsetForDate(ref, new Date(2026, 1, 22), "monday"), -1); // previous Sunday
+    assert.equal(getWeekOffsetForDate(ref, new Date(2026, 3, 1), "monday"), 5); // 2026-04-01 (week of 03-30)
+});
+
+test("getWeekOffsetForDate round-trips through getWeekDates", () => {
+    const ref = new Date(2026, 6, 19);
+    const target = new Date(2026, 11, 31);
+    for (const weekStartDay of ["monday", "sunday"]) {
+        const offset = getWeekOffsetForDate(ref, target, weekStartDay);
+        const week = getWeekDates(ref, offset, weekStartDay);
+        assert.ok(
+            week.some((d) => toKey(d) === toKey(target)),
+            `week at offset ${offset} (${weekStartDay}) should contain ${toKey(target)}`
+        );
+    }
 });
 
 test("weekend column checks follow the configured week start", () => {

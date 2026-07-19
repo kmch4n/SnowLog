@@ -71,6 +71,33 @@ export function getWeekDates(
 }
 
 /**
+ * 対象日を含む週の weekOffset（基準日を含む週 = 0）を返す
+ * getWeekDates(referenceDate, offset, weekStartDay) が targetDate を含むような offset
+ */
+export function getWeekOffsetForDate(
+    referenceDate: Date,
+    targetDate: Date,
+    weekStartDay: WeekStartDay
+): number {
+    const startOfWeek = (date: Date): Date => {
+        const copy = new Date(date);
+        copy.setHours(0, 0, 0, 0);
+        const jsDay = copy.getDay();
+        const dayIndex = weekStartDay === "monday"
+            ? (jsDay === 0 ? 6 : jsDay - 1)
+            : jsDay;
+        copy.setDate(copy.getDate() - dayIndex);
+        return copy;
+    };
+
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    // DST による ±1 時間のずれは round で吸収する
+    return Math.round(
+        (startOfWeek(targetDate).getTime() - startOfWeek(referenceDate).getTime()) / msPerWeek
+    );
+}
+
+/**
  * 7つの Date 配列から dateFrom / dateTo（Unix 秒）を返す
  */
 export function getWeekDateRange(dates: Date[]): {
