@@ -25,7 +25,7 @@ WWDC「Designing Fluid Interfaces」(2018) 等の設計原則を SnowLog（Reani
 ## ジェスチャー原則
 
 - ドラッグ中は 1:1 トラッキング。掴んだ位置のオフセットを尊重し、要素中心にスナップさせない。
-- release 時のコミット/キャンセル判定は**位置ではなく velocity の符号**で行う。
+- release 時のコミット/キャンセル判定は **velocity を第一基準**にし、ゆっくりした意図的なドラッグを拾うために距離しきい値を補助に使う（velocity OR 距離。位置だけで判定しない）。実例: `src/app/(tabs)/calendar/index.tsx` の `shouldCommit`。
 - release 後の spring には gesture の velocity を `withSpring(target, { ...config, velocity })` で引き渡し、指とアニメーションの継ぎ目を消す。
 - 割り込み可能にする: アニメーション中も入力をロックしない。再アニメーションは常に現在の表示値（SharedValue の現在値）から始める。
 - 境界では rubber-band（進行に応じた減衰）。ハードストップさせない。
