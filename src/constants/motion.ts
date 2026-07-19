@@ -1,4 +1,4 @@
-import type { WithSpringConfig } from "react-native-reanimated";
+import { LinearTransition, type WithSpringConfig } from "react-native-reanimated";
 
 /**
  * Standard spring configs, following Apple's damping/response model
@@ -19,6 +19,13 @@ export const SPRING_MOMENTUM: WithSpringConfig = {
     dampingRatio: 0.8,
     duration: 350,
 };
+
+/**
+ * Layout transition matching SPRING_DEFAULT, for views whose size or
+ * position changes across renders. Replaces RN core's LayoutAnimation,
+ * which ignores the system Reduce Motion setting.
+ */
+export const LAYOUT_SPRING = LinearTransition.springify(350).dampingRatio(1);
 
 /** Near-instant settle for press-in feedback — response must feel immediate. */
 export const SPRING_PRESS_IN: WithSpringConfig = {

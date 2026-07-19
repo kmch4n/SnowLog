@@ -10,7 +10,6 @@ import {
     InputAccessoryView,
     Keyboard,
     KeyboardAvoidingView,
-    LayoutAnimation,
     Linking,
     Platform,
     ScrollView,
@@ -21,8 +20,10 @@ import {
     View,
     useWindowDimensions,
 } from "react-native";
+import Animated from "react-native-reanimated";
 
 import { Colors } from "@/constants/colors";
+import { LAYOUT_SPRING } from "@/constants/motion";
 import { IconNames } from "@/constants/icons";
 import { Icon } from "@/components/ui/Icon";
 import { SkiResortSearch } from "@/components/SkiResortSearch";
@@ -37,7 +38,7 @@ const MEMO_INPUT_ACCESSORY_ID = "video-detail-memo-accessory";
 
 /** セクション間の薄いディバイダー */
 function SectionDivider() {
-    return <View style={styles.divider} />;
+    return <Animated.View layout={LAYOUT_SPRING} style={styles.divider} />;
 }
 
 /**
@@ -217,9 +218,6 @@ export default function VideoDetailScreen() {
                             video.filename
                         );
                         if (managedUri) {
-                            LayoutAnimation.configureNext(
-                                LayoutAnimation.Presets.easeInEaseOut
-                            );
                             setVideoUri(managedUri);
                         } else {
                             await updateFileAvailability(video.id, false);
@@ -243,8 +241,7 @@ export default function VideoDetailScreen() {
                     }
                     const info = await getAssetInfoWithDownload(video.assetId);
                     if (info?.uri || info?.localUri) {
-                        // 高さ変更をアニメーションで滑らかに遷移
-                        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                        // 高さ変更は LAYOUT_SPRING の layout transition が滑らかに遷移させる
                         // 再生には Photos フレームワークの uri (ph://) を優先利用する
                         setVideoUri(info.uri ?? info.localUri);
                         setAssetInfoMeta({ width: info.width, height: info.height, duration: info.duration });
@@ -339,24 +336,26 @@ export default function VideoDetailScreen() {
                 keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* 動画プレイヤーエリア */}
-                {video.isFileAvailable === 1 && videoUri ? (
-                    <VideoPlayerView
-                        uri={videoUri}
-                        style={{ width: "100%", height: playerHeight, backgroundColor: "#000000" }}
-                    />
-                ) : video.isFileAvailable !== 1 ? (
-                    <View style={styles.unavailableBanner}>
-                        <Text style={styles.unavailableText}>
-                            {t("videoDetail.fileMissing")}
-                        </Text>
-                    </View>
-                ) : (
-                    <View style={{ width: "100%", height: playerHeight, backgroundColor: "#000000" }} />
-                )}
+                {/* 動画プレイヤーエリア（ラッパーを永続させ、高さ変化を layout transition で遷移させる） */}
+                <Animated.View layout={LAYOUT_SPRING}>
+                    {video.isFileAvailable === 1 && videoUri ? (
+                        <VideoPlayerView
+                            uri={videoUri}
+                            style={{ width: "100%", height: playerHeight, backgroundColor: "#000000" }}
+                        />
+                    ) : video.isFileAvailable !== 1 ? (
+                        <View style={styles.unavailableBanner}>
+                            <Text style={styles.unavailableText}>
+                                {t("videoDetail.fileMissing")}
+                            </Text>
+                        </View>
+                    ) : (
+                        <View style={{ width: "100%", height: playerHeight, backgroundColor: "#000000" }} />
+                    )}
+                </Animated.View>
 
                 {/* メタデータ */}
-                <View style={styles.metaSection}>
+                <Animated.View layout={LAYOUT_SPRING} style={styles.metaSection}>
                     {/* タイトル（編集可能・未設定時はfilenameをplaceholderとして表示） */}
                     <View style={styles.titleRow}>
                         <TextInput
@@ -427,34 +426,34 @@ export default function VideoDetailScreen() {
                             suggestionGroups={resortSuggestionGroups}
                         />
                     </View>
-                </View>
+                </Animated.View>
 
                 <SectionDivider />
 
                 {/* 滑走種別 */}
-                <View style={styles.section}>
+                <Animated.View layout={LAYOUT_SPRING} style={styles.section}>
                     <Text style={styles.sectionTitle}>{t("videoDetail.techniquesLabel")}</Text>
                     <TechniqueSelector
                         selected={video.techniques ?? []}
                         onChange={updateTechniques}
                     />
-                </View>
+                </Animated.View>
 
                 <SectionDivider />
 
                 {/* タグ（自動保存） */}
-                <View style={styles.section}>
+                <Animated.View layout={LAYOUT_SPRING} style={styles.section}>
                     <Text style={styles.sectionTitle}>{t("videoDetail.tagsLabel")}</Text>
                     <TagSelector
                         selectedTagIds={tagIds}
                         onChange={handleTagsChange}
                     />
-                </View>
+                </Animated.View>
 
                 <SectionDivider />
 
                 {/* メモ（自動保存） */}
-                <View style={styles.section}>
+                <Animated.View layout={LAYOUT_SPRING} style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>{t("videoDetail.memoLabel")}</Text>
                         <Text style={styles.saveStatus}>
@@ -478,12 +477,14 @@ export default function VideoDetailScreen() {
                         onFocus={handleMemoFocus}
                         onBlur={handleMemoBlur}
                     />
-                </View>
+                </Animated.View>
 
                 {/* 削除ボタン */}
-                <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-                    <Text style={styles.deleteButtonText}>{t("videoDetail.deleteRecord")}</Text>
-                </TouchableOpacity>
+                <Animated.View layout={LAYOUT_SPRING}>
+                    <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                        <Text style={styles.deleteButtonText}>{t("videoDetail.deleteRecord")}</Text>
+                    </TouchableOpacity>
+                </Animated.View>
             </ScrollView>
             {Platform.OS === "ios" && (
                 <InputAccessoryView nativeID={MEMO_INPUT_ACCESSORY_ID}>
