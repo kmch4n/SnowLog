@@ -227,7 +227,10 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                             style={[styles.presetChip, active && styles.presetChipActive]}
                             onPress={() => handlePresetPress(preset.key)}
                         >
-                            <Text style={[styles.presetText, active && styles.presetTextActive]}>
+                            <Text
+                                style={[styles.presetText, active && styles.presetTextActive]}
+                                maxFontSizeMultiplier={1.4}
+                            >
                                 {t(`search.datePresets.${preset.key}`)}
                             </Text>
                         </PressableScale>

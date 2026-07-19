@@ -169,7 +169,9 @@ export function VideoCardCompact({
                     <View style={styles.chipRow}>
                         {visibleTechniques.map((technique) => (
                             <View key={technique} style={styles.techniqueChip}>
-                                <Text style={styles.techniqueChipText}>{technique}</Text>
+                                <Text style={styles.techniqueChipText} maxFontSizeMultiplier={1.4}>
+                                    {technique}
+                                </Text>
                             </View>
                         ))}
                         {visibleTags.map((tag) => {
@@ -190,6 +192,7 @@ export function VideoCardCompact({
                                             styles.tagChipText,
                                             { color: tagColors.text },
                                         ]}
+                                        maxFontSizeMultiplier={1.4}
                                     >
                                         {tag.name}
                                     </Text>

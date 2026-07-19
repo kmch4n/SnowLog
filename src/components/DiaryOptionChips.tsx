@@ -72,6 +72,7 @@ export function DiaryOptionChips<T extends string | number>(
                                 styles.chipText,
                                 isSelected && styles.chipTextSelected,
                             ]}
+                            maxFontSizeMultiplier={1.4}
                         >
                             {showIcon && opt.icon ? `${opt.icon} ` : ""}
                             {resolveLabel(opt)}
