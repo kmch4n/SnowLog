@@ -7,6 +7,7 @@ import type { SharedValue } from "react-native-reanimated";
 
 import { Colors } from "../constants/colors";
 import { IconNames } from "../constants/icons";
+import { hapticLight } from "../services/hapticsService";
 import {
     THUMBNAIL_MISSING_SENTINEL,
     resolveThumbnailUri,
@@ -215,6 +216,7 @@ export function VideoCardCompact({
             rightThreshold={44}
             dragOffsetFromRightEdge={12}
             overshootRight={false}
+            onSwipeableWillOpen={() => hapticLight()}
             renderRightActions={renderRightActions}
             containerStyle={styles.swipeContainer}
             childrenContainerStyle={styles.swipeChildren}
