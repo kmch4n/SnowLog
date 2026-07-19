@@ -49,21 +49,27 @@ export function BulkActionToolbar({
                             style={styles.actionButton}
                             onPress={onToggleFavorite}
                         >
-                            <Text style={styles.favoriteText}>{t("bulkToolbar.favorite")}</Text>
+                            <Text style={styles.favoriteText} maxFontSizeMultiplier={1.4}>
+                                {t("bulkToolbar.favorite")}
+                            </Text>
                         </PressableScale>
 
                         <PressableScale
                             style={styles.actionButton}
                             onPress={onDelete}
                         >
-                            <Text style={styles.deleteText}>{t("bulkToolbar.delete")}</Text>
+                            <Text style={styles.deleteText} maxFontSizeMultiplier={1.4}>
+                                {t("bulkToolbar.delete")}
+                            </Text>
                         </PressableScale>
 
                         <PressableScale
                             style={styles.actionButton}
                             onPress={onCancel}
                         >
-                            <Text style={styles.cancelText}>{t("bulkToolbar.cancel")}</Text>
+                            <Text style={styles.cancelText} maxFontSizeMultiplier={1.4}>
+                                {t("bulkToolbar.cancel")}
+                            </Text>
                         </PressableScale>
                     </View>
                 </>
