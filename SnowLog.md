@@ -79,7 +79,8 @@
 2. デフォルトの滑走種別候補を差分シード
 3. `capturedAt` が不正な動画レコードを修復
 4. サムネイル URI の相対パス移行（必要時のみ、後述）
-5. App Store 公開バージョンを参照した任意アップデート案内（後述）
+5. 参照されていないファイルの掃除（非ブロッキング。`InteractionManager.runAfterInteractions` で `capturedAt` 修復と並べて実行、後述）
+6. App Store 公開バージョンを参照した任意アップデート案内（後述）
 
 i18n のロケールはこの流れには含まれない。`src/i18n/index.ts` のモジュール初期化時にデバイスロケールから一度だけ解決され、永続化設定は読まない（§14 参照）。
 
@@ -284,13 +285,19 @@ videos --< video_tags >-- tags
 
 ### 7.7 設定 (`settings`)
 
-現在の設定メニューは以下の 5 項目。
+設定画面は、他画面へ遷移する 5 項目と、その場で実行する保守行 1 つで構成する。
+
+遷移する 5 項目:
 
 1. カレンダー設定
 2. 滑走種別の管理
 3. お気に入りスキー場
 4. タグの管理
 5. 重複候補の確認
+
+保守行:
+
+- 不要ファイルを削除
 
 #### カレンダー設定
 
@@ -314,6 +321,14 @@ videos --< video_tags >-- tags
 
 - 似ている動画を自動検出し、グループ単位で確認できる。
 - ここから候補動画の削除を実行できる。
+
+#### 不要ファイルを削除（保守行）
+
+- 画面遷移しない。タップすると確認 → 実行 → 結果の 3 段階をアラートで進める。
+- 確認時に `hapticWarning`、成功時に `hapticSuccess`、失敗時に `hapticError` を鳴らす。
+- 結果アラートは削除件数を示し、0 件のときは専用の文言に切り替える。
+- 実行中は多重起動を防ぐため、同じ行の再タップを無視する。
+- 実処理は `orphanedFileCleanupService.cleanupOrphanedFiles()`。起動時にも同じ関数が非ブロッキングで走る（§5）。
 
 ---
 
@@ -377,6 +392,8 @@ videos --< video_tags >-- tags
 | `bulkImportSummaryService.ts` | 一括インポートの結果（成功 / スキップ / 失敗件数）をプロセス内で揮発キャッシュし、ホームへ引き渡す |
 | `hapticsService.ts` | `expo-haptics` の薄いラッパ。`UnavailabilityError` を吸収する `safeFire` 経由で `hapticLight / Medium / Selection / Success / Warning / Error` を提供する |
 | `thumbnailMigrationService.ts` | 旧形式（絶対パス）のサムネイル URI を相対パスへ正規化し、欠損時は再生成または欠損センチネルでマークする一度限りの起動マイグレーション |
+| `orphanedFileCleanupService.ts` | `documentDirectory` 配下の `thumbnails/` と `videos/` を走査し、`videos` テーブルから参照されていないファイルを削除する。起動時（非ブロッキング）と設定画面の保守行から呼ばれる |
+| `updateCheckService.ts` | App Store Lookup API で公開バージョンを取得し、任意アップデート案内の要否を判定する。見送ったバージョンは `dismissed_update_prompt_version` に記録する |
 
 ---
 
@@ -402,6 +419,27 @@ videos --< video_tags >-- tags
 
 - 元アセットが消えた、または managed 動画が見つからない場合は `isFileAvailable` を使って再生不可を表現する。
 - データは残しつつ、再生 UI 側で利用不能を明示する。
+
+### 10.5 掃除の不変条件
+
+`documentDirectory` 配下でアプリが保持し続けるのは、**現在の `videos` 行から参照されているファイルだけ**である。
+
+- `thumbnails/` — `videos.thumbnailUri`（相対パス）が指すファイル
+- `videos/` — `getManagedVideoFileUri(id, filename)` が解決するファイル
+
+managed 動画側を参照扱いにするのは `assetId` が synthetic の行だけである（§10.2。通常のフォトライブラリ動画は `videos/` にコピーを持たない）。
+
+上記に該当しないものは回収対象で、`orphanedFileCleanupService.cleanupOrphanedFiles()` が削除する。実行契機は 2 つ。
+
+- 起動時。`InteractionManager.runAfterInteractions` の中で非ブロッキングに走り、失敗しても無視する
+- 設定画面の保守行「不要ファイルを削除」（§7.7）
+
+ただし未参照でも即座には消さない。安全弁が 2 つある。
+
+- **更新から 5 分以内のファイルは残す**（`DEFAULT_MINIMUM_FILE_AGE_MS`）。DB へ書き込む前の生成直後のファイルを、掃除が追い越して消してしまうのを防ぐ
+- **`protectFilesFromOrphanedCleanup()` で明示保護された URI は残す**。インポート処理のように、参照が確定するまでの間だけファイルを守りたい経路が使う
+
+したがって、動画レコードを消したあとにファイルの後始末が漏れても、いずれ回収される。逆に言えば、**`videos` から参照されないファイルを長期的に残す設計はできない**。恒久的に保持したいファイルを増やすなら、この掃除の対象ディレクトリの外に置くこと。
 
 ---
 
