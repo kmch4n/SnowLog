@@ -112,14 +112,15 @@ import してよい、という規約がある（`.claude/CLAUDE.md` に明文�
 
 新しく「このモジュール経由でのみ使う」窓口を作ったら、テストを書くのではなくここに 1 エントリ足すのが正着。
 
-## 純粋関数のテスト基盤は既にある（Issue #38 の前提は古い）
+## 純粋関数のテスト基盤は既にある（新しいランナーを入れないこと）
 
-Issue [#38](https://github.com/kmch4n/SnowLog/issues/38) は「テスト基盤が無いので Vitest / Jest を導入する」と提案しているが、
+Issue [#38](https://github.com/kmch4n/SnowLog/issues/38)（closed）は「テスト基盤が無いので Vitest / Jest を導入する」と提案していたが、
 **`versionUtils.test.cjs` が確立した「tsc でコンパイルして require する」パターンがそのまま使える**。
 新しいランナーの導入も、Expo / RN との設定調整も要らない。
 
-2026-07-16 に **#38 が挙げる 4 関数すべてにテストを追加済み**
+2026-07-16 に #38 が挙げる 4 関数すべてにテストを追加して完了済み
 （`parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils`）。Vitest / Jest は導入していない。
+**再提案しないこと。**
 
 ### コンパイル可否は「import の形」で決まる（重要）
 

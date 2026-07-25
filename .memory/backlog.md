@@ -22,11 +22,13 @@ status: active
 
 | テーマ | Issue |
 | --- | --- |
-| ユーティリティ関数の自動テスト基盤 | [#38](https://github.com/kmch4n/SnowLog/issues/38) |
-| Error Boundary の追加 | [#37](https://github.com/kmch4n/SnowLog/issues/37) |
 | JSON エクスポートの導線復活とインポート実装 | [#72](https://github.com/kmch4n/SnowLog/issues/72) |
 | `.web` シムの export 欠落 | [#74](https://github.com/kmch4n/SnowLog/issues/74) |
 | Large Title ヘッダー / Liquid Glass の拡張 | [#47](https://github.com/kmch4n/SnowLog/issues/47) / [#46](https://github.com/kmch4n/SnowLog/issues/46) |
+| iCloud ダウンロードの制御 / カスタムタグ UI / Reels 取り込み / コンテキストメニュー | [#70](https://github.com/kmch4n/SnowLog/issues/70) / [#69](https://github.com/kmch4n/SnowLog/issues/69) / [#54](https://github.com/kmch4n/SnowLog/issues/54) / [#45](https://github.com/kmch4n/SnowLog/issues/45) |
+
+この表は open のものだけを載せる（2026-07-25 時点で open は 8 件）。
+`#37`（Error Boundary）と `#38`（テスト基盤）は closed なので落とした。
 
 ## 完了済み（2026-03-26 に挙がっていた 3 件）
 
