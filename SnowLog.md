@@ -68,7 +68,6 @@
 - `settings/favorite-resorts`
 - `settings/tags`
 - `settings/duplicate-candidates`
-- `settings/language`
 
 ---
 
@@ -80,8 +79,9 @@
 2. デフォルトの滑走種別候補を差分シード
 3. `capturedAt` が不正な動画レコードを修復
 4. サムネイル URI の相対パス移行（必要時のみ、後述）
-5. i18n の初期ロケール解決（`appPreferenceRepository` から永続化済みの言語設定を読み込み、未設定ならデバイスロケールにフォールバック）
-6. App Store 公開バージョンを参照した任意アップデート案内（後述）
+5. App Store 公開バージョンを参照した任意アップデート案内（後述）
+
+i18n のロケールはこの流れには含まれない。`src/i18n/index.ts` のモジュール初期化時にデバイスロケールから一度だけ解決され、永続化設定は読まない（§14 参照）。
 
 ### 5.1 滑走種別候補のシード
 
@@ -284,14 +284,13 @@ videos --< video_tags >-- tags
 
 ### 7.7 設定 (`settings`)
 
-現在の設定メニューは以下の 6 項目。
+現在の設定メニューは以下の 5 項目。
 
 1. カレンダー設定
 2. 滑走種別の管理
 3. お気に入りスキー場
 4. タグの管理
 5. 重複候補の確認
-6. 言語設定
 
 #### カレンダー設定
 
@@ -315,11 +314,6 @@ videos --< video_tags >-- tags
 
 - 似ている動画を自動検出し、グループ単位で確認できる。
 - ここから候補動画の削除を実行できる。
-
-#### 言語設定
-
-- 日本語 / English / デバイスに従う の 3 択。
-- 選択は `app_preferences` の `locale` キーに保存し、即時 UI に反映する。
 
 ---
 
@@ -465,7 +459,7 @@ videos --< video_tags >-- tags
 5. 重複候補確認画面が設定にある
 6. Android は未対応だが、将来対応を見据えた一部の下地がある
 7. JSON バックアップ基盤が実装済みである
-8. **日英 2 言語の i18n 基盤**が導入済みで、設定から手動切替できる
+8. **日英 2 言語の i18n 基盤**が導入済みで、端末の言語設定に追従する（アプリ内に切替 UI は無い）
 9. **ハプティクス**が主要操作（一括選択開始、お気に入りトグル、削除確定、インポート完了など）に配線済み
 10. サムネイルは `documentDirectory` 相対パスで保存され、iOS のコンテナ再配置に耐性がある
 11. ホームに**並び順切替**と**スワイプ削除**が組み込まれている
@@ -481,22 +475,23 @@ videos --< video_tags >-- tags
 
 | ファイル | 役割 |
 |---|---|
-| `index.ts` | `i18n-js` インスタンス、ロケール解決、`loadInitialLocale` / `setLocalePreference`、購読リスナー管理 |
-| `useTranslation.ts` | `useSyncExternalStore` でロケール変更を購読する hook。`{ t, locale, preference, setPreference }` を返す |
-| `types.ts` | `SupportedLocale = "ja" \| "en"`、`LocalePreference = SupportedLocale \| "device"`、`LOCALE_PREFERENCE_KEY` |
+| `index.ts` | `i18n-js` インスタンス、モジュール初期化時のロケール解決、`t` / `getCurrentLocale` |
+| `useTranslation.ts` | `{ t, locale }` を返す hook。ロケールは実行中に変わらないため購読機構は持たない |
+| `types.ts` | `SupportedLocale = "ja" \| "en"`、`SUPPORTED_LOCALES` |
 | `locales/ja.ts` | 日本語翻訳テーブル。フラットキー + ドメイン名前空間（`home.*`、`import.*`、`diary.*` など） |
 | `locales/en.ts` | 英語翻訳テーブル。`Translations = typeof ja` で型を強制し、キー欠落をコンパイル時に検出する |
 
-### 14.2 永続化
+### 14.2 ロケールの決定
 
-- ユーザー選択は `app_preferences` の `locale` キーに `"ja" | "en" | "device"` のいずれかで保存する。
-- 読み込みは `appPreferenceRepository.getPreference("locale")` 経由で行う。
-- 値が不正・未設定の場合は `"device"` 扱いとし、`expo-localization` のデバイスロケールにフォールバックする。
+- `src/i18n/index.ts` がモジュール初期化時に `expo-localization` の `getLocales()[0]?.languageCode` を **一度だけ** 読む。
+- `ja` 以外はすべて `en` に正規化し、その値を `i18n-js` に固定する。
+- 永続化は行わない。`app_preferences` に言語のキーは存在しない。
 
-### 14.3 ロケール変更の伝播
+### 14.3 アプリ内に言語切替は無い
 
-- 切替時に `i18n-js` の `locale` を更新し、登録されたリスナーへ通知する。
-- `useTranslation` を購読している全コンポーネント（Stack 画面のタイトルを含む）が即時に再レンダーする。
+- 言語ピッカーはコミット `bab0b45` で削除済み。切替 API も setter も存在しない。
+- ユーザーは iOS の設定（設定 → SnowLog → 言語）で切り替える。アプリはそこで再起動されるため、実行中にロケールが変わることはない。
+- したがって `useTranslation` は再レンダー用の購読機構を持たず、`{ t, locale }` だけを返す。
 
 ### 14.4 iOS InfoPlist のローカライズ
 
