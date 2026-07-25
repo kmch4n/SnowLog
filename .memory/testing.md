@@ -8,12 +8,14 @@ status: active
 
 ## テストは存在するが `npm test` では走らない
 
-**`scripts/tests/` に `node:test` ベースのテストが 11 ファイル・73 ケースある**（2026-07-25 時点。実測値）。
+**`scripts/tests/` に `node:test` ベースのテストが 13 ファイル・92 ケースある**（2026-07-25 時点。実測値）。
+ほかに `scripts/tests/helpers/` があるが、これはテストではなく共有ハーネス（後述）。
 
 かつて `.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
 2026-07-15 に両方とも実態へ修正済み。**現在はどちらの記述も正しい**ので、乖離として扱わなくてよい。
 気づきにくさの原因は、いまはドキュメントではなく次の点にある。
 
+- `appPreferenceRepository.test.cjs`
 - `assetId.test.cjs`
 - `bulkImportProgressUtils.test.cjs`
 - `calendarUtils.test.cjs`
@@ -22,6 +24,7 @@ status: active
 - `homeSwipeDelete.test.cjs`
 - `parseTechniques.test.cjs`
 - `photosErrors.test.cjs`
+- `tagRepository.test.cjs`
 - `versionUtils.test.cjs`
 - `videoDetailKeyboardAccessory.test.cjs`
 - `videoListEquality.test.cjs`
@@ -53,11 +56,11 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 ## テストの性質は 2 種類ある — 一括りにしないこと
 
 方式が異なる。**「SnowLog のテストはソース文字列を見ているだけ」は誤り**（2026-07-15 に実地確認）。
-振る舞い検証が 9 本・正規表現が 2 本で、いまや前者が多数派。
+振る舞い検証が 11 本・正規表現が 2 本で、いまや前者が多数派。
 
 | 方式 | ファイル | 性質 |
 | --- | --- | --- |
-| **振る舞いを検証**（9 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる |
+| **振る舞いを検証**（11 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` / `tagRepository` / `appPreferenceRepository` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる。末尾 2 本は実 SQLite を使う（後述） |
 | **ソース正規表現**（2 本） | `homeSwipeDelete` / `videoDetailKeyboardAccessory` | `readFileSync` + `assert.match`。実装の書き方を固定するスナップショット |
 
 正規表現方式の 2 本だけが次の弱点を持つ。
@@ -163,6 +166,43 @@ Node は親方向へ探索するとき basename が `node_modules` のディレ�
 つまり型 import 版（`calendarUtils.test.cjs`）との差分は実質 **2 行**。
 **`Module._resolveFilename` などのフックを書く必要はない**（一度そう設計したが不要と判明）。
 今後 `src/utils/` に `@/` 値 import を持つモジュールが増えても、このレシピがそのまま効く。
+
+## リポジトリは実 SQLite で検証する（2026-07-25 追加）
+
+`src/database/repositories/*.ts` は上のパターンでは**触れない**。`db` を `src/database/index.ts` から
+import しており、そこがモジュール読み込み時に `expo-sqlite` を開くためである。
+結果として join・並び順・往復回数といった「クエリそのもの」が長らく無検証で、
+実際に `getTagsForVideos` のバグが 1 件出荷された（`6aecfbe`。join 行をそのまま展開して
+`Tag` に `videoId` が混入し、単件版と構造が食い違っていた）。
+
+`scripts/tests/helpers/repositoryHarness.cjs` がこれを埋める。手順は 4 つ。
+
+1. 対象リポジトリを `tsc --rootDir src` でコンパイルする
+2. emit 内の bare `require()` を絶対パスへ書き換える
+3. `drizzle/*.sql` を全部 `node:sqlite` のインメモリ DB へ再生する
+4. emit された `database/index.js` だけを `drizzle-orm/sqlite-proxy` 版に差し替える
+
+`index.js` より上はすべて出荷コードそのもの。スキーマも手書きコピーではなく出荷マイグレーションなので腐らない。
+proxy のコールバックが全クエリを記録するので、**往復回数を assert できる**のがこの方式の要。
+`tagRepository.test.cjs` の「バッチは 1 クエリ / 単件版は動画 3 件で 5 クエリ」がそれ。
+
+### 踏んだ落とし穴（3 つとも実測）
+
+- **emit を repo 内に置いてはいけない。** 素直にやると bare の `require("drizzle-orm")` を
+  解決させるため `node_modules/` 配下へ emit したくなるが、**このチェックアウトは OneDrive 同期配下にあり
+  `fs.rmSync` が例外を投げずに失敗する**（戻り値も正常、ディレクトリは残る）。毎回 emit が漏れ続ける。
+  `os.tmpdir()` へ出し、specifier 側を書き換えるのが正解。`git stash` が同じ理由で壊れたこともある。
+- **`--rootDir src` は必須。** 省くと tsc が entry point の import から共通ルートを推測するため、
+  `src/types` に届く `tagRepository` は `<out>/database/` へ、届かない `appPreferenceRepository` は
+  `<out>/` 直下へ emit される。同じレシピで置き場所が変わる。
+- **`statement.setReturnArrays(true)` が要る。** sqlite-proxy は行を**位置配列**で受け取る。
+  `Object.values()` で代用すると同名カラムが黙って潰れる。join では容易に起きる。
+
+### `expo-sqlite` に依存しない範囲
+
+`db.transaction` は sqlite-proxy でも呼べるが、`setTagsForVideo` の**原子性まで保証されているかは未確認**。
+ここに assert を足すなら、まず BEGIN/COMMIT がクエリログに現れるかを見ること。
+現れないなら「トランザクションを検証したつもり」の空 assert になる。
 
 ## 主要な検証手段は依然として手動
 
