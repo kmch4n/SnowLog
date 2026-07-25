@@ -3,7 +3,11 @@ import * as Sharing from "expo-sharing";
 import Constants from "expo-constants";
 
 import { getAllVideos } from "../database/repositories/videoRepository";
-import { getAllTags, getTagsForVideo } from "../database/repositories/tagRepository";
+import {
+    getAllTags,
+    getTagsForVideo,
+    getTagsForVideos,
+} from "../database/repositories/tagRepository";
 import { getAllTechniqueOptions } from "../database/repositories/techniqueOptionRepository";
 import { getFavoriteResorts } from "../database/repositories/favoriteResortRepository";
 import { getAllDiaryEntries } from "../database/repositories/diaryEntryRepository";
@@ -14,6 +18,25 @@ import { parseTechniques } from "../utils/parseTechniques";
 
 /** Bump when the export payload shape changes */
 const SCHEMA_VERSION = 1;
+
+/**
+ * Fallback for when the batched tag query fails: fetch one video at a time and
+ * skip the ones that throw, so a single unreadable row costs its own tags only.
+ */
+async function collectTagsPerVideo(videoIds: string[]): Promise<Map<string, Tag[]>> {
+    const map = new Map<string, Tag[]>();
+    await Promise.all(
+        videoIds.map(async (id) => {
+            try {
+                const videoTags = await getTagsForVideo(id);
+                if (videoTags.length > 0) map.set(id, videoTags);
+            } catch {
+                // Tag lookup failure should not block the entire export
+            }
+        })
+    );
+    return map;
+}
 
 /**
  * Export all user data as a full-backup JSON and open the system share sheet.
@@ -29,22 +52,22 @@ export async function exportAllToJSON(): Promise<void> {
             getAllPreferences(),
         ]);
 
-    // Attach per-video tags (individual failures fall back to empty array)
-    const videosWithTags: VideoWithTags[] = await Promise.all(
-        videos.map(async (video) => {
-            let videoTags: Tag[] = [];
-            try {
-                videoTags = await getTagsForVideo(video.id);
-            } catch {
-                // Tag lookup failure should not block the entire export
-            }
-            return {
-                ...video,
-                techniques: parseTechniques(video.techniques),
-                tags: videoTags,
-            };
-        })
-    );
+    // Attach per-video tags. One batched query covers the whole library; if it
+    // fails we drop back to the per-video path, which tolerates a single bad row
+    // rather than exporting every video with no tags at all.
+    const videoIds = videos.map((v) => v.id);
+    let tagsByVideoId: Map<string, Tag[]>;
+    try {
+        tagsByVideoId = await getTagsForVideos(videoIds);
+    } catch {
+        tagsByVideoId = await collectTagsPerVideo(videoIds);
+    }
+
+    const videosWithTags: VideoWithTags[] = videos.map((video) => ({
+        ...video,
+        techniques: parseTechniques(video.techniques),
+        tags: tagsByVideoId.get(video.id) ?? [],
+    }));
 
     const exportData = {
         schemaVersion: SCHEMA_VERSION,

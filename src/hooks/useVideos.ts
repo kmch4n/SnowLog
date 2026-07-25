@@ -1,7 +1,7 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 
-import { getTagsForVideo } from "../database/repositories/tagRepository";
+import { getTagsForVideos } from "../database/repositories/tagRepository";
 import { getVideosByFilter } from "../database/repositories/videoRepository";
 import { t } from "../i18n";
 import type { FilterOptions, VideoWithTags } from "../types";
@@ -60,15 +60,13 @@ export function useVideos(filter?: FilterOptions) {
             const rawVideos = await getVideosByFilter(stableFilter);
 
             // タグ情報を付加し、techniques を JSON 文字列からパース
-            const videosWithTags = await Promise.all(
-                rawVideos.map(async (video) => {
-                    return {
-                        ...video,
-                        tags: await getTagsForVideo(video.id),
-                        techniques: parseTechniques(video.techniques as string | null),
-                    };
-                })
-            );
+            // タグは 1 クエリでまとめて引く（動画ごとに引くと件数に比例して往復が増える）
+            const tagsByVideoId = await getTagsForVideos(rawVideos.map((v) => v.id));
+            const videosWithTags = rawVideos.map((video) => ({
+                ...video,
+                tags: tagsByVideoId.get(video.id) ?? [],
+                techniques: parseTechniques(video.techniques as string | null),
+            }));
 
             setVideos((current) =>
                 areVideoListsEqual(current, videosWithTags) ? current : videosWithTags

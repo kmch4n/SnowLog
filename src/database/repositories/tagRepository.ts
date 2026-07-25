@@ -64,6 +64,44 @@ export async function getTagsForVideo(videoId: string): Promise<Tag[]> {
     return result.map(asTag);
 }
 
+/**
+ * 複数動画のタグを 1 クエリでまとめて取得する
+ *
+ * `getTagsForVideo` を動画ごとに呼ぶと 1 件あたり 2 往復になり、一覧の
+ * フォーカス更新やエクスポートでクエリ数が動画数に比例して膨らむ。
+ *
+ * 並び順は `getTagsForVideo` と同じ `tags.id` 昇順にすること。
+ * `areVideoListsEqual` がタグを位置で比較するため、順序が変わると
+ * 一覧が毎回別物と判定されて再レンダーが多発する（Issue #59）。
+ */
+export async function getTagsForVideos(videoIds: string[]): Promise<Map<string, Tag[]>> {
+    const map = new Map<string, Tag[]>();
+    if (videoIds.length === 0) return map;
+
+    const rows = await db
+        .select({
+            videoId: videoTags.videoId,
+            id: tags.id,
+            name: tags.name,
+            type: tags.type,
+        })
+        .from(videoTags)
+        .innerJoin(tags, eq(videoTags.tagId, tags.id))
+        .where(inArray(videoTags.videoId, videoIds))
+        .orderBy(asc(tags.id));
+
+    for (const row of rows) {
+        const list = map.get(row.videoId);
+        const tag = asTag(row);
+        if (list) {
+            list.push(tag);
+        } else {
+            map.set(row.videoId, [tag]);
+        }
+    }
+    return map;
+}
+
 /** 動画にタグを追加する */
 export async function addTagToVideo(videoId: string, tagId: number): Promise<void> {
     const data: VideoTagInsert = { videoId, tagId };

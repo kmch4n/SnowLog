@@ -45,6 +45,16 @@ export async function getTagsForVideo(videoId: string): Promise<Tag[]> {
     return MOCK_TAGS.filter((t) => tagIds.includes(t.id));
 }
 
+/** ネイティブ側の一括取得に対応するモック。単件版と同じ結果を返すこと */
+export async function getTagsForVideos(videoIds: string[]): Promise<Map<string, Tag[]>> {
+    const map = new Map<string, Tag[]>();
+    for (const videoId of videoIds) {
+        const tags = await getTagsForVideo(videoId);
+        if (tags.length > 0) map.set(videoId, tags);
+    }
+    return map;
+}
+
 export async function addTagToVideo(_videoId: string, _tagId: number): Promise<void> {
     // Web では保存しない
 }
