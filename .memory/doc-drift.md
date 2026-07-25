@@ -31,7 +31,7 @@ status: active
 **正しく書けている場所:** `.claude/CLAUDE.md` は「i18n is device-locale-only (no runtime switching)」と正確に記述している。仕様を確認するときはこちらを見る。
 
 **アップグレード利用者への影響:** 言語ピッカーがあった頃のユーザーの `app_preferences` テーブルには、未使用の `app_locale` 行（旧 `src/i18n/types.ts` の `LOCALE_PREFERENCE_KEY`）が残っている可能性がある。キー名は `locale` ではない。クリーンアップのマイグレーションは存在せず、`exportService.ts` が `getAllPreferences()` で全 preference を書き出すため、この残存行はバックアップ JSON にも混入する。
-作業は Issue [#64](https://github.com/kmch4n/SnowLog/issues/64) で管理。**同 Issue の修正案は `key = 'locale'` を削除すると書いているが、それでは 1 行も消えない**（訂正コメント済み）。
+作業は Issue [#64](https://github.com/kmch4n/SnowLog/issues/64) で管理。同 Issue の修正案はかつて `key = 'locale'` を削除すると書いていたが（それでは 1 行も消えない）、2026-07-25 の Issue 監査で本文・受け入れ条件とも `app_locale` に修正済み。
 
 ## 2. `orphanedFileCleanupService` がドキュメントに存在しない
 
