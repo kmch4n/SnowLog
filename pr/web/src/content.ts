@@ -219,7 +219,6 @@ export const privacyContent: PrivacyContent = {
             title: "権限",
             items: [
                 "写真ライブラリ：動画の選択・参照のために必要です",
-                "カメラロールへの追加：将来的な書き出し機能のために要求する場合があります",
             ],
         },
         {
