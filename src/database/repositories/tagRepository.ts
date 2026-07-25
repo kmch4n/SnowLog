@@ -73,6 +73,9 @@ export async function getTagsForVideo(videoId: string): Promise<Tag[]> {
  * 並び順は `getTagsForVideo` と同じ `tags.id` 昇順にすること。
  * `areVideoListsEqual` がタグを位置で比較するため、順序が変わると
  * 一覧が毎回別物と判定されて再レンダーが多発する（Issue #59）。
+ *
+ * 返す `Tag` に join のキー（`videoId`）を混ぜないこと。単件版と構造が
+ * 変わり、タグをそのまま展開・シリアライズする経路が増えたときに壊れる。
  */
 export async function getTagsForVideos(videoIds: string[]): Promise<Map<string, Tag[]>> {
     const map = new Map<string, Tag[]>();
@@ -92,7 +95,8 @@ export async function getTagsForVideos(videoIds: string[]): Promise<Map<string, 
 
     for (const row of rows) {
         const list = map.get(row.videoId);
-        const tag = asTag(row);
+        // videoId は取り出したうえで捨てる（row をそのまま渡すと Tag に紛れ込む）
+        const tag = asTag({ id: row.id, name: row.name, type: row.type });
         if (list) {
             list.push(tag);
         } else {
