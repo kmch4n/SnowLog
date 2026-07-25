@@ -45,7 +45,7 @@ status: active
 
 ---
 
-## 未 Issue の観測: `.web` シムの export 欠落は体系的
+## 参考: `.web` シムの export 欠落は体系的（Issue [#74](https://github.com/kmch4n/SnowLog/issues/74)）
 
 2026-07-25 に Issue #71（`mediaService.web.ts` が `isSyntheticAssetId` を落としていた）を直す過程で、
 native と `.web` の export を全ペア突き合わせたところ、**同種の欠落が他に 10 件**あった。

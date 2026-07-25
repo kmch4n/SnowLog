@@ -15,7 +15,6 @@ status: active
 ## Issue 化されていない項目
 
 - **`src/app/video-import.tsx` の分割** — 約 1,300 行で、規約の ~500〜700 行を大きく超過。アプリの中核機能なので分割は慎重に。
-- **`.web` シムの export 欠落** — native と `.web` の export を突き合わせると 5 ファイルで計 10 件欠けている。`tsc` では検出できない。詳細と再確認コマンドは [doc-drift.md](doc-drift.md) の末尾。
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
@@ -26,6 +25,7 @@ status: active
 | ユーティリティ関数の自動テスト基盤 | [#38](https://github.com/kmch4n/SnowLog/issues/38) |
 | Error Boundary の追加 | [#37](https://github.com/kmch4n/SnowLog/issues/37) |
 | JSON エクスポートの導線復活とインポート実装 | [#72](https://github.com/kmch4n/SnowLog/issues/72) |
+| `.web` シムの export 欠落 | [#74](https://github.com/kmch4n/SnowLog/issues/74) |
 | Large Title ヘッダー / Liquid Glass の拡張 | [#47](https://github.com/kmch4n/SnowLog/issues/47) / [#46](https://github.com/kmch4n/SnowLog/issues/46) |
 
 ## 完了済み（2026-03-26 に挙がっていた 3 件）
