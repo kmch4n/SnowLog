@@ -19,6 +19,7 @@ import { ThumbnailMigrationScreen } from "@/components/ThumbnailMigrationScreen"
 import { Colors } from "@/constants/colors";
 import { db } from "@/database";
 import {
+    deletePreference,
     getPreference,
     setPreference,
 } from "@/database/repositories/appPreferenceRepository";
@@ -73,6 +74,13 @@ async function seedTechniqueOptions() {
 const MIN_VALID_TIMESTAMP = 946684800; // 2000-01-01 UTC (seconds)
 const REPAIR_VERSION = "1";
 const REPAIR_VERSION_KEY = "capturedAt_repair_version";
+
+/**
+ * Preference key written by the removed in-app language picker (`bab0b45`).
+ * The name is `app_locale`, not `locale` — it came from the deleted
+ * `LOCALE_PREFERENCE_KEY` in `src/i18n/types.ts`.
+ */
+const STALE_LOCALE_PREFERENCE_KEY = "app_locale";
 
 async function repairInvalidCapturedAt() {
     try {
@@ -142,6 +150,11 @@ export default function RootLayout() {
     useEffect(() => {
         if (!success) return;
         seedTechniqueOptions().catch(() => {});
+        // bab0b45 removed the in-app language picker but left behind the row it
+        // wrote. Nothing reads it, yet exportService dumps every preference, so
+        // it would otherwise keep leaking into backups. Idempotent, so it can
+        // just run on every launch rather than carrying a version gate.
+        deletePreference(STALE_LOCALE_PREFERENCE_KEY).catch(() => {});
 
         let cancelled = false;
         (async () => {

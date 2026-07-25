@@ -22,6 +22,11 @@ export async function getPreference(key: string): Promise<string | null> {
     return result[0]?.value ?? null;
 }
 
+/** 設定値を削除する（存在しない場合は何もしない） */
+export async function deletePreference(key: string): Promise<void> {
+    await db.delete(appPreferences).where(eq(appPreferences.key, key));
+}
+
 /** 設定値を保存する（upsert） */
 export async function setPreference(key: string, value: string): Promise<void> {
     await db

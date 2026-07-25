@@ -17,22 +17,8 @@ function detectDeviceLocale(): SupportedLocale {
 const currentLocale: SupportedLocale = detectDeviceLocale();
 i18n.locale = currentLocale;
 
-const listeners = new Set<() => void>();
-const version = 0;
-
 export function getCurrentLocale(): SupportedLocale {
     return currentLocale;
-}
-
-export function getLocaleVersion(): number {
-    return version;
-}
-
-export function subscribeToLocale(listener: () => void): () => void {
-    listeners.add(listener);
-    return () => {
-        listeners.delete(listener);
-    };
 }
 
 export function t(

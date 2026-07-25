@@ -16,6 +16,11 @@ export async function getPreference(key: string): Promise<string | null> {
     return store.get(key) ?? null;
 }
 
+/** 設定値を削除する（存在しない場合は何もしない） */
+export async function deletePreference(key: string): Promise<void> {
+    store.delete(key);
+}
+
 /** 設定値を保存する */
 export async function setPreference(key: string, value: string): Promise<void> {
     store.set(key, value);
