@@ -39,6 +39,7 @@ import {
 import { setPendingBulkImportSummary } from "@/services/bulkImportSummaryService";
 import { importVideo, type ImportableAsset } from "@/services/importService";
 import { getAssetInfoWithDownload } from "@/services/mediaService";
+import { SYNTHETIC_ASSET_ID_PREFIX } from "@/utils/assetId";
 import { isPhotosLibraryError } from "@/utils/photosErrors";
 import { useSkiResortSuggestions } from "@/hooks/useSkiResortSuggestions";
 import { randomUUID } from "expo-crypto";
@@ -456,7 +457,8 @@ export default function VideoImportScreen() {
         setIsSaving(true);
         try {
             // Generate a synthetic assetId when the picker did not return one
-            const effectiveAssetId = selectedAsset.assetId ?? `synthetic:${randomUUID()}`;
+            const effectiveAssetId =
+                selectedAsset.assetId ?? `${SYNTHETIC_ASSET_ID_PREFIX}${randomUUID()}`;
 
             const mediaAsset: ImportableAsset = {
                 id: effectiveAssetId,
@@ -605,7 +607,7 @@ export default function VideoImportScreen() {
             // Map each item's resolved assetId back to its index in the assets array
             const assetIndexMap = new Map<string, number>();
             const items: BulkImportItem[] = assets.map((a, index) => {
-                const id = a.assetId ?? `synthetic:${randomUUID()}`;
+                const id = a.assetId ?? `${SYNTHETIC_ASSET_ID_PREFIX}${randomUUID()}`;
                 assetIndexMap.set(id, index);
                 return {
                     assetId: id,

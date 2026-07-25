@@ -2,6 +2,10 @@ import * as MediaLibrary from "expo-media-library";
 
 import { isPhotosLibraryError } from "../utils/photosErrors";
 
+// Re-exported so callers keep importing it from here; the implementation lives
+// in utils/ so mediaService.web.ts can expose the same binding (Issue #71).
+export { isSyntheticAssetId } from "../utils/assetId";
+
 /**
  * expo-media-library のラッパー
  * フォトライブラリへのアクセス・動画取得を担う
@@ -82,11 +86,6 @@ export async function getAssetInfoWithDownload(
     } catch {
         return null;
     }
-}
-
-/** Check whether an assetId is a synthetic placeholder (no MediaLibrary entry) */
-export function isSyntheticAssetId(assetId: string): boolean {
-    return assetId.startsWith("synthetic:");
 }
 
 /**
