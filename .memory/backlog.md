@@ -1,6 +1,6 @@
 ---
 title: バックログ
-updated: 2026-07-15
+updated: 2026-07-25
 status: active
 ---
 
@@ -8,13 +8,14 @@ status: active
 
 コードや git log からは読み取れない「これからやりたいこと」の置き場。
 
-**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-07-15 時点で全 69 件 / open 12）、
+**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-07-25 時点で open 7 件）、
 やることは基本すべて Issue 化されている。ここに同じ内容を書くと二重管理になり、必ず片方が腐る。
 このファイルには **Issue になっていないものだけ** を置く。Issue 化できたらここから消す。
 
 ## Issue 化されていない項目
 
-- **`src/app/video-import.tsx` の分割** — 約 1,333 行で、規約の ~500〜700 行を大きく超過。アプリの中核機能なので分割は慎重に。
+- **`src/app/video-import.tsx` の分割** — 約 1,300 行で、規約の ~500〜700 行を大きく超過。アプリの中核機能なので分割は慎重に。
+- **`.web` シムの export 欠落** — native と `.web` の export を突き合わせると 5 ファイルで計 10 件欠けている。`tsc` では検出できない。詳細と再確認コマンドは [doc-drift.md](doc-drift.md) の末尾。
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
@@ -22,13 +23,10 @@ status: active
 
 | テーマ | Issue |
 | --- | --- |
-| ドキュメントの i18n 記述が古い | [#56](https://github.com/kmch4n/SnowLog/issues/56) |
-| orphanedFileCleanupService のドキュメント未記載 | [#57](https://github.com/kmch4n/SnowLog/issues/57) |
-| i18n の不活性な購読配線と残存 `locale` 行の削除 | [#64](https://github.com/kmch4n/SnowLog/issues/64) |
-| 未使用の Expo テンプレート由来ファイル・`theme.ts` の削除 | [#65](https://github.com/kmch4n/SnowLog/issues/65) |
 | ユーティリティ関数の自動テスト基盤 | [#38](https://github.com/kmch4n/SnowLog/issues/38) |
 | Error Boundary の追加 | [#37](https://github.com/kmch4n/SnowLog/issues/37) |
-| タグ取得の N+1 解消 | [#66](https://github.com/kmch4n/SnowLog/issues/66) |
+| JSON エクスポートの導線復活とインポート実装 | [#72](https://github.com/kmch4n/SnowLog/issues/72) |
+| Large Title ヘッダー / Liquid Glass の拡張 | [#47](https://github.com/kmch4n/SnowLog/issues/47) / [#46](https://github.com/kmch4n/SnowLog/issues/46) |
 
 ## 完了済み（2026-03-26 に挙がっていた 3 件）
 

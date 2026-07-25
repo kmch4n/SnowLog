@@ -1,6 +1,6 @@
 ---
 title: テストの実態と実行方法
-updated: 2026-07-15
+updated: 2026-07-25
 status: active
 ---
 
@@ -8,18 +8,20 @@ status: active
 
 ## テストは存在するが `npm test` では走らない
 
-**`scripts/tests/` に `node:test` ベースのテストが 9 ファイル・58 ケースある**（2026-07-16 時点）。
+**`scripts/tests/` に `node:test` ベースのテストが 11 ファイル・73 ケースある**（2026-07-25 時点。実測値）。
 
 かつて `.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
 2026-07-15 に両方とも実態へ修正済み。**現在はどちらの記述も正しい**ので、乖離として扱わなくてよい。
 気づきにくさの原因は、いまはドキュメントではなく次の点にある。
 
+- `assetId.test.cjs`
 - `bulkImportProgressUtils.test.cjs`
 - `calendarUtils.test.cjs`
 - `dateUtils.test.cjs`
 - `geoUtils.test.cjs`
 - `homeSwipeDelete.test.cjs`
 - `parseTechniques.test.cjs`
+- `photosErrors.test.cjs`
 - `versionUtils.test.cjs`
 - `videoDetailKeyboardAccessory.test.cjs`
 - `videoListEquality.test.cjs`
@@ -51,11 +53,11 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 ## テストの性質は 2 種類ある — 一括りにしないこと
 
 方式が異なる。**「SnowLog のテストはソース文字列を見ているだけ」は誤り**（2026-07-15 に実地確認）。
-振る舞い検証が 7 本・正規表現が 2 本で、いまや前者が多数派。
+振る舞い検証が 9 本・正規表現が 2 本で、いまや前者が多数派。
 
 | 方式 | ファイル | 性質 |
 | --- | --- | --- |
-| **振る舞いを検証**（7 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる |
+| **振る舞いを検証**（9 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる |
 | **ソース正規表現**（2 本） | `homeSwipeDelete` / `videoDetailKeyboardAccessory` | `readFileSync` + `assert.match`。実装の書き方を固定するスナップショット |
 
 正規表現方式の 2 本だけが次の弱点を持つ。
