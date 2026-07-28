@@ -355,7 +355,6 @@ export const ja = {
         preparingTitle: "選択した動画を読み込んでいます",
         preparingSubtitle: "写真アプリから動画ファイルを取り出しています。iCloud にのみ保存されている動画は端末へのダウンロードが必要なため、本数や通信状況によって数分かかることがあります。",
         preparingHint: "読み込みが終わると自動的にインポートが始まります。",
-        preparingElapsed: "経過時間: {{time}}",
         importingBlocked: {
             title: "インポート中",
             body: "処理が完了するまでお待ちください。",

@@ -357,7 +357,6 @@ export const en: Translations = {
         preparingTitle: "Loading the selected videos",
         preparingSubtitle: "Fetching the video files from your photo library. Videos stored only in iCloud must be downloaded first, so this can take a few minutes depending on how many you picked and your connection.",
         preparingHint: "The import starts automatically once loading finishes.",
-        preparingElapsed: "Elapsed time: {{time}}",
         importingBlocked: {
             title: "Import in progress",
             body: "Please wait until the operation finishes.",

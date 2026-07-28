@@ -46,7 +46,6 @@ import { randomUUID } from "expo-crypto";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
 import {
     estimateBulkImportRemainingMs,
-    formatElapsedMmSs,
     formatRemainingTime,
 } from "@/utils/bulkImportProgressUtils";
 import { formatDate, formatDateTime, formatDuration, parseExifDateTime, toDateKey } from "@/utils/dateUtils";
@@ -137,9 +136,7 @@ export default function VideoImportScreen() {
     const bulkStartedAtRef = useRef<number | null>(null);
     const bulkCurrentItemStartedAtRef = useRef<number | null>(null);
     const bulkCompletedElapsedMsRef = useRef(0);
-    const [preparingElapsedMs, setPreparingElapsedMs] = useState(0);
     const [showPreparingUI, setShowPreparingUI] = useState(false);
-    const preparingStartedAtRef = useRef<number | null>(null);
 
     const resetBulkImportState = useCallback(() => {
         setBulkPhase("idle");
@@ -156,8 +153,6 @@ export default function VideoImportScreen() {
         bulkStartedAtRef.current = null;
         bulkCurrentItemStartedAtRef.current = null;
         bulkCompletedElapsedMsRef.current = 0;
-        preparingStartedAtRef.current = null;
-        setPreparingElapsedMs(0);
         setShowPreparingUI(false);
     }, []);
 
@@ -235,19 +230,10 @@ export default function VideoImportScreen() {
     useEffect(() => {
         if (bulkPhase !== "preparing") {
             setShowPreparingUI(false);
-            setPreparingElapsedMs(0);
             return undefined;
         }
-        const startedAt = preparingStartedAtRef.current ?? Date.now();
-        preparingStartedAtRef.current = startedAt;
         const showTimer = setTimeout(() => setShowPreparingUI(true), 500);
-        const tickTimer = setInterval(() => {
-            setPreparingElapsedMs(Date.now() - startedAt);
-        }, 250);
-        return () => {
-            clearTimeout(showTimer);
-            clearInterval(tickTimer);
-        };
+        return () => clearTimeout(showTimer);
     }, [bulkPhase]);
 
     const handleRequestBulkStop = useCallback(() => {
@@ -771,7 +757,6 @@ export default function VideoImportScreen() {
         bulkCompletionExitRef.current = false;
         bulkStopRequestedRef.current = false;
         setIsBulkStopRequested(false);
-        preparingStartedAtRef.current = Date.now();
         setBulkPhase("preparing");
 
         let pickerResult: ImagePicker.ImagePickerResult;
@@ -899,11 +884,6 @@ export default function VideoImportScreen() {
                 </Text>
                 <Text style={styles.preparingHint}>
                     {t("import.preparingHint")}
-                </Text>
-                <Text style={styles.preparingElapsed}>
-                    {t("import.preparingElapsed", {
-                        time: formatElapsedMmSs(preparingElapsedMs),
-                    })}
                 </Text>
                 <TouchableOpacity
                     style={[
@@ -1332,12 +1312,6 @@ const styles = StyleSheet.create({
         color: Colors.textTertiary,
         textAlign: "center",
         lineHeight: 18,
-    },
-    preparingElapsed: {
-        fontSize: 13,
-        color: Colors.textTertiary,
-        textAlign: "center",
-        fontVariant: ["tabular-nums"],
     },
     preparingStopButton: {
         minWidth: 160,
