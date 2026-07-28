@@ -352,8 +352,9 @@ export const ja = {
         durationField: "再生時間",
         save: "保存",
         cancel: "キャンセル",
-        preparingTitle: "動画を準備しています...",
-        preparingSubtitle: "iCloudから動画を取得する場合、\n少し時間がかかることがあります。",
+        preparingTitle: "選択した動画を読み込んでいます",
+        preparingSubtitle: "写真アプリから動画ファイルを取り出しています。iCloud にのみ保存されている動画は端末へのダウンロードが必要なため、本数や通信状況によって数分かかることがあります。",
+        preparingHint: "読み込みが終わると自動的にインポートが始まります。",
         preparingElapsed: "経過時間: {{time}}",
         importingBlocked: {
             title: "インポート中",

@@ -897,6 +897,9 @@ export default function VideoImportScreen() {
                 <Text style={styles.preparingSubtitle}>
                     {t("import.preparingSubtitle")}
                 </Text>
+                <Text style={styles.preparingHint}>
+                    {t("import.preparingHint")}
+                </Text>
                 <Text style={styles.preparingElapsed}>
                     {t("import.preparingElapsed", {
                         time: formatElapsedMmSs(preparingElapsedMs),
@@ -1323,6 +1326,12 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
         textAlign: "center",
         lineHeight: 20,
+    },
+    preparingHint: {
+        fontSize: 12,
+        color: Colors.textTertiary,
+        textAlign: "center",
+        lineHeight: 18,
     },
     preparingElapsed: {
         fontSize: 13,
