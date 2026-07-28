@@ -776,6 +776,15 @@ export default function VideoImportScreen() {
         // pulls iCloud-backed assets in the background before the await
         // resolves. Without this guard, the idle import UI is exposed and
         // interactable during that download window.
+        //
+        // The flip side: this phase must not show an elapsed-time counter. The
+        // await below spans both the user browsing the picker and the download
+        // that follows the dismissal, and the dismissal is not observable from
+        // JS -- expo-image-picker bridges no dismiss event (its delegate calls
+        // dismiss and resolves the promise only after MediaHandler finishes),
+        // and an in-process PHPicker leaves AppState on "active". Any clock
+        // started here therefore counts the user's browsing time. Elapsed time
+        // is shown in the "importing" phase instead, where the anchor is real.
         bulkCompletionExitRef.current = false;
         bulkStopRequestedRef.current = false;
         setIsBulkStopRequested(false);

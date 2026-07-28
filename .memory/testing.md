@@ -1,6 +1,6 @@
 ---
 title: テストの実態と実行方法
-updated: 2026-07-25
+updated: 2026-07-28
 status: active
 ---
 
@@ -8,7 +8,7 @@ status: active
 
 ## テストは存在するが `npm test` では走らない
 
-**`scripts/tests/` に `node:test` ベースのテストが 13 ファイル・92 ケースある**（2026-07-25 時点。実測値）。
+**`scripts/tests/` に `node:test` ベースのテストが 13 ファイル・94 ケースある**（2026-07-28 時点。実測値）。
 ほかに `scripts/tests/helpers/` があるが、これはテストではなく共有ハーネス（後述）。
 
 かつて `.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
