@@ -11,6 +11,7 @@ interface BulkImportProgressProps {
     currentFilename?: string;
     stepLabel?: string;
     remainingLabel?: string;
+    elapsedLabel?: string;
     isStopRequested: boolean;
     onRequestStop: () => void;
 }
@@ -26,6 +27,7 @@ export function BulkImportProgress({
     currentFilename,
     stepLabel,
     remainingLabel,
+    elapsedLabel,
     isStopRequested,
     onRequestStop,
 }: BulkImportProgressProps) {
@@ -54,6 +56,7 @@ export function BulkImportProgress({
 
             {stepLabel && <Text style={styles.stepText}>{stepLabel}</Text>}
             {remainingLabel && <Text style={styles.remainingText}>{remainingLabel}</Text>}
+            {elapsedLabel && <Text style={styles.elapsedText}>{elapsedLabel}</Text>}
 
             {/* スキップ・エラーカウント */}
             <View style={styles.statsRow}>
@@ -138,6 +141,12 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: Colors.textTertiary,
         marginTop: 6,
+    },
+    elapsedText: {
+        fontSize: 13,
+        color: Colors.textTertiary,
+        marginTop: 4,
+        fontVariant: ["tabular-nums"],
     },
     statsRow: {
         marginTop: 16,

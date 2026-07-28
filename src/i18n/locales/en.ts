@@ -398,6 +398,7 @@ export const en: Translations = {
             progressTitle: "Bulk import in progress",
             currentFile: "Processing: {{filename}}",
             remainingTime: "Time remaining: {{time}}",
+            elapsedTime: "Time elapsed: {{time}}",
             remainingUnknown: "Estimating time remaining...",
             remainingSeconds: "about {{count}} sec",
             remainingMinutes: "about {{count}} min",

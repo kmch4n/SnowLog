@@ -396,6 +396,7 @@ export const ja = {
             progressTitle: "一括インポート中",
             currentFile: "処理中: {{filename}}",
             remainingTime: "残り時間: {{time}}",
+            elapsedTime: "経過時間: {{time}}",
             remainingUnknown: "残り時間を計算中...",
             remainingSeconds: "約{{count}}秒",
             remainingMinutes: "約{{count}}分",

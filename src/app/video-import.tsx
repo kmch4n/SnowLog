@@ -46,6 +46,7 @@ import { randomUUID } from "expo-crypto";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
 import {
     estimateBulkImportRemainingMs,
+    formatElapsedMmSs,
     formatRemainingTime,
 } from "@/utils/bulkImportProgressUtils";
 import { formatDate, formatDateTime, formatDuration, parseExifDateTime, toDateKey } from "@/utils/dateUtils";
@@ -136,6 +137,10 @@ export default function VideoImportScreen() {
     const bulkStartedAtRef = useRef<number | null>(null);
     const bulkCurrentItemStartedAtRef = useRef<number | null>(null);
     const bulkCompletedElapsedMsRef = useRef(0);
+    // 表示用。ETA 用の bulkStartedAtRef とは別に、画面が「インポート中」へ
+    // 切り替わった瞬間を起点にする。
+    const importingStartedAtRef = useRef<number | null>(null);
+    const [importingElapsedMs, setImportingElapsedMs] = useState(0);
     const [showPreparingUI, setShowPreparingUI] = useState(false);
 
     const resetBulkImportState = useCallback(() => {
@@ -153,6 +158,8 @@ export default function VideoImportScreen() {
         bulkStartedAtRef.current = null;
         bulkCurrentItemStartedAtRef.current = null;
         bulkCompletedElapsedMsRef.current = 0;
+        importingStartedAtRef.current = null;
+        setImportingElapsedMs(0);
         setShowPreparingUI(false);
     }, []);
 
@@ -226,6 +233,21 @@ export default function VideoImportScreen() {
         }, 1000);
         return () => clearInterval(timer);
     }, [bulkPhase, bulkProgress]);
+
+    useEffect(() => {
+        if (bulkPhase !== "importing") {
+            setImportingElapsedMs(0);
+            return undefined;
+        }
+        const tick = () => {
+            const startedAt = importingStartedAtRef.current;
+            if (startedAt == null) return;
+            setImportingElapsedMs(Date.now() - startedAt);
+        };
+        tick();
+        const timer = setInterval(tick, 1000);
+        return () => clearInterval(timer);
+    }, [bulkPhase]);
 
     useEffect(() => {
         if (bulkPhase !== "preparing") {
@@ -811,6 +833,7 @@ export default function VideoImportScreen() {
         }
 
         // 一括モード開始
+        importingStartedAtRef.current = Date.now();
         setBulkPhase("importing");
         setBulkProgress({ current: 0, total: 0 });
         setBulkSkippedCount(0);
@@ -921,6 +944,9 @@ export default function VideoImportScreen() {
                             })
                             : t("import.bulk.remainingUnknown")
                     }
+                    elapsedLabel={t("import.bulk.elapsedTime", {
+                        time: formatElapsedMmSs(importingElapsedMs),
+                    })}
                     isStopRequested={isBulkStopRequested}
                     onRequestStop={handleRequestBulkStop}
                 />
