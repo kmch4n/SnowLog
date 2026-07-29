@@ -1,4 +1,5 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { Palette } from "../theme/colors.ts";
 
 // Wall-clock, fps-independent: convert with `fps` at the use site, never hardcode a frame count.
 const DEFAULT_DURATION_IN_SECONDS = 0.15;
@@ -15,6 +16,6 @@ export const FlashCut: React.FC<{ durationInSeconds?: number }> = ({
     });
 
     return (
-        <AbsoluteFill style={{ backgroundColor: "#FFFFFF", opacity, pointerEvents: "none" }} />
+        <AbsoluteFill style={{ backgroundColor: Palette.white, opacity, pointerEvents: "none" }} />
     );
 };

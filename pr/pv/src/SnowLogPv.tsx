@@ -31,7 +31,8 @@ export type SnowLogPvProps = {
     hasBgm: boolean;
 };
 
-const SCENE_COMPONENTS: Record<SceneId, React.FC> = {
+/** Exported so Root can register each scene as its own Composition. */
+export const SCENE_COMPONENTS: Record<SceneId, React.FC> = {
     s01: S01Hook,
     s02: S02Grid,
     s03: S03Logo,
@@ -61,7 +62,7 @@ export const SnowLogPv: React.FC<SnowLogPvProps> = ({ scenes, hasBgm }) => {
 
     return (
         <AbsoluteFill style={{ backgroundColor: Palette.backdrop }}>
-            {scenes.map((scene) => {
+            {scenes.map((scene, index) => {
                 const Scene = SCENE_COMPONENTS[scene.id];
 
                 return (
@@ -72,7 +73,11 @@ export const SnowLogPv: React.FC<SnowLogPvProps> = ({ scenes, hasBgm }) => {
                         premountFor={fps}
                     >
                         <Scene />
-                        <FlashCut />
+                        {/* The flash marks a cut between scenes, so the first
+                            scene has nothing to cut from. Flashing there would
+                            open the film — and any auto-generated thumbnail —
+                            on a pure white frame. */}
+                        {index === 0 ? null : <FlashCut />}
                         {scene.hasNarration ? <Audio src={staticFile(scene.narrationFile)} /> : null}
                     </Sequence>
                 );

@@ -1,4 +1,5 @@
 import { AbsoluteFill, random, useCurrentFrame, useVideoConfig } from "remotion";
+import { Palette } from "../theme/colors.ts";
 
 export const SnowParticles: React.FC<{ count?: number }> = ({ count = 90 }) => {
     const frame = useCurrentFrame();
@@ -24,7 +25,7 @@ export const SnowParticles: React.FC<{ count?: number }> = ({ count = 90 }) => {
                             width: size,
                             height: size,
                             borderRadius: "50%",
-                            backgroundColor: "#FFFFFF",
+                            backgroundColor: Palette.white,
                             opacity: 0.15 + random(`${seed}-opacity`) * 0.4,
                         }}
                     />

@@ -1,11 +1,13 @@
 import { Composition } from "remotion";
 import type { CalculateMetadataFunction } from "remotion";
-import { SCENES } from "./script.ts";
-import { SnowLogPv } from "./SnowLogPv.tsx";
+import { SCENES, TOTAL_MIN_SECONDS } from "./script.ts";
+import { SCENE_COMPONENTS, SnowLogPv } from "./SnowLogPv.tsx";
 import type { SnowLogPvProps } from "./SnowLogPv.tsx";
 import { measureNarration, resolveScenes, staticFileExists, totalFrames } from "./timeline.ts";
 
 const FPS = 60;
+const WIDTH = 1920;
+const HEIGHT = 1080;
 
 const calculateMetadata: CalculateMetadataFunction<SnowLogPvProps> = async () => {
     const narrationSeconds = await measureNarration(SCENES);
@@ -28,15 +30,33 @@ const calculateMetadata: CalculateMetadataFunction<SnowLogPvProps> = async () =>
 
 export const RemotionRoot: React.FC = () => {
     return (
-        <Composition
-            id="SnowLogPv"
-            component={SnowLogPv}
-            durationInFrames={78 * FPS}
-            fps={FPS}
-            width={1920}
-            height={1080}
-            defaultProps={{ scenes: [], hasBgm: false }}
-            calculateMetadata={calculateMetadata}
-        />
+        <>
+            <Composition
+                id="SnowLogPv"
+                component={SnowLogPv}
+                // Only the fallback before calculateMetadata resolves; deriving
+                // it from the script keeps it honest when a scene length changes.
+                durationInFrames={TOTAL_MIN_SECONDS * FPS}
+                fps={FPS}
+                width={WIDTH}
+                height={HEIGHT}
+                defaultProps={{ scenes: [], hasBgm: false }}
+                calculateMetadata={calculateMetadata}
+            />
+
+            {/* One composition per scene, so a single scene can be previewed and
+                re-rendered without stepping through the whole film. */}
+            {SCENES.map((scene) => (
+                <Composition
+                    key={scene.id}
+                    id={scene.title.replace(/\s+/g, "")}
+                    component={SCENE_COMPONENTS[scene.id]}
+                    durationInFrames={Math.round(scene.minDurationInSeconds * FPS)}
+                    fps={FPS}
+                    width={WIDTH}
+                    height={HEIGHT}
+                />
+            ))}
+        </>
     );
 };
