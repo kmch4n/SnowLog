@@ -106,6 +106,11 @@ const main = async () => {
     mkdirSync(TEMP_DIR, { recursive: true });
 
     for (const scene of SCENES) {
+        // The title card carries no spoken line.
+        if (scene.narrationText === "") {
+            continue;
+        }
+
         const outPath = join(OUT_DIR, `${scene.id}.wav`);
         await synthesise(scene.narrationText, speaker, outPath);
         normalise(outPath);

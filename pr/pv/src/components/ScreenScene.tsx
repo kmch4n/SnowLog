@@ -1,18 +1,45 @@
-import { AbsoluteFill, useVideoConfig } from "remotion";
+import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Caption } from "./Caption.tsx";
 import { Palette } from "../theme/colors.ts";
+import { SPRING_SMOOTH } from "../theme/springs.ts";
 import { fontFamily, TYPE } from "../theme/typography.ts";
 
 // Wall-clock, fps-independent: convert with `fps` at the use site, never hardcode a frame count.
 const CAPTION_BASE_DELAY_IN_SECONDS = 0.35;
 const CAPTION_STEP_IN_SECONDS = 0.7;
+const DEVICE_ENTER_IN_SECONDS = 0.8;
+const DEVICE_EXIT_IN_SECONDS = 0.55;
 
 export const ScreenScene: React.FC<{
     eyebrow?: string;
     captions: readonly string[];
+    /** Which side the phone flies in from. Alternated scene to scene. */
+    enterFrom?: 1 | -1;
     children: React.ReactNode;
-}> = ({ eyebrow, captions, children }) => {
-    const { fps } = useVideoConfig();
+}> = ({ eyebrow, captions, enterFrom = 1, children }) => {
+    const frame = useCurrentFrame();
+    const { fps, durationInFrames } = useVideoConfig();
+
+    // The entrance lives here rather than in DeviceFrame because S04 and S06
+    // split their phone across several <Series.Sequence> clips — inside
+    // DeviceFrame the local frame restarts per clip, and the phone would fly in
+    // again on every cut within the scene.
+    const enter = spring({
+        frame,
+        fps,
+        config: SPRING_SMOOTH,
+        durationInFrames: Math.round(fps * DEVICE_ENTER_IN_SECONDS),
+    });
+    const exitStart = durationInFrames - Math.round(fps * DEVICE_EXIT_IN_SECONDS);
+    const exit = spring({
+        frame: frame - exitStart,
+        fps,
+        config: SPRING_SMOOTH,
+        durationInFrames: Math.round(fps * DEVICE_EXIT_IN_SECONDS),
+    });
+
+    // -1 while arriving, 0 while settled, +1 while leaving.
+    const travel = exit - (1 - enter);
 
     return (
         <AbsoluteFill style={{ backgroundColor: Palette.backdrop }}>
@@ -52,6 +79,13 @@ export const ScreenScene: React.FC<{
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        perspective: 2200,
+                        transform: [
+                            `translateX(${travel * 620 * enterFrom}px)`,
+                            `rotateY(${travel * 26 * enterFrom}deg)`,
+                            `scale(${1 - Math.abs(travel) * 0.12})`,
+                        ].join(" "),
+                        opacity: 1 - Math.abs(travel) * 0.85,
                     }}
                 >
                     {children}

@@ -1,6 +1,7 @@
 import { Audio } from "@remotion/media";
 import { AbsoluteFill, Sequence, interpolate, staticFile, useVideoConfig } from "remotion";
-import { FlashCut } from "./components/FlashCut.tsx";
+import { SceneTransition } from "./components/transitions/SceneTransition.tsx";
+import { S00Title } from "./scenes/S00Title.tsx";
 import { S01Hook } from "./scenes/S01Hook.tsx";
 import { S02Grid } from "./scenes/S02Grid.tsx";
 import { S03Logo } from "./scenes/S03Logo.tsx";
@@ -33,6 +34,7 @@ export type SnowLogPvProps = {
 
 /** Exported so Root can register each scene as its own Composition. */
 export const SCENE_COMPONENTS: Record<SceneId, React.FC> = {
+    s00: S00Title,
     s01: S01Hook,
     s02: S02Grid,
     s03: S03Logo,
@@ -43,6 +45,9 @@ export const SCENE_COMPONENTS: Record<SceneId, React.FC> = {
     s08: S08Privacy,
     s09: S09Cta,
 };
+
+/** Half the length of a transition; it reaches this far either side of a cut. */
+const TRANSITION_HALF_IN_SECONDS = 0.35;
 
 /** Duck the music under narration so the voice stays legible. */
 const BGM_BASE_VOLUME = 0.35;
@@ -73,12 +78,31 @@ export const SnowLogPv: React.FC<SnowLogPvProps> = ({ scenes, hasBgm }) => {
                         premountFor={fps}
                     >
                         <Scene />
-                        {/* The flash marks a cut between scenes, so the first
-                            scene has nothing to cut from. Flashing there would
-                            open the film — and any auto-generated thumbnail —
-                            on a pure white frame. */}
-                        {index === 0 ? null : <FlashCut />}
                         {scene.hasNarration ? <Audio src={staticFile(scene.narrationFile)} /> : null}
+                    </Sequence>
+                );
+            })}
+
+            {/* Transitions sit on top of the scenes, straddling each cut, rather
+                than wrapping them. <TransitionSeries> would shorten the
+                timeline by overlapping the scenes it joins, and scene lengths
+                here are derived from the measured narration — so the total has
+                to stay the plain sum of the durations. */}
+            {scenes.map((scene, index) => {
+                if (scene.enterWith === undefined || index === 0) {
+                    return null;
+                }
+
+                const half = Math.round(fps * TRANSITION_HALF_IN_SECONDS);
+
+                return (
+                    <Sequence
+                        key={`transition-${scene.id}`}
+                        from={scene.from - half}
+                        durationInFrames={half * 2}
+                        premountFor={fps}
+                    >
+                        <SceneTransition kind={scene.enterWith} index={index} />
                     </Sequence>
                 );
             })}

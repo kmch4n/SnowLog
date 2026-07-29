@@ -21,7 +21,7 @@ export const S05Record: React.FC = () => {
         sceneSeconds > AVAILABLE_SECONDS ? AVAILABLE_SECONDS / sceneSeconds : 1;
 
     return (
-        <ScreenScene eyebrow={scene.eyebrow} captions={scene.captions}>
+        <ScreenScene eyebrow={scene.eyebrow} captions={scene.captions} enterFrom={-1}>
             <DeviceFrame
                 src="screen/detail.mp4"
                 trimBefore={Math.round(START_SECONDS * fps)}

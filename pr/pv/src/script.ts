@@ -1,4 +1,7 @@
+import type { TransitionKind } from "./components/transitions/SceneTransition.tsx";
+
 export type SceneId =
+    | "s00"
     | "s01" | "s02" | "s03" | "s04" | "s05" | "s06" | "s07" | "s08" | "s09";
 
 export type SceneSpec = {
@@ -19,9 +22,24 @@ export type SceneSpec = {
     minDurationInSeconds: number;
     /** Silence held after the narration ends, so the motion can breathe. */
     tailInSeconds: number;
+    /**
+     * How the cut into this scene is covered. Omitted on the opening scene,
+     * which has nothing to cut from — that is also why the film no longer
+     * starts on a white frame.
+     */
+    enterWith?: TransitionKind;
 };
 
 export const SCENES: readonly SceneSpec[] = [
+    {
+        id: "s00",
+        title: "S0 Title",
+        narrationFile: "audio/narration/s00.wav",
+        narrationText: "",
+        captions: ["2026 SEASON"],
+        minDurationInSeconds: 3,
+        tailInSeconds: 0,
+    },
     {
         id: "s01",
         title: "S1 Hook",
@@ -30,6 +48,7 @@ export const SCENES: readonly SceneSpec[] = [
         captions: [],
         minDurationInSeconds: 7,
         tailInSeconds: 1.5,
+        enterWith: "snow",
     },
     {
         id: "s02",
@@ -40,6 +59,7 @@ export const SCENES: readonly SceneSpec[] = [
         captions: ["撮った動画は、増えていく。", "あの日の一本が、見つからない。"],
         minDurationInSeconds: 9,
         tailInSeconds: 1.5,
+        enterWith: "whip",
     },
     {
         id: "s03",
@@ -49,6 +69,7 @@ export const SCENES: readonly SceneSpec[] = [
         captions: ["滑走動画を、練習ログへ。"],
         minDurationInSeconds: 6,
         tailInSeconds: 1.5,
+        enterWith: "snow",
     },
     {
         id: "s04",
@@ -60,6 +81,7 @@ export const SCENES: readonly SceneSpec[] = [
         captions: ["まとめて取り込む", "GPSでゲレンデを判定", "全国378ヶ所を収録"],
         minDurationInSeconds: 11,
         tailInSeconds: 1,
+        enterWith: "whip",
     },
     {
         id: "s05",
@@ -71,6 +93,7 @@ export const SCENES: readonly SceneSpec[] = [
         captions: ["技術・タグ・メモ", "大回り、小回り、コブ", "練習内容を動画に残す"],
         minDurationInSeconds: 12,
         tailInSeconds: 1,
+        enterWith: "flash",
     },
     {
         id: "s06",
@@ -82,6 +105,7 @@ export const SCENES: readonly SceneSpec[] = [
         captions: ["カレンダーと日記", "天候・雪質・感想まで", "滑った日ごとに残す"],
         minDurationInSeconds: 11,
         tailInSeconds: 1,
+        enterWith: "whip",
     },
     {
         id: "s07",
@@ -93,6 +117,7 @@ export const SCENES: readonly SceneSpec[] = [
         captions: ["シーズン単位で振り返る", "ゲレンデと技術の傾向", "続けるほど、見えてくる"],
         minDurationInSeconds: 11,
         tailInSeconds: 1.5,
+        enterWith: "snow",
     },
     {
         id: "s08",
@@ -103,6 +128,7 @@ export const SCENES: readonly SceneSpec[] = [
         captions: ["オフラインファースト", "データは端末の中だけ", "広告なし・課金なし"],
         minDurationInSeconds: 8,
         tailInSeconds: 1,
+        enterWith: "whip",
     },
     {
         id: "s09",
@@ -112,6 +138,7 @@ export const SCENES: readonly SceneSpec[] = [
         captions: ["App Store で配布中", "iOS 16+ / 無料"],
         minDurationInSeconds: 7,
         tailInSeconds: 1.5,
+        enterWith: "snow",
     },
 ] as const;
 

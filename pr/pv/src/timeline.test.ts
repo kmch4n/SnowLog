@@ -6,15 +6,15 @@ import { distributeFrames, resolveScenes, totalFrames } from "./timeline.ts";
 test("falls back to the minimum duration when narration is missing", () => {
     const resolved = resolveScenes(SCENES, new Map(), 60);
 
-    assert.equal(resolved[0].durationInFrames, 7 * 60);
-    assert.equal(totalFrames(resolved), 82 * 60);
+    assert.equal(resolved[0].durationInFrames, 3 * 60);
+    assert.equal(totalFrames(resolved), 85 * 60);
 });
 
 test("stretches a scene when narration plus tail exceeds the minimum", () => {
     // s01 has a 7s minimum and a 1.5s tail. 8s of speech needs 9.5s.
     const resolved = resolveScenes(SCENES, new Map([["s01", 8]]), 60);
 
-    assert.equal(resolved[0].durationInFrames, Math.ceil(9.5 * 60));
+    assert.equal(resolved[1].durationInFrames, Math.ceil(9.5 * 60));
 });
 
 test("rounds a fractional frame count up, not down or to nearest", () => {
@@ -24,22 +24,22 @@ test("rounds a fractional frame count up, not down or to nearest", () => {
     // reaches 512 -- this is the only fixture that can tell them apart.
     const resolved = resolveScenes(SCENES, new Map([["s01", 7.02]]), 60);
 
-    assert.equal(resolved[0].durationInFrames, 512);
+    assert.equal(resolved[1].durationInFrames, 512);
 });
 
 test("keeps the minimum when narration plus tail is shorter", () => {
     const resolved = resolveScenes(SCENES, new Map([["s01", 2]]), 60);
 
-    assert.equal(resolved[0].durationInFrames, 7 * 60);
+    assert.equal(resolved[1].durationInFrames, 7 * 60);
 });
 
 test("lays scenes out back to back", () => {
     const resolved = resolveScenes(SCENES, new Map(), 60);
 
-    // s01 runs 7s and s02 runs 9s.
+    // s00 runs 3s, s01 runs 7s.
     assert.equal(resolved[0].from, 0);
-    assert.equal(resolved[1].from, 7 * 60);
-    assert.equal(resolved[2].from, 16 * 60);
+    assert.equal(resolved[1].from, 3 * 60);
+    assert.equal(resolved[2].from, 10 * 60);
 });
 
 test("distributes a frame budget in proportion to the weights", () => {

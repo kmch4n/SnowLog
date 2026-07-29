@@ -27,7 +27,7 @@ export const S04Import: React.FC = () => {
     const clipFrames = distributeFrames([...CLIP_SECONDS], durationInFrames);
 
     return (
-        <ScreenScene eyebrow={scene.eyebrow} captions={scene.captions}>
+        <ScreenScene eyebrow={scene.eyebrow} captions={scene.captions} enterFrom={1}>
             <Series>
                 {CLIP_SOURCES.map((src, index) => (
                     <Series.Sequence

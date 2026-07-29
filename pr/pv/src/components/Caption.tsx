@@ -31,13 +31,23 @@ export const Caption: React.FC<{
                     config: SPRING_SNAPPY,
                 });
 
+                const remaining = 1 - progress;
+
                 return (
                     <span
                         key={`${character}-${index}`}
                         style={{
                             display: "inline-block",
                             opacity: progress,
-                            transform: `translateY(${(1 - progress) * 28}px)`,
+                            // Rises, slides in from behind the previous letter,
+                            // and resolves out of a blur, so the line arrives
+                            // with some force rather than just fading up.
+                            transform: [
+                                `translateY(${remaining * 34}px)`,
+                                `translateX(${remaining * -26}px)`,
+                                `scale(${1 - remaining * 0.14})`,
+                            ].join(" "),
+                            filter: `blur(${remaining * 7}px)`,
                             whiteSpace: "pre",
                         }}
                     >

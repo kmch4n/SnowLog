@@ -2,16 +2,16 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { SCENES, TOTAL_MIN_SECONDS } from "./script.ts";
 
-test("covers all nine scenes in order", () => {
-    assert.equal(SCENES.length, 9);
+test("covers all ten scenes in order", () => {
+    assert.equal(SCENES.length, 10);
     assert.deepEqual(
         SCENES.map((scene) => scene.id),
-        ["s01", "s02", "s03", "s04", "s05", "s06", "s07", "s08", "s09"],
+        ["s00", "s01", "s02", "s03", "s04", "s05", "s06", "s07", "s08", "s09"],
     );
 });
 
-test("minimum durations add up to the designed 82 seconds", () => {
-    assert.equal(TOTAL_MIN_SECONDS, 82);
+test("minimum durations add up to the designed 85 seconds", () => {
+    assert.equal(TOTAL_MIN_SECONDS, 85);
 });
 
 test("every scene points at its own narration file", () => {
@@ -36,7 +36,6 @@ test("narration text stays within the spoken budget", () => {
 });
 
 test("every scene that shows captions has copy for them", () => {
-    // s01 is deliberately caption-free: it is the full-bleed hook.
     for (const scene of SCENES) {
         if (scene.id === "s01") {
             assert.equal(scene.captions.length, 0);
