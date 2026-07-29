@@ -22,7 +22,7 @@ mkdir -p "$DEST/footage" "$DEST/screen" "$DEST/grid" "$DEST/brand" \
 # supersampled rather than upscaled.
 ffmpeg -y -loglevel error -i "$SRC/滑走動画.mov" \
     -vf "crop=3072:1728:384:100,scale=1920:1080:flags=lanczos" \
-    -r 60 -c:v libx264 -crf 16 -preset slow -pix_fmt yuv420p \
+    -r 60 -c:v libx264 -crf 18 -preset slow -pix_fmt yuv420p \
     -an -movflags +faststart \
     "$DEST/footage/run.mp4"
 
