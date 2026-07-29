@@ -1,36 +1,30 @@
 import { Video } from "@remotion/media";
-import { interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 
-// The screen recordings are 592x1280. Never let SCREEN_HEIGHT exceed that —
-// upscaling a screen capture is immediately visible as mush.
-const SCREEN_HEIGHT = 960;
-const SCREEN_WIDTH = Math.round((SCREEN_HEIGHT * 592) / 1280);
+/**
+ * Apple's official iPhone 17 Pro bezel, from the Product Bezels section of
+ * developer.apple.com/design/resources. The PNG is 1350x2760 with the screen
+ * and the Dynamic Island punched out as transparency, so the frame itself masks
+ * the recording's corners and draws the island — no CSS approximation needed.
+ *
+ * The screen rect was measured from the alpha channel rather than guessed:
+ * 1206x2593 at (72, 84). Keeping these as fractions means the frame can be
+ * displayed at any size without the video drifting out of the cutout.
+ */
+const FRAME_ASPECT = 1350 / 2760;
+const SCREEN_LEFT = 72 / 1350;
+const SCREEN_TOP = 84 / 2760;
+const SCREEN_WIDTH = 1206 / 1350;
+const SCREEN_HEIGHT = 2593 / 2760;
 
-const BEZEL = 11;
-const SCREEN_RADIUS = 46;
-const BODY_RADIUS = SCREEN_RADIUS + BEZEL;
-const BODY_WIDTH = SCREEN_WIDTH + BEZEL * 2;
-
-// Proportions taken from a modern iPhone: the island is roughly 28% of the
-// screen width and sits just under the top bezel.
-const ISLAND_WIDTH = Math.round(SCREEN_WIDTH * 0.28);
-const ISLAND_HEIGHT = 34;
-const ISLAND_TOP = 13;
-
-const BUTTON_DEPTH = 3;
-
-type SideButton = {
-    side: "left" | "right";
-    top: number;
-    height: number;
-};
-
-const SIDE_BUTTONS: readonly SideButton[] = [
-    { side: "left", top: 132, height: 30 },
-    { side: "left", top: 196, height: 62 },
-    { side: "left", top: 272, height: 62 },
-    { side: "right", top: 226, height: 96 },
-];
+/**
+ * The recordings are 592x1280. Displaying the screen area at 960px keeps it a
+ * downscale; anything above 1280 would upscale a screen capture, which reads as
+ * mush immediately.
+ */
+const SCREEN_DISPLAY_HEIGHT = 960;
+const FRAME_HEIGHT = Math.round(SCREEN_DISPLAY_HEIGHT / SCREEN_HEIGHT);
+const FRAME_WIDTH = Math.round(FRAME_HEIGHT * FRAME_ASPECT);
 
 export const DeviceFrame: React.FC<{
     src: string;
@@ -60,41 +54,20 @@ export const DeviceFrame: React.FC<{
             <div
                 style={{
                     position: "relative",
+                    width: FRAME_WIDTH,
+                    height: FRAME_HEIGHT,
                     transform: `rotateY(${rotateY}deg)`,
                     transformStyle: "preserve-3d",
-                    width: BODY_WIDTH,
-                    padding: BEZEL,
-                    borderRadius: BODY_RADIUS,
-                    background: "linear-gradient(150deg, #3A4350 0%, #11161D 42%, #0A0D12 68%, #2B333E 100%)",
-                    boxShadow: [
-                        "0 2px 3px rgba(255,255,255,0.22) inset",
-                        "0 -2px 3px rgba(0,0,0,0.5) inset",
-                        "0 34px 60px rgba(0,0,0,0.55)",
-                        "0 90px 140px rgba(0,0,0,0.45)",
-                    ].join(", "),
+                    filter: "drop-shadow(0 34px 60px rgba(0,0,0,0.55)) drop-shadow(0 90px 140px rgba(0,0,0,0.4))",
                 }}
             >
-                {SIDE_BUTTONS.map((button) => (
-                    <div
-                        key={`${button.side}-${button.top}`}
-                        style={{
-                            position: "absolute",
-                            [button.side]: -BUTTON_DEPTH,
-                            top: button.top,
-                            width: BUTTON_DEPTH + 2,
-                            height: button.height,
-                            borderRadius: 2,
-                            background: "linear-gradient(180deg, #47505C 0%, #232A33 100%)",
-                        }}
-                    />
-                ))}
-
                 <div
                     style={{
-                        position: "relative",
-                        width: SCREEN_WIDTH,
-                        height: SCREEN_HEIGHT,
-                        borderRadius: SCREEN_RADIUS,
+                        position: "absolute",
+                        left: `${SCREEN_LEFT * 100}%`,
+                        top: `${SCREEN_TOP * 100}%`,
+                        width: `${SCREEN_WIDTH * 100}%`,
+                        height: `${SCREEN_HEIGHT * 100}%`,
                         overflow: "hidden",
                         backgroundColor: "#000000",
                     }}
@@ -106,37 +79,23 @@ export const DeviceFrame: React.FC<{
                         playbackRate={playbackRate}
                         muted
                         style={{
-                            width: SCREEN_WIDTH,
-                            height: SCREEN_HEIGHT,
+                            width: "100%",
+                            height: "100%",
                             objectFit: "cover",
                             display: "block",
                         }}
                     />
-
-                    {/* Screen recordings capture the framebuffer, so the cutout
-                        is absent from the source and has to be drawn back on. */}
-                    <div
-                        style={{
-                            position: "absolute",
-                            top: ISLAND_TOP,
-                            left: (SCREEN_WIDTH - ISLAND_WIDTH) / 2,
-                            width: ISLAND_WIDTH,
-                            height: ISLAND_HEIGHT,
-                            borderRadius: ISLAND_HEIGHT / 2,
-                            backgroundColor: "#000000",
-                        }}
-                    />
-
-                    {/* A faint diagonal sheen so the glass reads as glass. */}
-                    <div
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            background:
-                                "linear-gradient(122deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 34%, rgba(255,255,255,0) 66%, rgba(255,255,255,0.045) 100%)",
-                        }}
-                    />
                 </div>
+
+                <Img
+                    src={staticFile("brand/device-frame.png")}
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                    }}
+                />
             </div>
         </div>
     );

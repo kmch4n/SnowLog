@@ -37,6 +37,11 @@ cp "$SRC/ホーム→ダッシュボードに飛ぶ ダッシュボードをス�
 cp "$ROOT/assets/images/icon.png"                        "$DEST/brand/icon.png"
 cp "$ROOT/pr/web/public/images/app-store-badge.svg"      "$DEST/brand/app-store-badge.svg"
 
+# Apple's official device bezel, from the Product Bezels section of
+# developer.apple.com/design/resources. Licensed for marketing your own app;
+# it lives in .temp/ and public/, both untracked, and must not be committed.
+cp "$SRC/iPhone 17 Pro - Deep Blue - Portrait.png"       "$DEST/brand/device-frame.png"
+
 # Tiles for the S2 grid. These are placeholders pulled from the hero footage.
 # Real thumbnails can be dropped into public/grid/ by hand and will NOT be
 # overwritten by a re-run -- pass --regen-grid to deliberately rebuild them.
