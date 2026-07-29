@@ -1,13 +1,14 @@
 ---
-import { githubUrl, type HeroContent, type NavContent } from "../i18n";
+import { githubUrl, type HeroContent, type NavContent, type VideoContent } from "../i18n";
 
 interface Props {
     appStoreUrl: string;
     content: HeroContent;
     nav: NavContent;
+    video: VideoContent;
 }
 
-const { appStoreUrl, content, nav } = Astro.props;
+const { appStoreUrl, content, nav, video } = Astro.props;
 ---
 
 <header class="hero">
@@ -65,5 +66,19 @@ const { appStoreUrl, content, nav } = Astro.props;
                 />
             </div>
         </div>
+    </section>
+
+    <section class="hero-video" aria-labelledby="hero-video-title">
+        <p class="eyebrow">{video.eyebrow}</p>
+        <h2 id="hero-video-title">{video.title}</h2>
+        <video
+            controls
+            preload="none"
+            playsinline
+            poster="/videos/snowlog-pv-poster.jpg"
+            aria-label={video.ariaLabel}
+        >
+            <source src="/videos/snowlog-pv-720p.mp4" type="video/mp4" />
+        </video>
     </section>
 </header>
