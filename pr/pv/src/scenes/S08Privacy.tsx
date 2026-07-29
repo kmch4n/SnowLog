@@ -7,6 +7,8 @@ const DOT_COUNT = 28;
 
 // Wall-clock, fps-independent: convert with `fps` at the use site, never hardcode a frame count.
 const PULL_DURATION_IN_SECONDS = 2.4;
+// Intentionally 2/3, not a rounder value: this exactly reproduces the
+// original delayInFrames={40} at 60fps (40 / 60 = 2/3).
 const CAPTION_DELAY_IN_SECONDS = 2 / 3;
 
 export const S08Privacy: React.FC = () => {
