@@ -37,7 +37,8 @@ export const DeviceFrame: React.FC<{
     trimBefore?: number;
     trimAfter?: number;
     tiltDegrees?: number;
-}> = ({ src, trimBefore, trimAfter, tiltDegrees = 8 }) => {
+    playbackRate?: number;
+}> = ({ src, trimBefore, trimAfter, tiltDegrees = 8, playbackRate }) => {
     const frame = useCurrentFrame();
     const { durationInFrames } = useVideoConfig();
 
@@ -102,6 +103,7 @@ export const DeviceFrame: React.FC<{
                         src={staticFile(src)}
                         trimBefore={trimBefore}
                         trimAfter={trimAfter}
+                        playbackRate={playbackRate}
                         muted
                         style={{
                             width: SCREEN_WIDTH,

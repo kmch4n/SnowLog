@@ -67,6 +67,33 @@ export const totalFrames = (resolved: readonly ResolvedScene[]): number =>
     resolved.reduce((total, scene) => total + scene.durationInFrames, 0);
 
 /**
+ * Splits a frame budget across weighted parts so the parts always sum back to
+ * the budget exactly.
+ *
+ * Scenes that chain several clips have to fill their whole `Sequence`; if the
+ * parts were rounded independently, the drift would leave a gap at the end of
+ * the scene where nothing renders. Rounding cumulative edges instead of
+ * individual widths keeps the total exact no matter how the weights divide.
+ */
+export const distributeFrames = (
+    weights: readonly number[],
+    budgetInFrames: number,
+): number[] => {
+    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+    let consumedWeight = 0;
+    let previousEdge = 0;
+
+    return weights.map((weight) => {
+        consumedWeight += weight;
+        const edge = Math.round((consumedWeight / totalWeight) * budgetInFrames);
+        const span = edge - previousEdge;
+        previousEdge = edge;
+        return span;
+    });
+};
+
+/**
  * Reads the real length of each narration file. A missing file is the
  * designed-for state before its voice-over has been recorded, and is skipped
  * silently so an incomplete voice-over set never blocks a render. A file

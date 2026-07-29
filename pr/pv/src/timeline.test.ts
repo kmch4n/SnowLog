@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { SCENES } from "./script.ts";
-import { resolveScenes, totalFrames } from "./timeline.ts";
+import { distributeFrames, resolveScenes, totalFrames } from "./timeline.ts";
 
 test("falls back to the minimum duration when narration is missing", () => {
     const resolved = resolveScenes(SCENES, new Map(), 60);
@@ -39,4 +39,30 @@ test("lays scenes out back to back", () => {
     assert.equal(resolved[0].from, 0);
     assert.equal(resolved[1].from, 7 * 60);
     assert.equal(resolved[2].from, 14 * 60);
+});
+
+test("distributes a frame budget in proportion to the weights", () => {
+    assert.deepEqual(distributeFrames([3.1, 1.6, 6.3], 660), [186, 96, 378]);
+});
+
+test("distributed parts always sum back to the budget exactly", () => {
+    // 7 equal parts of 1000 frames is 142.857..., which drifts by 1 frame if
+    // each part is rounded on its own. The scene would then end on a frame
+    // with nothing rendered in it.
+    const parts = distributeFrames([1, 1, 1, 1, 1, 1, 1], 1000);
+
+    assert.equal(
+        parts.reduce((sum, part) => sum + part, 0),
+        1000,
+    );
+    assert.equal(parts.length, 7);
+});
+
+test("distributes a stretched budget without losing a frame", () => {
+    const parts = distributeFrames([4.9, 6.1], 731);
+
+    assert.equal(
+        parts.reduce((sum, part) => sum + part, 0),
+        731,
+    );
 });
