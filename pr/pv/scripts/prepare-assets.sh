@@ -10,7 +10,22 @@ DEST="$ROOT/pr/pv/public"
 mkdir -p "$DEST/footage" "$DEST/screen" "$DEST/grid" "$DEST/brand" \
          "$DEST/audio/narration"
 
-cp "$SRC/滑走動画.MP4"                                   "$DEST/footage/run.mp4"
+# The hero footage is 4K HEVC at 59.94fps with an audio track. Transcode it
+# rather than copying: headless Chrome cannot be relied on to decode HEVC, the
+# composition is 60fps, and the film carries its own narration so the camera
+# audio must go.
+#
+# The crop drops the bottom strip, which carries a burned-in "Insta360 Ace Pro 2"
+# watermark — the only non-SnowLog brand mark that would otherwise appear in the
+# film. 3072x1728 is 16:9, and the window sits above the watermark at y=1872.
+# Even after cropping, 3072px still downsamples to 1920px, so the result is
+# supersampled rather than upscaled.
+ffmpeg -y -loglevel error -i "$SRC/滑走動画.mov" \
+    -vf "crop=3072:1728:384:100,scale=1920:1080:flags=lanczos" \
+    -r 60 -c:v libx264 -crf 16 -preset slow -pix_fmt yuv420p \
+    -an -movflags +faststart \
+    "$DEST/footage/run.mp4"
+
 cp "$SRC/ホーム→インポート→まとめてインポート.MP4"        "$DEST/screen/import-01.mp4"
 cp "$SRC/ビデオを選択→読み込みへ.MP4"                     "$DEST/screen/import-02.mp4"
 cp "$SRC/読み込み→スキー場サジェスト.MP4"                 "$DEST/screen/import-03.mp4"
