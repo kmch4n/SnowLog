@@ -7,7 +7,7 @@ test("falls back to the minimum duration when narration is missing", () => {
     const resolved = resolveScenes(SCENES, new Map(), 60);
 
     assert.equal(resolved[0].durationInFrames, 3 * 60);
-    assert.equal(totalFrames(resolved), 85 * 60);
+    assert.equal(totalFrames(resolved), 91 * 60);
 });
 
 test("stretches a scene when narration plus tail exceeds the minimum", () => {

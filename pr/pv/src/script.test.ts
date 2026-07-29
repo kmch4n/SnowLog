@@ -10,8 +10,8 @@ test("covers all ten scenes in order", () => {
     );
 });
 
-test("minimum durations add up to the designed 85 seconds", () => {
-    assert.equal(TOTAL_MIN_SECONDS, 85);
+test("minimum durations add up to the designed 91 seconds", () => {
+    assert.equal(TOTAL_MIN_SECONDS, 91);
 });
 
 test("every scene points at its own narration file", () => {
