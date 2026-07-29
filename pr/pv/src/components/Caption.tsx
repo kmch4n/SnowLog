@@ -3,7 +3,8 @@ import { Palette } from "../theme/colors.ts";
 import { SPRING_SNAPPY } from "../theme/springs.ts";
 import { fontFamily, TYPE } from "../theme/typography.ts";
 
-const FRAMES_PER_CHARACTER = 2;
+// Wall-clock, fps-independent: convert with `fps` at the use site, never hardcode a frame count.
+const SECONDS_PER_CHARACTER = 0.06;
 
 export const Caption: React.FC<{
     text: string;
@@ -25,7 +26,7 @@ export const Caption: React.FC<{
         >
             {Array.from(text).map((character, index) => {
                 const progress = spring({
-                    frame: frame - delayInFrames - index * FRAMES_PER_CHARACTER,
+                    frame: frame - delayInFrames - index * SECONDS_PER_CHARACTER * fps,
                     fps,
                     config: SPRING_SNAPPY,
                 });
