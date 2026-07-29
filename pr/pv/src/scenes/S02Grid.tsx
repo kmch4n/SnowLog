@@ -1,9 +1,8 @@
 import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { Caption } from "../components/Caption.tsx";
-import { getScene } from "../script.ts";
+import { getScene, GRID_FRAME_COUNT } from "../script.ts";
 import { Palette } from "../theme/colors.ts";
 
-const GRID_FRAME_COUNT = 15;
 const COLUMNS = 6;
 const ROWS = 8;
 const TILE_WIDTH = 300;

@@ -115,6 +115,15 @@ export const SCENES: readonly SceneSpec[] = [
     },
 ] as const;
 
+/**
+ * How many tiles sit in `public/grid/`, named `frame-01.jpg` upward with no
+ * gaps. The scene cannot read the filesystem — it runs in the browser — so this
+ * has to be stated. `prepare-assets.sh` prints the real count on every run; if
+ * the two disagree the render fails loudly on a missing image rather than
+ * quietly dropping a tile.
+ */
+export const GRID_FRAME_COUNT = 15;
+
 export const TOTAL_MIN_SECONDS = SCENES.reduce(
     (total, scene) => total + scene.minDurationInSeconds,
     0,

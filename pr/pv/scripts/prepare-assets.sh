@@ -37,9 +37,25 @@ cp "$SRC/ホーム→ダッシュボードに飛ぶ ダッシュボードをス�
 cp "$ROOT/assets/images/icon.png"                        "$DEST/brand/icon.png"
 cp "$ROOT/pr/web/public/images/app-store-badge.svg"      "$DEST/brand/app-store-badge.svg"
 
-# 15 stills evenly spaced across the 7.7s run footage, for the S2 grid.
-ffmpeg -y -loglevel error -i "$DEST/footage/run.mp4" \
-    -vf "fps=2,scale=540:-1" -frames:v 15 -q:v 3 \
-    "$DEST/grid/frame-%02d.jpg"
+# Tiles for the S2 grid. These are placeholders pulled from the hero footage.
+# Real thumbnails can be dropped into public/grid/ by hand and will NOT be
+# overwritten by a re-run -- pass --regen-grid to deliberately rebuild them.
+GRID_PLACEHOLDER_COUNT=15
+
+if [ "${1:-}" = "--regen-grid" ] || [ -z "$(ls -A "$DEST/grid" 2>/dev/null)" ]; then
+    rm -f "$DEST"/grid/frame-*.jpg
+    ffmpeg -y -loglevel error -i "$DEST/footage/run.mp4" \
+        -vf "fps=2,scale=540:-1" -frames:v "$GRID_PLACEHOLDER_COUNT" -q:v 3 \
+        "$DEST/grid/frame-%02d.jpg"
+else
+    echo "grid/ already has tiles; left untouched (pass --regen-grid to rebuild)"
+fi
+
+TILE_COUNT="$(find "$DEST/grid" -name 'frame-*.jpg' | wc -l)"
+if [ "$TILE_COUNT" -eq 0 ]; then
+    echo "ERROR: no tiles found in $DEST/grid" >&2
+    exit 1
+fi
 
 echo "Assets prepared in $DEST"
+echo "grid/ holds $TILE_COUNT tiles — GRID_FRAME_COUNT in src/script.ts must match"
