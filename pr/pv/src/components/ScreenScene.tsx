@@ -39,7 +39,21 @@ export const ScreenScene: React.FC<{
                         />
                     ))}
                 </div>
-                <div style={{ height: "100%" }}>{children}</div>
+                {/* `position: relative` is load-bearing. Remotion's <Series.Sequence>
+                    and <AbsoluteFill> position themselves against the nearest
+                    positioned ancestor; without it they escape this column and
+                    anchor to the 1920x1080 scene root, painting over the copy. */}
+                <div
+                    style={{
+                        position: "relative",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}
+                >
+                    {children}
+                </div>
             </div>
         </AbsoluteFill>
     );
