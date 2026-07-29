@@ -40,7 +40,10 @@ export const totalFrames = (resolved: readonly ResolvedScene[]): number =>
 
 /**
  * Reads the real length of each narration file. Missing files are skipped so
- * that an incomplete voice-over set never blocks a render.
+ * that an incomplete voice-over set never blocks a render, but every failure
+ * is logged so a corrupted or misnamed file — as opposed to one that simply
+ * has not been recorded yet — is still discoverable. Without this warning a
+ * truncated scene looks identical to the intended pre-recording state.
  */
 export const measureNarration = async (
     scenes: readonly SceneSpec[],
@@ -55,7 +58,11 @@ export const measureNarration = async (
                     }),
                 });
                 return [scene.id, await input.computeDuration()];
-            } catch {
+            } catch (error) {
+                console.warn(
+                    `[timeline] Failed to measure narration for ${scene.id} ` +
+                        `(${scene.narrationFile}): ${error}`,
+                );
                 return null;
             }
         }),

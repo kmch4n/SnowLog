@@ -17,6 +17,16 @@ test("stretches a scene when narration plus tail exceeds the minimum", () => {
     assert.equal(resolved[0].durationInFrames, Math.ceil(9.5 * 60));
 });
 
+test("rounds a fractional frame count up, not down or to nearest", () => {
+    // s01 has a 1.5s tail. 7.02s of speech needs 8.52s, i.e.
+    // 8.52 * 60 = 511.2 frames. The fractional part (.2) is below .5, so
+    // Math.round and Math.floor both land on 511 while only Math.ceil
+    // reaches 512 -- this is the only fixture that can tell them apart.
+    const resolved = resolveScenes(SCENES, new Map([["s01", 7.02]]), 60);
+
+    assert.equal(resolved[0].durationInFrames, 512);
+});
+
 test("keeps the minimum when narration plus tail is shorter", () => {
     const resolved = resolveScenes(SCENES, new Map([["s01", 2]]), 60);
 
