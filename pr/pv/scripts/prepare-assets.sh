@@ -47,19 +47,24 @@ cp "$SRC/iPhone 17 Pro - Deep Blue - Portrait.png"       "$DEST/brand/device-fra
 python "$(dirname "$0")/make-screen-mask.py" \
     "$DEST/brand/device-frame.png" "$DEST/brand/device-screen-mask.png"
 
-# Tiles for the S2 grid. These are placeholders pulled from the hero footage.
-# Real thumbnails can be dropped into public/grid/ by hand and will NOT be
-# overwritten by a re-run -- pass --regen-grid to deliberately rebuild them.
-GRID_PLACEHOLDER_COUNT=15
+# Tiles for the S2 grid. The photos come from .temp/ like every other raw
+# asset, so public/grid/ is purely generated -- drop replacements in .temp/ and
+# re-run rather than hand-placing files here.
+rm -f "$DEST"/grid/frame-*.jpg
 
-if [ "${1:-}" = "--regen-grid" ] || [ -z "$(ls -A "$DEST/grid" 2>/dev/null)" ]; then
-    rm -f "$DEST"/grid/frame-*.jpg
-    ffmpeg -y -loglevel error -i "$DEST/footage/run.mp4" \
-        -vf "fps=2,scale=540:-1" -frames:v "$GRID_PLACEHOLDER_COUNT" -q:v 3 \
-        "$DEST/grid/frame-%02d.jpg"
-else
-    echo "grid/ already has tiles; left untouched (pass --regen-grid to rebuild)"
-fi
+tile_index=1
+for photo in "$SRC"/S__*.jpg; do
+    [ -e "$photo" ] || continue
+    ffmpeg -y -loglevel error -i "$photo" -vf "scale=540:-1" -q:v 3 \
+        "$(printf '%s/grid/frame-%02d.jpg' "$DEST" "$tile_index")"
+    tile_index=$((tile_index + 1))
+done
+
+# One tile from the opening run, so the grid reads as "your own footage" rather
+# than a stock set the viewer has not seen before.
+ffmpeg -y -loglevel error -ss 5 -i "$DEST/footage/run.mp4" -frames:v 1 \
+    -vf "scale=540:-1" -q:v 3 \
+    "$(printf '%s/grid/frame-%02d.jpg' "$DEST" "$tile_index")"
 
 TILE_COUNT="$(find "$DEST/grid" -name 'frame-*.jpg' | wc -l)"
 if [ "$TILE_COUNT" -eq 0 ]; then

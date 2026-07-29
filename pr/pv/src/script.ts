@@ -122,7 +122,7 @@ export const SCENES: readonly SceneSpec[] = [
  * the two disagree the render fails loudly on a missing image rather than
  * quietly dropping a tile.
  */
-export const GRID_FRAME_COUNT = 15;
+export const GRID_FRAME_COUNT = 8;
 
 export const TOTAL_MIN_SECONDS = SCENES.reduce(
     (total, scene) => total + scene.minDurationInSeconds,

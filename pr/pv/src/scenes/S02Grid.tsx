@@ -1,10 +1,12 @@
-import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, interpolate, random, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { Caption } from "../components/Caption.tsx";
 import { getScene, GRID_FRAME_COUNT } from "../script.ts";
 import { Palette } from "../theme/colors.ts";
+import { tileOrder } from "../tiles.ts";
 
 const COLUMNS = 6;
 const ROWS = 8;
+const TILE_COUNT = COLUMNS * ROWS;
 const TILE_WIDTH = 300;
 const TILE_HEIGHT = 190;
 const GAP = 18;
@@ -13,10 +15,15 @@ const GAP = 18;
 const CAPTION_DELAY_IN_SECONDS = 0.5;
 const CAPTION_STEP_IN_SECONDS = 0.9;
 
-const tileSrc = (index: number): string => {
-    const frameNumber = (index % GRID_FRAME_COUNT) + 1;
-    return staticFile(`grid/frame-${String(frameNumber).padStart(2, "0")}.jpg`);
-};
+const tileSrc = (source: number): string =>
+    staticFile(`grid/frame-${String(source + 1).padStart(2, "0")}.jpg`);
+
+/**
+ * Computed once at module scope rather than per render. It depends on nothing
+ * but the grid shape, and Remotion renders frames in parallel — recomputing it
+ * per frame would be wasted work at best and a flicker risk at worst.
+ */
+const TILE_SOURCES = tileOrder(TILE_COUNT, GRID_FRAME_COUNT, COLUMNS);
 
 export const S02Grid: React.FC = () => {
     const scene = getScene("s02");
@@ -37,16 +44,18 @@ export const S02Grid: React.FC = () => {
                         transformStyle: "preserve-3d",
                     }}
                 >
-                    {new Array(COLUMNS * ROWS).fill(true).map((_, index) => (
+                    {TILE_SOURCES.map((source, index) => (
                         <Img
                             key={index}
-                            src={tileSrc(index)}
+                            src={tileSrc(source)}
                             style={{
                                 width: TILE_WIDTH,
                                 height: TILE_HEIGHT,
                                 objectFit: "cover",
                                 borderRadius: 10,
-                                opacity: 0.55,
+                                // Scattered a little so the grid does not read
+                                // as a flat, uniform sheet.
+                                opacity: 0.42 + random(`tile-opacity-${index}`) * 0.26,
                             }}
                         />
                     ))}
