@@ -9,13 +9,18 @@ const FPS = 60;
 
 const calculateMetadata: CalculateMetadataFunction<SnowLogPvProps> = async () => {
     const narrationSeconds = await measureNarration(SCENES);
-    const scenes = resolveScenes(SCENES, narrationSeconds, FPS);
+    // Carry the per-scene answer through instead of collapsing it into one
+    // global flag: narration is recorded a scene at a time, so each scene
+    // must gate its own `<Audio>` on whether its own file was found.
+    const scenes = resolveScenes(SCENES, narrationSeconds, FPS).map((scene) => ({
+        ...scene,
+        hasNarration: narrationSeconds.has(scene.id),
+    }));
 
     return {
         durationInFrames: totalFrames(scenes),
         props: {
             scenes,
-            hasNarration: narrationSeconds.size > 0,
             hasBgm: await staticFileExists("audio/bgm.mp3"),
         },
     };
@@ -30,7 +35,7 @@ export const RemotionRoot: React.FC = () => {
             fps={FPS}
             width={1920}
             height={1080}
-            defaultProps={{ scenes: [], hasNarration: false, hasBgm: false }}
+            defaultProps={{ scenes: [], hasBgm: false }}
             calculateMetadata={calculateMetadata}
         />
     );

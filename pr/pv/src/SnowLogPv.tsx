@@ -14,10 +14,20 @@ import { Palette } from "./theme/colors.ts";
 import type { SceneId } from "./script.ts";
 import type { ResolvedScene } from "./timeline.ts";
 
-export type SnowLogPvProps = {
-    scenes: ResolvedScene[];
-    /** True when at least one narration file was found. */
+/**
+ * A scene with its own narration-availability flag attached, computed once
+ * in `calculateMetadata` from the `Map<SceneId, number>` that
+ * `measureNarration` returns. This must stay per-scene: narration is
+ * recorded a scene at a time, so a single global flag would make every
+ * scene render an `<Audio>` pointing at a file that does not exist yet as
+ * soon as the first narration file lands.
+ */
+export type SceneWithNarration = ResolvedScene & {
     hasNarration: boolean;
+};
+
+export type SnowLogPvProps = {
+    scenes: SceneWithNarration[];
     hasBgm: boolean;
 };
 
@@ -42,8 +52,12 @@ const BGM_DUCKED_VOLUME = 0.09;
 const BGM_FADE_IN_SECONDS = 1;
 const BGM_FADE_OUT_LEAD_SECONDS = 2;
 
-export const SnowLogPv: React.FC<SnowLogPvProps> = ({ scenes, hasNarration, hasBgm }) => {
+export const SnowLogPv: React.FC<SnowLogPvProps> = ({ scenes, hasBgm }) => {
     const { fps, durationInFrames } = useVideoConfig();
+    // Ducking is a whole-track decision (there is only one BGM track), so it
+    // asks "does narration exist anywhere in the film", unlike the per-scene
+    // `<Audio>` gate below.
+    const hasAnyNarration = scenes.some((scene) => scene.hasNarration);
 
     return (
         <AbsoluteFill style={{ backgroundColor: Palette.backdrop }}>
@@ -59,7 +73,7 @@ export const SnowLogPv: React.FC<SnowLogPvProps> = ({ scenes, hasNarration, hasB
                     >
                         <Scene />
                         <FlashCut />
-                        {hasNarration ? <Audio src={staticFile(scene.narrationFile)} /> : null}
+                        {scene.hasNarration ? <Audio src={staticFile(scene.narrationFile)} /> : null}
                     </Sequence>
                 );
             })}
@@ -72,6 +86,11 @@ export const SnowLogPv: React.FC<SnowLogPvProps> = ({ scenes, hasNarration, hasB
                     volume={(f) =>
                         interpolate(
                             f,
+                            // Strictly increasing only because `resolveScenes`
+                            // (timeline.ts) guarantees the composition is at
+                            // least `TOTAL_MIN_SECONDS * fps` frames long
+                            // (script.ts). If that floor ever drops below a
+                            // few seconds, this range stops being valid.
                             [
                                 0,
                                 fps * BGM_FADE_IN_SECONDS,
@@ -80,8 +99,8 @@ export const SnowLogPv: React.FC<SnowLogPvProps> = ({ scenes, hasNarration, hasB
                             ],
                             [
                                 0,
-                                hasNarration ? BGM_DUCKED_VOLUME : BGM_BASE_VOLUME,
-                                hasNarration ? BGM_DUCKED_VOLUME : BGM_BASE_VOLUME,
+                                hasAnyNarration ? BGM_DUCKED_VOLUME : BGM_BASE_VOLUME,
+                                hasAnyNarration ? BGM_DUCKED_VOLUME : BGM_BASE_VOLUME,
                                 0,
                             ],
                             { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
