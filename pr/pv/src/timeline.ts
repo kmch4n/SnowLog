@@ -1,38 +1,30 @@
-import { access } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { Input, ALL_FORMATS, UrlSource } from "mediabunny";
 import { staticFile } from "remotion";
 import type { SceneId, SceneSpec } from "./script.ts";
 
-/** The `public/` folder that `staticFile()` paths are relative to. */
-const PUBLIC_DIR = path.join(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "..",
-    "public",
-);
-
 /**
- * Checks whether a `staticFile()`-style path (relative to `public/`) exists
- * on disk. Reusable for any asset under `public/`, not just narration audio
- * -- e.g. the same check is needed for `audio/bgm.mp3`.
+ * Checks whether a `staticFile()`-style path (relative to `public/`) is
+ * reachable. Reusable for any asset under `public/`, not just narration
+ * audio -- e.g. the same check is needed for `audio/bgm.mp3`.
  *
- * A filesystem check, rather than an HTTP probe, because `staticFile()`
- * returns a host-relative path (e.g. "/audio/narration/s01.wav") outside of
- * an active Remotion render or Studio session. `fetch()` against that path
- * throws immediately ("Failed to parse URL") in a plain Node process --
- * exactly the context this helper (and its tests) must also run in -- so an
- * HTTP HEAD probe cannot tell "missing" apart from "can't reach the server".
- * Reading the file directly off disk works the same way in every context
- * `measureNarration` actually runs in (Node test scripts, Remotion's
- * Node-based `calculateMetadata`, and real renders).
+ * `calculateMetadata` -- the only real caller of `measureNarration` -- runs
+ * in a browser context: the Studio evaluates it in the page, and
+ * `remotion render` evaluates it in headless Chrome. It is never evaluated
+ * in plain Node, so this module must stay free of any Node.js-only imports
+ * and must not do anything at module-evaluation time that assumes a
+ * filesystem. A
+ * HEAD request against `staticFile()`'s URL is what actually works in that
+ * environment: a non-ok response, or a throw (asset unreachable for any
+ * reason), both mean "not recorded yet" and are treated identically.
  */
 export const staticFileExists = async (
     relativePath: string,
 ): Promise<boolean> => {
     try {
-        await access(path.join(PUBLIC_DIR, relativePath));
-        return true;
+        const response = await fetch(staticFile(relativePath), {
+            method: "HEAD",
+        });
+        return response.ok;
     } catch {
         return false;
     }
