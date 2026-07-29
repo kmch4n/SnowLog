@@ -211,3 +211,29 @@ proxy のコールバックが全クエリを記録するので、**往復回数
 スキーマ・インポート・エクスポート・ダッシュボードに触ったら、`migrate → import → search → export` の全フローを通す。
 `*.web.tsx` に触ったときだけ Web も確認する。
 PR 前には `npm run lint` も実行する。
+
+## `pr/pv`（PV）は別のテスト面
+
+2026-07-29 に `pr/pv/`（Remotion 製の紹介映像）が入った。`pr/web` と同じく**独立した npm プロジェクト**で、
+テストの走らせ方がリポジトリ本体と違う。上の `scripts/tests/*.test.cjs` の話は一切当てはまらない。
+
+```bash
+cd pr/pv
+node --test "src/*.test.ts"   # 15 件
+npx tsc --noEmit
+npx remotion compositions     # 尺が意図どおりか
+```
+
+- `tsc` へのコンパイルは不要。**Node 25 の型ストリッピングで `.ts` を直接実行する。**
+  そのため `src` 内の相対 import は**必ず拡張子付き**（`./script.ts`）で書く。
+- **緑のテストは何も保証しない。** ここで実際に起きた事故:
+  - `tsc` も 15 件のテストも通ったまま、テロップがスマホのモックに隠れて 78 秒中 33 秒が読めなかった。
+  - `timeline.ts` に `node:fs` が混入し、Studio が起動しなくなる状態でテストは全て緑だった。
+    `calculateMetadata` は**ブラウザ文脈**（Studio はページ内、レンダリングはヘッドレス Chrome）で
+    評価される。`Root.tsx` から辿れるモジュールに `node:` / `import.meta.url` / `process` を入れてはいけない。
+    テストは素の Node で走るので、この壊れ方は**構造的に検出できない**。
+  - 動画の1フレーム目が真っ白なまま気づかれなかった。
+- したがって**静止画を出して目視する**のが主要な検証手段:
+  `npx remotion still SnowLogPv out/x.png --frame=N`。シーンごとの Composition も登録済み。
+- 素材は `.temp/`（gitignore）から `bash pr/pv/scripts/prepare-assets.sh` で生成する。
+  `pr/pv/public/` は README 以外追跡しない。
