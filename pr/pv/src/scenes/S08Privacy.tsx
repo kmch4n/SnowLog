@@ -1,5 +1,6 @@
 import { AbsoluteFill, Img, interpolate, random, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { Caption } from "../components/Caption.tsx";
+import { getScene } from "../script.ts";
 import { Palette } from "../theme/colors.ts";
 import { SPRING_SMOOTH } from "../theme/springs.ts";
 
@@ -10,8 +11,10 @@ const PULL_DURATION_IN_SECONDS = 2.4;
 // Intentionally 2/3, not a rounder value: this exactly reproduces the
 // original delayInFrames={40} at 60fps (40 / 60 = 2/3).
 const CAPTION_DELAY_IN_SECONDS = 2 / 3;
+const CAPTION_STEP_IN_SECONDS = 0.6;
 
 export const S08Privacy: React.FC = () => {
+    const scene = getScene("s08");
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
 
@@ -50,12 +53,24 @@ export const S08Privacy: React.FC = () => {
                 src={staticFile("brand/icon.png")}
                 style={{ width: 200, height: 200, borderRadius: 44 }}
             />
-            <AbsoluteFill style={{ justifyContent: "flex-end", padding: 120 }}>
-                <Caption
-                    text="オフラインファースト"
-                    delayInFrames={Math.round(CAPTION_DELAY_IN_SECONDS * fps)}
-                    align="center"
-                />
+            <AbsoluteFill
+                style={{
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    padding: 120,
+                    gap: 18,
+                }}
+            >
+                {scene.captions.map((caption, index) => (
+                    <Caption
+                        key={caption}
+                        text={caption}
+                        delayInFrames={Math.round(
+                            (CAPTION_DELAY_IN_SECONDS + index * CAPTION_STEP_IN_SECONDS) * fps,
+                        )}
+                        align="center"
+                    />
+                ))}
             </AbsoluteFill>
         </AbsoluteFill>
     );

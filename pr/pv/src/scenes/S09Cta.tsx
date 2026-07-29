@@ -1,5 +1,6 @@
 import { AbsoluteFill, Img, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { SnowParticles } from "../components/SnowParticles.tsx";
+import { getScene } from "../script.ts";
 import { Palette } from "../theme/colors.ts";
 import { SPRING_SMOOTH } from "../theme/springs.ts";
 import { fontFamily, TYPE } from "../theme/typography.ts";
@@ -8,6 +9,7 @@ import { fontFamily, TYPE } from "../theme/typography.ts";
 const BADGE_DELAY_IN_SECONDS = 0.4;
 
 export const S09Cta: React.FC = () => {
+    const scene = getScene("s09");
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
 
@@ -40,9 +42,14 @@ export const S09Cta: React.FC = () => {
                     transform: `translateY(${(1 - badgeIn) * 24}px)`,
                 }}
             />
-            <div style={{ fontFamily, color: Palette.textSecondary, ...TYPE.label }}>
-                iOS 16+ / 無料
-            </div>
+            {scene.captions.map((caption) => (
+                <div
+                    key={caption}
+                    style={{ fontFamily, color: Palette.textSecondary, ...TYPE.label }}
+                >
+                    {caption}
+                </div>
+            ))}
         </AbsoluteFill>
     );
 };

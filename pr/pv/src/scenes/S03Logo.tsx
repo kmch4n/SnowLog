@@ -1,5 +1,6 @@
 import { AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { SnowParticles } from "../components/SnowParticles.tsx";
+import { getScene } from "../script.ts";
 import { Palette } from "../theme/colors.ts";
 import { SPRING_SMOOTH } from "../theme/springs.ts";
 import { fontFamily, TYPE } from "../theme/typography.ts";
@@ -9,6 +10,7 @@ const WIPE_DELAY_IN_SECONDS = 0.3;
 const WIPE_DURATION_IN_SECONDS = 0.8;
 
 export const S03Logo: React.FC = () => {
+    const scene = getScene("s03");
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
 
@@ -50,7 +52,7 @@ export const S03Logo: React.FC = () => {
                     maskImage: `linear-gradient(to right, #000 ${wipe}%, transparent ${wipe}%)`,
                 }}
             >
-                滑走動画を、練習ログへ。
+                {scene.captions[0]}
             </div>
         </AbsoluteFill>
     );

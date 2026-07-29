@@ -7,7 +7,7 @@ test("falls back to the minimum duration when narration is missing", () => {
     const resolved = resolveScenes(SCENES, new Map(), 60);
 
     assert.equal(resolved[0].durationInFrames, 7 * 60);
-    assert.equal(totalFrames(resolved), 78 * 60);
+    assert.equal(totalFrames(resolved), 82 * 60);
 });
 
 test("stretches a scene when narration plus tail exceeds the minimum", () => {
@@ -36,9 +36,10 @@ test("keeps the minimum when narration plus tail is shorter", () => {
 test("lays scenes out back to back", () => {
     const resolved = resolveScenes(SCENES, new Map(), 60);
 
+    // s01 runs 7s and s02 runs 9s.
     assert.equal(resolved[0].from, 0);
     assert.equal(resolved[1].from, 7 * 60);
-    assert.equal(resolved[2].from, 14 * 60);
+    assert.equal(resolved[2].from, 16 * 60);
 });
 
 test("distributes a frame budget in proportion to the weights", () => {

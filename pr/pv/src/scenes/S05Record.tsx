@@ -1,6 +1,7 @@
 import { useVideoConfig } from "remotion";
 import { DeviceFrame } from "../components/DeviceFrame.tsx";
 import { ScreenScene } from "../components/ScreenScene.tsx";
+import { getScene } from "../script.ts";
 
 /** `screen/detail.mp4` runs 16.3s; the first 2s are the tap that opens it. */
 const SOURCE_SECONDS = 16.3;
@@ -8,6 +9,7 @@ const START_SECONDS = 2;
 const AVAILABLE_SECONDS = SOURCE_SECONDS - START_SECONDS;
 
 export const S05Record: React.FC = () => {
+    const scene = getScene("s05");
     const { fps, durationInFrames } = useVideoConfig();
 
     // Unlike the chained scenes, this one has spare footage past its designed
@@ -19,7 +21,7 @@ export const S05Record: React.FC = () => {
         sceneSeconds > AVAILABLE_SECONDS ? AVAILABLE_SECONDS / sceneSeconds : 1;
 
     return (
-        <ScreenScene eyebrow="RECORD" captions={["技術・タグ・メモ"]}>
+        <ScreenScene eyebrow={scene.eyebrow} captions={scene.captions}>
             <DeviceFrame
                 src="screen/detail.mp4"
                 trimBefore={Math.round(START_SECONDS * fps)}

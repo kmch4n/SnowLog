@@ -1,6 +1,7 @@
 import { Series, useVideoConfig } from "remotion";
 import { DeviceFrame } from "../components/DeviceFrame.tsx";
 import { ScreenScene } from "../components/ScreenScene.tsx";
+import { getScene } from "../script.ts";
 import { distributeFrames } from "../timeline.ts";
 
 /** Natural length of each recording, in seconds, in playback order. */
@@ -14,6 +15,7 @@ const CLIP_SOURCES = [
 ] as const;
 
 export const S04Import: React.FC = () => {
+    const scene = getScene("s04");
     const { fps, durationInFrames } = useVideoConfig();
 
     // The scene grows when its narration outruns the designed minimum. The
@@ -25,7 +27,7 @@ export const S04Import: React.FC = () => {
     const clipFrames = distributeFrames([...CLIP_SECONDS], durationInFrames);
 
     return (
-        <ScreenScene eyebrow="IMPORT" captions={["まとめて取り込む", "378のゲレンデを収録"]}>
+        <ScreenScene eyebrow={scene.eyebrow} captions={scene.captions}>
             <Series>
                 {CLIP_SOURCES.map((src, index) => (
                     <Series.Sequence

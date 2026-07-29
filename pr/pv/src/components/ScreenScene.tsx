@@ -8,7 +8,7 @@ const CAPTION_BASE_DELAY_IN_SECONDS = 0.35;
 const CAPTION_STEP_IN_SECONDS = 0.7;
 
 export const ScreenScene: React.FC<{
-    eyebrow: string;
+    eyebrow?: string;
     captions: readonly string[];
     children: React.ReactNode;
 }> = ({ eyebrow, captions, children }) => {
@@ -26,9 +26,11 @@ export const ScreenScene: React.FC<{
                 }}
             >
                 <div style={{ display: "grid", gap: 28 }}>
-                    <div style={{ fontFamily, color: Palette.gold, ...TYPE.label }}>
-                        {eyebrow}
-                    </div>
+                    {eyebrow === undefined ? null : (
+                        <div style={{ fontFamily, color: Palette.gold, ...TYPE.label }}>
+                            {eyebrow}
+                        </div>
+                    )}
                     {captions.map((caption, index) => (
                         <Caption
                             key={caption}
