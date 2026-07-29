@@ -3,28 +3,43 @@ import { Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "r
 
 /**
  * Apple's official iPhone 17 Pro bezel, from the Product Bezels section of
- * developer.apple.com/design/resources. The PNG is 1350x2760 with the screen
- * and the Dynamic Island punched out as transparency, so the frame itself masks
- * the recording's corners and draws the island — no CSS approximation needed.
+ * developer.apple.com/design/resources.
  *
- * The screen rect was measured from the alpha channel rather than guessed:
- * 1206x2593 at (72, 84). Keeping these as fractions means the frame can be
- * displayed at any size without the video drifting out of the cutout.
+ * The screen rect below is not eyeballed — `scripts/make-screen-mask.py` reads
+ * it out of the bezel's alpha channel and prints it on every asset build, so it
+ * can be checked against these numbers. An earlier hand-measurement was wrong
+ * by 15px at the top and bottom because it caught the Dynamic Island's hole
+ * instead of the screen.
  */
 const FRAME_ASPECT = 1350 / 2760;
-const SCREEN_LEFT = 72 / 1350;
-const SCREEN_TOP = 84 / 2760;
-const SCREEN_WIDTH = 1206 / 1350;
-const SCREEN_HEIGHT = 2593 / 2760;
+const SCREEN_LEFT = 0.053333;
+const SCREEN_TOP = 0.025;
+const SCREEN_WIDTH = 0.893333;
+const SCREEN_HEIGHT = 0.95;
 
 /**
- * The recordings are 592x1280. Displaying the screen area at 960px keeps it a
+ * The recordings are 592x1280. Displaying the screen area at ~960px keeps it a
  * downscale; anything above 1280 would upscale a screen capture, which reads as
  * mush immediately.
  */
 const SCREEN_DISPLAY_HEIGHT = 960;
 const FRAME_HEIGHT = Math.round(SCREEN_DISPLAY_HEIGHT / SCREEN_HEIGHT);
 const FRAME_WIDTH = Math.round(FRAME_HEIGHT * FRAME_ASPECT);
+
+/**
+ * Apple's screen corners are squircles, not circular arcs, so no CSS
+ * border-radius clips the recording to them — the video kept poking out past
+ * the phone at the corners. Masking with the bezel's own cutout is exact by
+ * construction and survives swapping in a different device.
+ */
+const screenMask = {
+    WebkitMaskImage: `url(${staticFile("brand/device-screen-mask.png")})`,
+    maskImage: `url(${staticFile("brand/device-screen-mask.png")})`,
+    WebkitMaskSize: "100% 100%",
+    maskSize: "100% 100%",
+    WebkitMaskRepeat: "no-repeat",
+    maskRepeat: "no-repeat",
+} as const;
 
 export const DeviceFrame: React.FC<{
     src: string;
@@ -61,30 +76,31 @@ export const DeviceFrame: React.FC<{
                     filter: "drop-shadow(0 34px 60px rgba(0,0,0,0.55)) drop-shadow(0 90px 140px rgba(0,0,0,0.4))",
                 }}
             >
-                <div
-                    style={{
-                        position: "absolute",
-                        left: `${SCREEN_LEFT * 100}%`,
-                        top: `${SCREEN_TOP * 100}%`,
-                        width: `${SCREEN_WIDTH * 100}%`,
-                        height: `${SCREEN_HEIGHT * 100}%`,
-                        overflow: "hidden",
-                        backgroundColor: "#000000",
-                    }}
-                >
-                    <Video
-                        src={staticFile(src)}
-                        trimBefore={trimBefore}
-                        trimAfter={trimAfter}
-                        playbackRate={playbackRate}
-                        muted
+                <div style={{ position: "absolute", inset: 0, ...screenMask }}>
+                    <div
                         style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block",
+                            position: "absolute",
+                            left: `${SCREEN_LEFT * 100}%`,
+                            top: `${SCREEN_TOP * 100}%`,
+                            width: `${SCREEN_WIDTH * 100}%`,
+                            height: `${SCREEN_HEIGHT * 100}%`,
+                            backgroundColor: "#000000",
                         }}
-                    />
+                    >
+                        <Video
+                            src={staticFile(src)}
+                            trimBefore={trimBefore}
+                            trimAfter={trimAfter}
+                            playbackRate={playbackRate}
+                            muted
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
+                            }}
+                        />
+                    </div>
                 </div>
 
                 <Img

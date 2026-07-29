@@ -42,6 +42,11 @@ cp "$ROOT/pr/web/public/images/app-store-badge.svg"      "$DEST/brand/app-store-
 # it lives in .temp/ and public/, both untracked, and must not be committed.
 cp "$SRC/iPhone 17 Pro - Deep Blue - Portrait.png"       "$DEST/brand/device-frame.png"
 
+# The screen cutout, derived from the bezel's own alpha. Apple's screen corners
+# are squircles, so this is the only way to clip the recording to them exactly.
+python "$(dirname "$0")/make-screen-mask.py" \
+    "$DEST/brand/device-frame.png" "$DEST/brand/device-screen-mask.png"
+
 # Tiles for the S2 grid. These are placeholders pulled from the hero footage.
 # Real thumbnails can be dropped into public/grid/ by hand and will NOT be
 # overwritten by a re-run -- pass --regen-grid to deliberately rebuild them.
