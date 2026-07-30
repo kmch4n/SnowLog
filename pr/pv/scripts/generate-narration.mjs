@@ -79,12 +79,15 @@ const VOICE_ID = "snowlog-narrator";
  * checkpoint conditions on this: gender, age, tone, pace and setting are all
  * fair game.
  *
- * Deliberately does not ask for a bright tone. The first attempt did, and a
- * bright young male voice came out light and airy -- the "hollow" quality that
- * sent this back. Asking for body instead pulls the other way.
+ * Deliberately does not ask for a bright tone. An early version did, and the
+ * result came out light and airy -- the "hollow" quality that sent it back.
+ * Asking for body instead pulls the other way.
+ *
+ * Only the gender word has changed since this read 男性; everything else is
+ * held constant so the two are comparable.
  */
 const VOICE_CAPTION =
-    "20代半ばの男性のナレーター。落ち着いた芯のある声で、少しゆっくりと、" +
+    "20代半ばの女性のナレーター。落ち着いた芯のある声で、少しゆっくりと、" +
     "はっきり丁寧に説明している。";
 
 /**
