@@ -1,5 +1,5 @@
 import { Video } from "@remotion/media";
-import { Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { Img, staticFile } from "remotion";
 
 /**
  * Apple's official iPhone 17 Pro bezel, from the Product Bezels section of
@@ -41,23 +41,21 @@ const screenMask = {
     maskRepeat: "no-repeat",
 } as const;
 
+/**
+ * The phone holds still. It used to drift slowly from +8 to -8 degrees across
+ * every scene so it never sat perfectly still; that was removed on request. The
+ * entrance and exit rotation still lives in ScreenScene, which is the only
+ * remaining place the frame turns.
+ */
 export const DeviceFrame: React.FC<{
     src: string;
     trimBefore?: number;
     trimAfter?: number;
-    tiltDegrees?: number;
     playbackRate?: number;
-}> = ({ src, trimBefore, trimAfter, tiltDegrees = 8, playbackRate }) => {
-    const frame = useCurrentFrame();
-    const { durationInFrames } = useVideoConfig();
-
-    // Slow drift so the frame never sits perfectly still.
-    const rotateY = interpolate(frame, [0, durationInFrames], [tiltDegrees, -tiltDegrees]);
-
+}> = ({ src, trimBefore, trimAfter, playbackRate }) => {
     return (
         <div
             style={{
-                perspective: 2000,
                 display: "grid",
                 placeItems: "center",
                 height: "100%",
@@ -71,8 +69,6 @@ export const DeviceFrame: React.FC<{
                     position: "relative",
                     width: FRAME_WIDTH,
                     height: FRAME_HEIGHT,
-                    transform: `rotateY(${rotateY}deg)`,
-                    transformStyle: "preserve-3d",
                     filter: "drop-shadow(0 34px 60px rgba(0,0,0,0.55)) drop-shadow(0 90px 140px rgba(0,0,0,0.4))",
                 }}
             >

@@ -6,7 +6,7 @@ export const S07Dashboard: React.FC = () => {
     const scene = getScene("s07");
     return (
         <ScreenScene eyebrow={scene.eyebrow} captions={scene.captions} enterFrom={-1}>
-            <DeviceFrame src="screen/dashboard.mp4" tiltDegrees={5} />
+            <DeviceFrame src="screen/dashboard.mp4" />
         </ScreenScene>
     );
 };
