@@ -15,6 +15,8 @@ status: active
 ## 1. エクスポートが到達不能 —『設定からエクスポートできる』は誤り
 
 **古い記述:** `pr/web` の FAQ が「アプリ内設定から JSON でエクスポートし、新しい端末で読み込む」と案内していた（2026-07-17 に修正済み）。
+`README.md` も「全データの JSON エクスポート（`expo-sharing` 経由）を備える」と主張していた（2026-07-30 に修正済み。
+現在は README の「いまはできないこと」と `docs/design-notes.md` で未到達であることを明示している）。
 `src/i18n/locales/{ja,en}.ts` には `settings.menu.export`（「ライブラリ全体を JSON でエクスポートします」）と `settings.export.*` ブロックが残っている。
 
 **実態:**
