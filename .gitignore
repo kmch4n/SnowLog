@@ -68,3 +68,7 @@ notes/
 
 # Temp files
 .temp/
+
+# Python bytecode, from the measurement scripts in pr/pv/scripts
+__pycache__/
+*.pyc
