@@ -158,7 +158,7 @@ App Store に問い合わせる 1 本だけで、そこに利用者のデータ�
 
 ## License
 
-**All Rights Reserved.** Copyright (c) 2026 Kotaro Sasagawa.
+**All Rights Reserved.** Copyright (c) 2026 kmch4n.
 
 著作権は開発者に帰属し、本ソースコードのいかなる利用・複製・改変・再配布・商用利用・アプリケーションストアへの公開も許諾しない。
 
