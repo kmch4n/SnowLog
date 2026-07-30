@@ -28,6 +28,11 @@ export const homeContent: HomeContent = {
         appStoreAria: "App StoreでSnowLogをダウンロード",
         note: "iOS向け / オフラインファースト / 日本語・英語対応",
     },
+    video: {
+        eyebrow: "Movie",
+        title: "1分42秒で分かる、SnowLog。",
+        ariaLabel: "SnowLogの紹介映像",
+    },
     statsAria: "SnowLogの主要スペック",
     stats: [
         { value: "378", label: "収録ゲレンデ" },

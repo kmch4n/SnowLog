@@ -239,7 +239,7 @@ ls pr/pv/public/screen pr/pv/public/footage pr/pv/public/brand
 ls pr/pv/public/grid | wc -l
 ```
 
-Expected: `screen/` に 6 本、`footage/` に 1 本、`brand/` に 2 個、`grid/` に 15 枚。
+Expected: `screen/` に 7 本、`footage/` に 1 本、`brand/` に 2 個、`grid/` に 15 枚。
 `grid/` が 15 未満なら `fps=2` を上げて再実行する。
 
 - [ ] **Step 3: Review the extracted grid frames for privacy**

@@ -244,6 +244,20 @@ h1 span {
     width: 100%;
 }
 
+.hero-video {
+    margin: 96px auto 0;
+    max-width: 960px;
+    text-align: center;
+}
+
+.hero-video video {
+    width: 100%;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: block;
+    margin-top: 24px;
+}
+
 .screenshot-phone img {
     width: 100%;
 }

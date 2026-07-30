@@ -25,6 +25,7 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 | [agent-rules.md](agent-rules.md) | エージェント共通の約束事。コミットへの AI 言及禁止など |
 | [backlog.md](backlog.md) | 将来やること、および完了済み項目の記録 |
 | [apple-design-rn.md](apple-design-rn.md) | Apple フルードインターフェース原則の RN 適用規約。spring 既定値・Reduced Motion・ジェスチャー・押下フィードバック |
+| [pv-narration-voice.md](pv-narration-voice.md) | `pr/pv` の PV ナレーションを全シーン同じ声に保つ方法。Irodori-TTS の話者固定と、F0 で声色を測ろうとして失敗した記録 |
 
 ## 何をここに書き、何を書かないか
 

@@ -62,6 +62,15 @@ app-example
 .claude/settings.local.json
 .gemini/
 .playwright-mcp/
+# Tool state only. The plans and specs under docs/superpowers/ are tracked on purpose.
+.superpowers/
 
 # Memo
 notes/
+
+# Temp files
+.temp/
+
+# Python bytecode, from the measurement scripts in pr/pv/scripts
+__pycache__/
+*.pyc

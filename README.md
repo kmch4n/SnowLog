@@ -14,6 +14,16 @@
 
 ---
 
+## 紹介映像
+
+https://github.com/user-attachments/assets/cfae5ed5-ee5b-4d0c-9b47-ee4a3946c094
+
+1 分 42 秒の紹介映像である。主要な画面と、参照型ストレージ・オフラインファーストという設計上の判断を通して見せている。[snowlog.kmchan.jp](https://snowlog.kmchan.jp) でも視聴できる。
+
+映像は [Remotion](https://www.remotion.dev/) で構成しており、ソースは `pr/pv/` にある。
+
+---
+
 ## アプリの画面
 
 <p align="center">

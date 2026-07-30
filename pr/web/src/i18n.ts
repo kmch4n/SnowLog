@@ -14,6 +14,12 @@ export interface HeroContent {
     note: string;
 }
 
+export interface VideoContent {
+    eyebrow: string;
+    title: string;
+    ariaLabel: string;
+}
+
 export interface StatItem {
     value: string;
     label: string;
@@ -81,6 +87,7 @@ export interface HomeContent {
     description: string;
     nav: NavContent;
     hero: HeroContent;
+    video: VideoContent;
     statsAria: string;
     stats: StatItem[];
     problem: ProblemContent;
