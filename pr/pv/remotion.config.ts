@@ -9,8 +9,13 @@ Config.setJpegQuality(100);
 Config.setCodec("h264");
 Config.setCrf(16);
 
-// Lets ffmpeg use the GPU encoder when one is available.
-Config.setHardwareAcceleration("if-possible");
+// setHardwareAcceleration("if-possible") used to sit here, and it never once
+// took effect: ffmpeg's GPU encoders do not accept "crf", so every render
+// printed "Hardware accelerated encoding disabled" and fell back to libx264.
+// Removed rather than left as decoration. It would need a bitrate target
+// instead of CRF, and giving up quality-per-bit control on the master to save
+// under a minute of a five-minute render is the wrong way round -- frame
+// rendering dominates, not encoding.
 
 // Every scene decodes the same few source clips over and over. The default
 // cache is far smaller than these files, so frames were being re-decoded
