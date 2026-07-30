@@ -20,6 +20,7 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 
 | ファイル | 内容 |
 | --- | --- |
+| [wiring.md](wiring.md) | 非自明な配線とデータ契約。`_layout.tsx` の起動順序、i18n / ハプティクス / サムネイルの窓口、`app_preferences` の実キー。**該当箇所を触る前に読む** |
 | [doc-drift.md](doc-drift.md) | ドキュメントとコードの乖離。README.md / SnowLog.md / AGENTS.md / CLAUDE.md のどの記述が古いか |
 | [testing.md](testing.md) | テストの実態と実行方法。npm script が無いので気づきにくい |
 | [agent-rules.md](agent-rules.md) | エージェント共通の約束事。コミットへの AI 言及禁止など |
@@ -36,6 +37,7 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 | バージョン・依存・npm script | `package.json` |
 | テーブル定義 | `src/database/schema.ts` |
 | アーキテクチャ・機能仕様 | `SnowLog.md` |
+| 技術選定の理由・設計判断の経緯 | `docs/design-notes.md` |
 | コーディング規約・エージェント向け指示 | `.codex/AGENTS.md` / `.claude/CLAUDE.md` |
 | **やること・バグ・改善提案** | **GitHub Issues**（`kmch4n/SnowLog`） |
 | 上記から読み取れない知識・判断の背景・既知の乖離 | **`.memory/`（ここ）** |

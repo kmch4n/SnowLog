@@ -1,39 +1,101 @@
 # Repository Guidelines
 
+Canonical contributor conventions for SnowLog, shared by Codex, Claude Code, and humans.
+`.claude/CLAUDE.md` imports this file and adds only Claude-specific notes.
+
+**This file is loaded into every session. Keep it short.** Detail belongs in `.memory/`,
+which is read on demand. If you are tempted to explain something at length here, write it
+in `.memory/` and leave a pointer.
+
 ## Shared Knowledge Base — Read First
-`.memory/` is the cross-agent knowledge base, shared by Claude Code, Codex, and humans, and tracked in git. This file and `.claude/CLAUDE.md` are tracked too (since 2026-07-15); only `.claude/settings.local.json` stays ignored as a personal, machine-local override. Read `.memory/README.md` at the start of a task and follow its index to the relevant entries.
 
-`.memory/` records what the code cannot show: known drift between the docs and the implementation, how to run the tests, agreed agent rules, and the backlog. When you learn something durable that does not belong in code, add it there rather than to any agent-private memory, and keep `.memory/README.md`'s index in sync.
+`.memory/` is the cross-agent knowledge base, tracked in git. **Read `.memory/README.md` at the
+start of a task** and follow its index. It records what the code cannot show: known doc/code
+drift, how to run the tests, non-obvious wiring, agreed agent rules, and the backlog.
 
-Because AGENTS.md and CLAUDE.md are separate files, they drift. Rules that both agents must follow live in `.memory/agent-rules.md` — read it, and do not duplicate it here.
+When you learn something durable that does not belong in code, add it there — never to an
+agent-private memory — and keep the index in sync.
 
-## Project Structure & Module Organization
-SnowLog is an Expo Router app. Routes live in `src/app`, with tab screens in `src/app/(tabs)` and feature routes such as `src/app/video` and `src/app/settings`. Shared UI belongs in `src/components`, reusable logic in `src/hooks`, business logic in `src/services`, helpers in `src/utils`, and shared types in `src/types`. Database schema and repositories are in `src/database`, with generated Drizzle files in `drizzle/`. Keep static assets in `assets/` and utility scripts in `scripts/`.
+| Topic | File |
+| --- | --- |
+| Rules both agents follow, and the reasoning | `.memory/agent-rules.md` |
+| Startup order, non-obvious wiring, data contracts | `.memory/wiring.md` |
+| How the tests actually work, and their traps | `.memory/testing.md` |
+| Where the docs disagree with the code | `.memory/doc-drift.md` |
 
-## Build, Test, and Development Commands
-- `npm install`: install dependencies and run the image cache patch.
-- `npm run start`: start Expo Dev Tools and Metro.
-- `npm run ios`, `npm run android`, `npm run web`: run the app on each platform.
-- `npm run lint`: run ESLint through Expo.
-- `npm run db:generate`: regenerate Drizzle migration output.
-- `npm run db:studio`: inspect the local SQLite schema.
+## Project Structure
 
-## Coding Style & Naming Conventions
-Use TypeScript with `strict` mode, four-space indentation, and double quotes. Prefer small focused modules over large route files. Use PascalCase for components (`VideoCard.tsx`), camelCase for functions, and `useXxx` for hooks (`useVideos.ts`). Keep route files focused on composition; move persistence and data orchestration into hooks, services, or repositories. Use the `@/` alias for imports from `src`.
+Expo Router app. Routes in `src/app` (tabs in `src/app/(tabs)`, features in `src/app/video` and
+`src/app/settings`). Shared UI in `src/components`, reusable logic in `src/hooks`, business logic
+in `src/services`, helpers in `src/utils`, shared types in `src/types`. Schema and repositories in
+`src/database`; **`drizzle/` is generated — never edit it by hand.** Static assets in `assets/`,
+utility scripts in `scripts/`. `pr/web` (Astro site) and `pr/pv` (Remotion video) are independent
+projects with their own `node_modules`.
 
-User-facing strings must go through `useTranslation()` from `@/i18n/useTranslation` (or the module-level `t` from `@/i18n` for non-React contexts). Keep `src/i18n/locales/ja.ts` and `src/i18n/locales/en.ts` keys in sync — the `Translations = typeof ja` annotation enforces this at compile time. For iOS permission descriptions, edit `locales/ja.json` and `locales/en.json` at the repo root; the inline `infoPlist` block in `app.json` is the Japanese fallback only and should not be relied on for localization.
+## Commands
 
-## Testing Guidelines
-`scripts/tests/` holds 13 `node:test` files (94 cases). There is no `test` npm script — run them with `node --test "scripts/tests/*.test.cjs"` (quote the glob; a directory argument fails on Node 25 / Windows). Eleven compile the target `.ts` with `tsc` and assert on real behavior — two of those (`tagRepository`, `appPreferenceRepository`) go further and run the repository against an in-memory `node:sqlite` database built by replaying `drizzle/*.sql`, via `scripts/tests/helpers/repositoryHarness.cjs`, which is the only way to assert on query shape and round-trip counts. Two (`homeSwipeDelete`, `videoDetailKeyboardAccessory`) match source text via regex, so refactors can break them while the app still works. How to compile depends on the target's imports — an aliased (`@/`) import needs a self-contained temp tsconfig, and an aliased *value* import also needs the emit to land in `node_modules/@`. Date tests pin `process.env.TZ`; verify new ones with `TZ=UTC`. **A green assert proves nothing until you break the code and watch it fail** — see `.memory/testing.md`. The `expo-symbols` / `expo-haptics` choke points are enforced by `no-restricted-imports` in `eslint.config.js`, not by these tests.
+| Command | Purpose |
+| --- | --- |
+| `npm install` | Install deps (runs the image cache patch on postinstall) |
+| `npm run start` / `ios` / `android` / `web` | Metro / per-platform run |
+| `npm run lint` | ESLint through Expo |
+| `npm run db:generate` / `db:studio` | Regenerate Drizzle migrations / inspect the schema |
+| `node --test "scripts/tests/*.test.cjs"` | Tests — there is no `test` script. Quote the glob. |
 
-Automated coverage is thin, so manual verification carries the load. Before opening a PR, run `npm run lint` and manually verify the affected flow in Expo, especially iOS. For database changes, regenerate migrations, start with a clean local database, and verify import, edit, dashboard, and search flows. Check Web separately when touching `*.web.tsx` behavior.
+## Coding Style & Naming
 
-## Commit & Pull Request Guidelines
-Agents may run `git add`, `git commit`, `git push`, and GitHub write actions at any time, without asking first. **This overrides the stricter "explicit instruction" policy in the global `~/.codex/AGENTS.md` and `~/.codex/commit_message.md` — inside SnowLog, this file wins.** Destructive operations (`reset --hard`, force push, branch delete) still require an explicit instruction. See `.memory/agent-rules.md` for the rationale.
+TypeScript `strict`, four-space indentation, double quotes. No `any` without an inline
+justification. Prefer small focused modules; keep files within ~500–700 lines. Route files stay
+composition-only — push persistence and orchestration into hooks, services, or repositories.
 
-Split your work into focused commits: one logical change per commit, never bundling unrelated changes. Prefer several small commits over one large one.
+PascalCase components (`VideoCard.tsx`), camelCase functions and vars, UPPER_SNAKE_CASE constants,
+`useXxx` hooks (`useVideos.ts`), API clients named `cl`. Use the `@/` alias for imports from `src`.
+npm with `package-lock.json`.
 
-Recent commits use gitmoji-style subjects such as `[✨] Add seasonal dashboard tab` and `[🐛] Fix timestamp handling`. Keep commit titles in English, present tense, and ideally within 72 characters. PRs should stay focused, explain user impact, link related issues, and include screenshots or recordings for UI changes. Add short manual test steps when touching import, settings, or migration flows.
+User-facing strings go through `useTranslation()` from `@/i18n/useTranslation`, or the module-level
+`t` from `@/i18n` outside React. Keep `src/i18n/locales/ja.ts` and `en.ts` in sync — the
+`Translations = typeof ja` annotation enforces it at compile time. iOS permission descriptions live
+in `locales/ja.json` / `locales/en.json` at the repo root; the inline `infoPlist` block in
+`app.json` is the Japanese fallback only.
 
-## Security & Configuration Tips
-Keep secrets in ignored `.env` files. Do not commit `.expo/`, `ios/`, `android/`, debug logs, or build artifacts. Treat `scripts/patchImageUtilsCache.js` as build infrastructure, and verify permission-related changes on a real device when editing media import or file system code.
+Native-dependent modules need a `.web.ts` / `.web.tsx` companion. `tsc` cannot detect a missing
+export in a shim, so check the pair by hand — see `.memory/doc-drift.md`.
+
+## Testing
+
+Run with `node --test "scripts/tests/*.test.cjs"`. Automated coverage is thin and some tests match
+source text with regexes, so **a green assert proves nothing until you break the code and watch it
+fail.** How to compile a target depends on the shape of its imports. Both points, and the rest of
+the mechanics, are in `.memory/testing.md` — read it before adding a test.
+
+Manual verification carries the load. Before finishing: run `npm run lint` and verify the affected
+flow on iOS. For database changes, regenerate migrations, start from a clean local database, and
+walk migrate → import → search → export. Re-check Web only when touching `*.web.tsx`.
+
+## Git
+
+Agents may run `git add`, `git commit`, `git push`, and GitHub write actions at any time, without
+asking first. **This overrides the stricter "explicit instruction" policy in the global
+`~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` — inside SnowLog, this file wins.** Do not carry
+that relaxation to other projects.
+
+- **Commit directly to `main`. Do not create a branch or a PR unless asked.** This repo is
+  single-developer with a linear history; branching breaks that convention. Many agents default to
+  branching — do not.
+- **Destructive operations still require an explicit instruction**: `reset --hard`, force push,
+  branch deletion.
+- **One logical change per commit.** Never bundle unrelated work; prefer several small commits.
+- Format: `[gitmoji] English message`, ≤72 chars, present tense (`[✨] Add seasonal dashboard tab`).
+  Review the last 10 commits before drafting.
+- **No AI attribution anywhere** — not in commits, issues, comments, or PRs. No `Co-Authored-By`.
+- Verify the active git identity is `kmch4n` (`kmchan@kmchan.jp`) before writing. If it looks like a
+  bot or service account, stop and report.
+- Treat design discussion and review as read-only: do not start editing until implementation is
+  explicitly requested.
+
+## Security & Configuration
+
+Keep secrets in ignored `.env` files. Do not commit `.expo/`, `ios/`, `android/`, debug logs, or
+build artifacts. Treat `scripts/patchImageUtilsCache.js` as build infrastructure. Verify
+permission-related changes on a real device when editing media import or file system code.
+Never deploy to production without explicit approval.
