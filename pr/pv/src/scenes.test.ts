@@ -57,3 +57,24 @@ test("every caption in the script reaches a scene file", () => {
         );
     }
 });
+
+test("no scene renders only its first caption", () => {
+    // The test above is satisfied by a scene that looks its captions up and then
+    // renders `captions[0]`, which is what S00Title and S03Logo did. A second
+    // caption added to s03 disappeared without a single test failing. Rendering
+    // the array makes dropping one structurally impossible, so forbid the
+    // indexing outright rather than trying to detect the symptom.
+    //
+    // Matches source text, so it can be defeated by writing the index a
+    // different way. It still catches the obvious regression, which is the one
+    // that actually happened.
+    for (const { name, source } of sceneSources()) {
+        const indexed = source.match(/captions\s*\[\s*\d+\s*\]/g) ?? [];
+
+        assert.deepEqual(
+            indexed,
+            [],
+            `${name} picks captions out by index (${indexed.join(", ")}); map over them instead so none is dropped`,
+        );
+    }
+});

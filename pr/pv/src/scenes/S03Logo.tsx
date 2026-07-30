@@ -43,16 +43,25 @@ export const S03Logo: React.FC = () => {
                     transform: `scale(${0.85 + iconIn * 0.15})`,
                 }}
             />
-            <div
-                style={{
-                    fontFamily,
-                    color: Palette.snow,
-                    ...TYPE.hero,
-                    WebkitMaskImage: `linear-gradient(to right, #000 ${wipe}%, transparent ${wipe}%)`,
-                    maskImage: `linear-gradient(to right, #000 ${wipe}%, transparent ${wipe}%)`,
-                }}
-            >
-                {scene.captions[0]}
+            {/* Every caption, not just the first. Indexing one out and ignoring
+                the rest silently discarded a line added to the script, and no
+                test caught it. The first line carries the scene, so later ones
+                sit a step down in the hierarchy. */}
+            <div style={{ display: "grid", justifyItems: "center", gap: 20 }}>
+                {scene.captions.map((caption, index) => (
+                    <div
+                        key={caption}
+                        style={{
+                            fontFamily,
+                            color: index === 0 ? Palette.snow : Palette.gold,
+                            ...(index === 0 ? TYPE.hero : TYPE.caption),
+                            WebkitMaskImage: `linear-gradient(to right, #000 ${wipe}%, transparent ${wipe}%)`,
+                            maskImage: `linear-gradient(to right, #000 ${wipe}%, transparent ${wipe}%)`,
+                        }}
+                    >
+                        {caption}
+                    </div>
+                ))}
             </div>
         </AbsoluteFill>
     );
