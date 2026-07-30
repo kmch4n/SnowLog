@@ -1,5 +1,6 @@
 import { Input, ALL_FORMATS, UrlSource } from "mediabunny";
 import { staticFile } from "remotion";
+import { NARRATION_LEAD_IN_SECONDS } from "./script.ts";
 import type { SceneId, SceneSpec } from "./script.ts";
 
 /**
@@ -39,9 +40,10 @@ export type ResolvedScene = SceneSpec & {
 /**
  * Turns narration lengths into scene lengths.
  *
- * A scene lasts for whichever is longer: its designed minimum, or the
- * narration plus its tail. Scenes without narration keep their minimum, which
- * is what lets the whole film render before any audio has been recorded.
+ * A scene lasts for whichever is longer: its designed minimum, or the lead-in
+ * silence plus the narration plus its tail. Scenes without narration keep their
+ * minimum, which is what lets the whole film render before any audio has been
+ * recorded — and they get no lead-in, because there is nothing to lead into.
  */
 export const resolveScenes = (
     scenes: readonly SceneSpec[],
@@ -53,7 +55,9 @@ export const resolveScenes = (
     return scenes.map((scene) => {
         const narration = narrationSeconds.get(scene.id);
         const spokenSeconds =
-            narration === undefined ? 0 : narration + scene.tailInSeconds;
+            narration === undefined
+                ? 0
+                : NARRATION_LEAD_IN_SECONDS + narration + scene.tailInSeconds;
         const seconds = Math.max(scene.minDurationInSeconds, spokenSeconds);
         const durationInFrames = Math.ceil(seconds * fps);
         const resolved = { ...scene, durationInFrames, from: cursor };

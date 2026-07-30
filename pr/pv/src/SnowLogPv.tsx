@@ -12,6 +12,7 @@ import { S07Dashboard } from "./scenes/S07Dashboard.tsx";
 import { S08Privacy } from "./scenes/S08Privacy.tsx";
 import { S09Cta } from "./scenes/S09Cta.tsx";
 import { Palette } from "./theme/colors.ts";
+import { NARRATION_LEAD_IN_SECONDS } from "./script.ts";
 import type { SceneId } from "./script.ts";
 import type { ResolvedScene } from "./timeline.ts";
 
@@ -78,7 +79,15 @@ export const SnowLogPv: React.FC<SnowLogPvProps> = ({ scenes, hasBgm }) => {
                         premountFor={fps}
                     >
                         <Scene />
-                        {scene.hasNarration ? <Audio src={staticFile(scene.narrationFile)} /> : null}
+                        {scene.hasNarration ? (
+                            // Held back so the cut and the motion land before the
+                            // voice does. resolveScenes counts the same lead-in
+                            // into the scene length, so the tail of the line
+                            // still fits inside the scene.
+                            <Sequence from={Math.round(fps * NARRATION_LEAD_IN_SECONDS)}>
+                                <Audio src={staticFile(scene.narrationFile)} />
+                            </Sequence>
+                        ) : null}
                     </Sequence>
                 );
             })}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SCENES, TOTAL_MIN_SECONDS } from "./script.ts";
+import { NARRATION_LEAD_IN_SECONDS, SCENES, TOTAL_MIN_SECONDS } from "./script.ts";
 
 test("covers all ten scenes in order", () => {
     assert.equal(SCENES.length, 10);
@@ -10,8 +10,8 @@ test("covers all ten scenes in order", () => {
     );
 });
 
-test("minimum durations add up to the designed 94 seconds", () => {
-    assert.equal(TOTAL_MIN_SECONDS, 94);
+test("minimum durations add up to the designed 98 seconds", () => {
+    assert.equal(TOTAL_MIN_SECONDS, 98);
 });
 
 test("every scene points at its own narration file", () => {
@@ -21,16 +21,21 @@ test("every scene points at its own narration file", () => {
 });
 
 test("narration text stays within the spoken budget", () => {
-    // 5.5 characters per second is the assumed Japanese reading speed. The tail
-    // has to be counted too: resolveScenes stretches a scene to
-    // narration + tailInSeconds, so ignoring the tail would assert an invariant
-    // the timeline does not actually hold to.
+    // 5.5 characters per second is the assumed Japanese reading speed. The
+    // lead-in and the tail both have to be counted: resolveScenes stretches a
+    // scene to lead + narration + tail, so leaving either out would assert an
+    // invariant the timeline does not actually hold to.
     for (const scene of SCENES) {
+        if (scene.narrationText === "") {
+            continue;
+        }
+
         const spokenSeconds = scene.narrationText.length / 5.5;
-        const neededSeconds = spokenSeconds + scene.tailInSeconds;
+        const neededSeconds =
+            NARRATION_LEAD_IN_SECONDS + spokenSeconds + scene.tailInSeconds;
         assert.ok(
             neededSeconds <= scene.minDurationInSeconds,
-            `${scene.id}: ${neededSeconds.toFixed(1)}s of speech plus tail does not fit in ${scene.minDurationInSeconds}s`,
+            `${scene.id}: ${neededSeconds.toFixed(1)}s of lead-in, speech and tail does not fit in ${scene.minDurationInSeconds}s`,
         );
     }
 });

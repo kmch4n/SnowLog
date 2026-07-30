@@ -44,7 +44,7 @@ export const SCENES: readonly SceneSpec[] = [
         id: "s01",
         title: "S1 Hook",
         narrationFile: "audio/narration/s01.wav",
-        narrationText: "😀 今日も、いい感じの動画が撮れました！",
+        narrationText: "今日も、いい感じの動画が撮れました！",
         captions: [],
         minDurationInSeconds: 7,
         tailInSeconds: 1.5,
@@ -59,7 +59,7 @@ export const SCENES: readonly SceneSpec[] = [
         // 63 characters, the longest line in the film. resolveScenes would
         // stretch the scene to fit the audio regardless, but the floor is what
         // the layout is designed against, so it has to say so.
-        minDurationInSeconds: 13,
+        minDurationInSeconds: 14,
         tailInSeconds: 1.5,
         enterWith: "whip",
     },
@@ -80,7 +80,7 @@ export const SCENES: readonly SceneSpec[] = [
         narrationText: "動画をまとめて選ぶだけで取り込みが終わります。GPSの位置情報から、滑ったゲレンデも自動で判定します。",
         eyebrow: "IMPORT",
         captions: ["滑走動画をまとめて取り込めます", "ゲレンデを位置から自動で判定します", "全国のゲレンデに対応しています"],
-        minDurationInSeconds: 11,
+        minDurationInSeconds: 12,
         tailInSeconds: 1,
         enterWith: "whip",
     },
@@ -113,7 +113,7 @@ export const SCENES: readonly SceneSpec[] = [
         narrationText: "記録が積み重なると、シーズン全体の傾向が見えてきます。どこでどの種目を練習したのかが、数字でわかります。",
         eyebrow: "SEASON",
         captions: ["シーズン全体を見渡せます", "練習の傾向がわかります", "続けるほど見えてきます"],
-        minDurationInSeconds: 11,
+        minDurationInSeconds: 12,
         tailInSeconds: 1.5,
         enterWith: "snow",
     },
@@ -123,7 +123,7 @@ export const SCENES: readonly SceneSpec[] = [
         narrationFile: "audio/narration/s08.wav",
         narrationText: "データはすべて端末の中に保存され、外部には送信されません。広告も課金もありません。",
         captions: ["データは端末の中だけです", "外部には送信しません", "広告も課金もありません"],
-        minDurationInSeconds: 9,
+        minDurationInSeconds: 10,
         tailInSeconds: 1,
         enterWith: "whip",
     },
@@ -131,7 +131,7 @@ export const SCENES: readonly SceneSpec[] = [
         id: "s09",
         title: "S9 CTA",
         narrationFile: "audio/narration/s09.wav",
-        narrationText: "😀スノーログは App Store から無料でダウンロードできます。",
+        narrationText: "スノーログは App Store から無料でダウンロードできます。",
         captions: ["App Store で配布中です", "iOS 16 以上・無料で配信中"],
         minDurationInSeconds: 9,
         tailInSeconds: 1.5,
@@ -147,6 +147,16 @@ export const SCENES: readonly SceneSpec[] = [
  * quietly dropping a tile.
  */
 export const GRID_FRAME_COUNT = 8;
+
+/**
+ * Silence held at the start of every scene before its narration begins, so the
+ * cut and the motion land before the voice does.
+ *
+ * Counted into the scene length by `resolveScenes` as well as offsetting the
+ * `<Audio>`. Offsetting the audio alone would push the tail of each line past
+ * the end of its scene and cut the last words off.
+ */
+export const NARRATION_LEAD_IN_SECONDS = 1;
 
 export const TOTAL_MIN_SECONDS = SCENES.reduce(
     (total, scene) => total + scene.minDurationInSeconds,
