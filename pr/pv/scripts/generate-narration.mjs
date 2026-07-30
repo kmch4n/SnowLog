@@ -32,8 +32,23 @@
 // the sentences overlap each other almost entirely. The old 11.5 Hz figure was
 // not a better voice, only a number that had been selected for.
 //
+// ## Why the reference is chosen rather than just taken
+//
+// The reference also sets a noise floor that every cloned line inherits, and the
+// model does not produce equally clean clips. Eight candidates from identical
+// settings, differing only in seed, measured between -31.5 dB and -56.4 dB of
+// energy above 8 kHz. The first reference used here was taken without measuring,
+// landed at -32.7 dB, and the narration built on it was audibly gritty: cloning
+// had copied its noise into all nine lines. Dose and response -- a longer
+// composite reference was noisier still and produced the noisiest lines of all.
+//
+// So candidates are generated and scored by scripts/pick-reference.py, and the
+// winner is brought to the loudness the server expects before being uploaded.
+// Finished lines then measure past -54 dB, cleaner than caption-only generation
+// with no reference at all.
+//
 // Check the result with scripts/check-narration-voice.py, which reports the
-// envelope spread rather than the pitch spread.
+// envelope spread and the noise rather than the pitch spread.
 //
 // Because generation is deterministic the reference is synthesised from the
 // constants below rather than stored as a binary asset, so this file is the
@@ -44,7 +59,7 @@
 
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCENES } from "../src/script.ts";
@@ -87,9 +102,23 @@ const VOICE_CAPTION =
 const REFERENCE_TEXT =
     "滑走動画を練習の記録として残していくアプリです。落ち着いて、はっきりお伝えします。";
 
-/** Higher than the server default of 40. 32-64 is the useful band; the top of
- *  it trades render time for stability, which matters more than speed here. */
-const NUM_STEPS = 64;
+/**
+ * How many candidate references to generate and score. Eight covers the range
+ * well: of eight tried, two came in under -50 dB of noise and six did not, so a
+ * much smaller pool risks not finding a clean one at all.
+ */
+const REFERENCE_CANDIDATES = 8;
+
+/**
+ * The server's own guideline for quality, and where this measured best.
+ *
+ * 64 was used for a while on the theory that more steps meant more stability.
+ * Measured against 40 on the same lines it was slightly worse on both noise
+ * (-61.32 dB against -61.95) and roughness (2.44 dB against 2.52), while taking
+ * 1.6x as long. The upstream guide puts the useful band at 32-40 and calls 40
+ * the figure for quality work.
+ */
+const NUM_STEPS = 40;
 
 /**
  * How closely the reference is followed. The server's default, stated
@@ -111,6 +140,18 @@ const SEED = 20260730;
 const TARGET_LUFS = -14;
 const TRUE_PEAK_DB = -1.5;
 
+/**
+ * What the reference itself is brought to before upload.
+ *
+ * The server normalises the reference to -16 LUFS by default, and notes that
+ * this matches how the codec was trained. The first reference here was written
+ * out raw: -17.82 LUFS with a true peak of -0.04 dBTP, so the server's own step
+ * had to add 1.8 dB to a signal already at the ceiling. Doing it here, with the
+ * peak held well down, leaves that step nothing to do and nothing to clip.
+ */
+const REFERENCE_LUFS = -16;
+const REFERENCE_PEAK_DB = -3;
+
 const RETRIES = 3;
 
 /**
@@ -124,6 +165,9 @@ const RETRIES = 3;
 const referenceSettings = () => ({
     caption: VOICE_CAPTION,
     referenceText: REFERENCE_TEXT,
+    referenceCandidates: REFERENCE_CANDIDATES,
+    referenceLufs: REFERENCE_LUFS,
+    referencePeakDb: REFERENCE_PEAK_DB,
     numSteps: NUM_STEPS,
     seed: SEED,
 });
@@ -178,8 +222,6 @@ const ffmpeg = (args, what) => {
     }
 };
 
-const LOUDNORM = `I=${TARGET_LUFS}:TP=${TRUE_PEAK_DB}:LRA=11`;
-
 /**
  * First loudnorm pass: what is this file's loudness, before changing it?
  *
@@ -189,10 +231,10 @@ const LOUDNORM = `I=${TARGET_LUFS}:TP=${TRUE_PEAK_DB}:LRA=11`;
  * whole script is fighting, and on a 3.4 second line there is barely enough
  * audio for the correction to settle at all.
  */
-const measureLoudness = (path) => {
+const measureLoudness = (path, target) => {
     const result = spawnSync(
         "ffmpeg",
-        ["-hide_banner", "-i", path, "-af", `loudnorm=${LOUDNORM}:print_format=json`, "-f", "null", "-"],
+        ["-hide_banner", "-i", path, "-af", `loudnorm=${target}:print_format=json`, "-f", "null", "-"],
         { encoding: "utf8" },
     );
 
@@ -207,14 +249,72 @@ const measureLoudness = (path) => {
     return JSON.parse(result.stderr.slice(start, end + 1));
 };
 
+/** Second loudnorm pass, as one fixed gain rather than a moving one. */
+const applyLoudness = (source, target, level, extra = []) => {
+    const measured = measureLoudness(source, level);
+    const applied = [
+        level,
+        `measured_I=${measured.input_i}`,
+        `measured_TP=${measured.input_tp}`,
+        `measured_LRA=${measured.input_lra}`,
+        `measured_thresh=${measured.input_thresh}`,
+        `offset=${measured.target_offset}`,
+        // One gain figure for the whole file. Without this the second pass would
+        // compress as it goes, which changes the tone of a voice and not just its
+        // level -- and differently in each file.
+        "linear=true",
+    ].join(":");
+
+    ffmpeg(
+        ["-i", source, "-af", `loudnorm=${applied}`, "-ar", "48000", "-ac", "1", ...extra, target],
+        `normalising ${source}`,
+    );
+};
+
 /**
- * Synthesises the reference clip, caption-driven and with no reference of its
- * own. Written straight out rather than passed through ffmpeg: the model already
- * emits 48 kHz mono, so a re-encode would only risk changing the bytes the
- * speaker identity is derived from.
+ * Generates several candidate references, keeps the best, and brings it to the
+ * loudness the server expects.
+ *
+ * Written as 32-bit float. The conditioning step lowers the level, and at 16 bits
+ * that showed up as a rising noise floor -- the same clip measured 3 dB hissier
+ * after a gain change that mathematically cannot alter the ratio. Float has no
+ * such floor.
  */
 const buildReference = async () => {
-    writeFileSync(REFERENCE_PATH, await speak(REFERENCE_TEXT, "none", {}));
+    const candidates = [];
+
+    console.log(`generating ${REFERENCE_CANDIDATES} candidate references`);
+    for (let index = 0; index < REFERENCE_CANDIDATES; index++) {
+        const path = join(WORK_DIR, `candidate-${index}.wav`);
+        writeFileSync(path, await speak(REFERENCE_TEXT, "none", { seed: SEED + index }));
+        candidates.push(path);
+    }
+
+    const chosen = spawnSync("python", [join(HERE, "pick-reference.py"), ...candidates], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "inherit"],
+    });
+
+    if (chosen.status !== 0) {
+        throw new Error("reference selection failed");
+    }
+
+    const index = Number(chosen.stdout.trim());
+
+    if (!Number.isInteger(index) || candidates[index] === undefined) {
+        throw new Error(`reference selection returned "${chosen.stdout.trim()}"`);
+    }
+
+    applyLoudness(
+        candidates[index],
+        REFERENCE_PATH,
+        `I=${REFERENCE_LUFS}:TP=${REFERENCE_PEAK_DB}:LRA=11`,
+        ["-c:a", "pcm_f32le"],
+    );
+
+    for (const path of candidates) {
+        rmSync(path, { force: true });
+    }
 };
 
 /** Uploads the reference so later requests can name it, replacing any previous one. */
@@ -248,22 +348,8 @@ const registerVoice = async () => {
  * away the top of a voice is exactly how it ends up sounding thin.
  */
 const normalise = (path) => {
-    const measured = measureLoudness(path);
-    const applied = [
-        LOUDNORM,
-        `measured_I=${measured.input_i}`,
-        `measured_TP=${measured.input_tp}`,
-        `measured_LRA=${measured.input_lra}`,
-        `measured_thresh=${measured.input_thresh}`,
-        `offset=${measured.target_offset}`,
-        // One gain figure for the whole file. Without this the second pass would
-        // compress as it goes, which changes the tone of a voice and not just its
-        // level -- and differently in each file.
-        "linear=true",
-    ].join(":");
-
     const temp = `${path}.norm.wav`;
-    ffmpeg(["-i", path, "-af", `loudnorm=${applied}`, "-ar", "48000", "-ac", "1", temp], `normalising ${path}`);
+    applyLoudness(path, temp, `I=${TARGET_LUFS}:TP=${TRUE_PEAK_DB}:LRA=11`);
     renameSync(temp, path);
 };
 
