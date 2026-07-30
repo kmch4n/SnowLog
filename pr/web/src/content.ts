@@ -30,7 +30,7 @@ export const homeContent: HomeContent = {
     },
     video: {
         eyebrow: "Movie",
-        title: "1分42秒で分かる、SnowLog。",
+        title: "Promotion Video",
         ariaLabel: "SnowLogの紹介映像",
     },
     statsAria: "SnowLogの主要スペック",

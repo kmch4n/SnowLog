@@ -19,10 +19,15 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MASTER="$HERE/../out/snowlog-pv.mp4"
 WEB="$HERE/../../web/public/videos"
 
-# CRF 31 at 720p. High enough to keep the file inside the budget for a
-# landing page that autoplays nothing and is fetched with preload="none";
-# low enough that the captions stay crisp, which is what suffers first.
-CRF=31
+# The landing page serves the film at full resolution. CRF 30 rather than the
+# 31 the 720p copy used: the same setting costs less perceptually when it has
+# four times the pixels to spend it on, and the captions are what suffer first.
+#
+# This is not the master. The master is CRF 16 for archival and YouTube, and at
+# ~98 MB it has no business in a git repository or on a web page -- a visitor
+# who presses play would pull it down over a range request either way, but every
+# re-export would also add another 98 MB to the history permanently.
+CRF=30
 
 # Well past the scene's entrance animation, so the poster shows the logo and
 # tagline settled rather than mid-flight. S3 runs 20.0s to 28.0s.
@@ -83,22 +88,28 @@ else
     mv -f "$MASTER.levelled.mp4" "$MASTER"
 fi
 
+# No scale filter: the master is already 1920x1080, so re-encoding at the same
+# size avoids a resample the picture would only lose from.
 ffmpeg -y -loglevel error -i "$MASTER" \
-    -vf "scale=1280:720:flags=lanczos" \
     -c:v libx264 -crf "$CRF" -preset slow -pix_fmt yuv420p \
     -c:a aac -b:a 128k \
     -movflags +faststart \
-    "$WEB/snowlog-pv-720p.mp4"
+    "$WEB/snowlog-pv-1080p.mp4"
 
 ffmpeg -y -loglevel error -ss "$POSTER_AT" -i "$MASTER" -frames:v 1 \
-    -vf "scale=1280:720:flags=lanczos" -q:v 3 \
+    -q:v 3 \
     "$WEB/snowlog-pv-poster.jpg"
+
+# The 720p copy the page used before. Left behind by an older run it would sit
+# in the repository unreferenced, so clear it out rather than trusting whoever
+# reads the diff to notice.
+rm -f "$WEB/snowlog-pv-720p.mp4"
 
 duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$MASTER")
 printf '\nmaster   %s  %.2fs\n' "$MASTER" "$duration"
-for file in "$WEB/snowlog-pv-720p.mp4" "$WEB/snowlog-pv-poster.jpg"; do
+for file in "$WEB/snowlog-pv-1080p.mp4" "$WEB/snowlog-pv-poster.jpg"; do
     printf '%-46s %s\n' "$(basename "$file")" "$(du -h "$file" | cut -f1)"
 done
-printf '\nRuntime for pr/web/src/content.ts: %dm%02ds\n' \
+printf '\nRuntime: %dm%02ds\n' \
     "$(awk -v d="$duration" 'BEGIN{printf "%d", d/60}')" \
     "$(awk -v d="$duration" 'BEGIN{printf "%d", d%60}')"
