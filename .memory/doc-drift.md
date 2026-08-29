@@ -1,6 +1,6 @@
 ---
 title: ドキュメントとコードの乖離
-updated: 2026-07-25
+updated: 2026-08-30
 status: active
 ---
 
@@ -12,23 +12,31 @@ status: active
 2026-07-25 の Issue 監査バッチで、旧 1（i18n 記述）・2（`orphanedFileCleanupService` 未記載）・4（権限文言）を解消して削除した。
 残っているのは以下の 3 件。
 
-## 1. エクスポートが到達不能 —『設定からエクスポートできる』は誤り
+## 1. エクスポートは到達可能になったが未検証 — インポートは依然として未実装
 
-**古い記述:** `pr/web` の FAQ が「アプリ内設定から JSON でエクスポートし、新しい端末で読み込む」と案内していた（2026-07-17 に修正済み）。
-`README.md` も「全データの JSON エクスポート（`expo-sharing` 経由）を備える」と主張していた（2026-07-30 に修正済み。
-現在は README の「いまはできないこと」と `docs/design-notes.md` で未到達であることを明示している）。
-`src/i18n/locales/{ja,en}.ts` には `settings.menu.export`（「ライブラリ全体を JSON でエクスポートします」）と `settings.export.*` ブロックが残っている。
+**更新（2026-08-30）:** 旧項目「エクスポートが到達不能」は解消した。設定画面にエクスポート行を追加し、
+`exportAllToJSON()` が iOS から呼べるようになった（Issue [#72](https://github.com/kmch4n/SnowLog/issues/72) のエクスポート側）。
+ただし **2 点が残っているのでこの項目は消さない**。
 
-**実態:**
+**1. 実機で一度も動かしていない。** それ以前は `src/app/video/[id].web.tsx` からしか呼ばれておらず、
+その import も web では `exportService.web.ts`（未対応 Alert）に解決されていたため、
+ネイティブ実装は**どのプラットフォームでも実行された実績が無い**。
+純粋部分（`src/services/exportPayload.ts`）は `scripts/tests/exportPayload.test.cjs` で検証済みだが、
+ファイル書き出し・共有シート・リポジトリ往復は未検証。**実機で通すまでは未検証コードとして扱うこと。**
 
-- `exportAllToJSON()`（`src/services/exportService.ts`）の呼び出し元は **`src/app/video/[id].web.tsx` のみ** — Web 検証スタブのヘッダーボタンで、iOS からは到達できない。
-- 設定画面（`src/app/(tabs)/settings/index.tsx`）の `SettingsRoute` は calendar / techniques / favorite-resorts / tags / duplicate-candidates の 5 つ + ストレージ整理行のみで、エクスポート行は無い。
-- 死んでいる i18n 文言は `settings.menu.export` と `settings.descriptions.export` の 2 つ。`settings.export.*` ブロックは web 経路（`video/[id].web.tsx`）と `exportService` 自身から参照されており生きている（未参照は `title` / `description` / `buttonLabel` / `success` のみ）。
-- なお `video/[id].web.tsx` の import は web では `exportService.web.ts`（未対応 Alert）に解決されるため、ネイティブ実装の `exportAllToJSON()` は**どのプラットフォームからも到達不能**。一度も実行された実績が無い未検証コードとして扱うこと。
-- **インポート（JSON 復元）は未実装**。`readAsStringAsync` / `DocumentPicker` / `getDocumentAsync` / `importFromJSON` は全て 0 ヒットで、`expo-document-picker` の依存も無い。`src/services/importService.ts` は名前に反して写真ライブラリからの動画取り込み。
+**2. インポート（JSON 復元）は未実装。** `readAsStringAsync` / `DocumentPicker` / `getDocumentAsync` /
+`importFromJSON` は全て 0 ヒットで、`expo-document-picker` の依存も無い。
+`src/services/importService.ts` は名前に反して写真ライブラリからの動画取り込み。
+**したがって機種変更時のデータ移行は依然としてできない。**
 
-結果として、現状の実装では機種変更時のデータ移行ができない。エクスポートは将来実装予定。
-作業は Issue [#72](https://github.com/kmch4n/SnowLog/issues/72) で管理。
+そのため次の 2 つの記述は**現時点で正しく、変えてはいけない**。
+
+- `README.md` の「いまはできないこと」→ 移行不可。インポートが入るまで正しい。
+- `pr/web/src/content.ts` の FAQ「機種変更時にデータは引き継がれますか？」→
+  「JSON形式でのエクスポートを実装予定ですが、時期は未定です」。
+  **Web サイトは出荷済みアプリを説明するもの**で、エクスポートはまだ release に載っていない。
+  エクスポートを含む version を出すときに直す。`.codex/release-prompt.md` の更新対象に `pr/web` の FAQ が
+  含まれているので、release 手順を踏めば拾える。
 
 ## 2. `schema.ts` のコメント『動画ファイルのコピーは保持しない（参照方式）』は不正確
 

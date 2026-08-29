@@ -456,10 +456,21 @@ managed 動画側を参照扱いにするのは `assetId` が synthetic の行�
 - `diaryEntries`
 - `preferences`
 
-### 11.2 現在の位置づけ
+### 11.2 導線と処理の流れ
 
-- サービス実装は存在するが、現時点では主要 UI からの導線は限定的である。
-- そのため、本機能は「実装済みのバックアップ基盤」として扱うのが正確である。
+- 設定画面（`src/app/(tabs)/settings/index.tsx`）の「エクスポート」行から実行する。
+- ペイロードの組み立ては純粋関数 `buildExportPayload()`（`src/services/exportPayload.ts`）に分離されており、
+  `scripts/tests/exportPayload.test.cjs` で検証している。`exportService.ts` は I/O だけを持つ。
+- ファイルは `cacheDirectory` に `snowlog-backup-YYYYMMDD-HHmm.json` として書き出し、共有シートを開く。
+  共有後に削除はせず、次回エクスポート時に古いバックアップを掃除する。
+- 共有シートが利用できない場合は `ExportError` を投げる。この例外のメッセージだけがユーザーに提示される。
+
+### 11.3 現在の制限
+
+- **インポート（JSON からの復元）は未実装。** そのため本機能は単体ではバックアップであって、
+  機種変更時の移行手段にはならない。Issue #72 で管理している。
+- ネイティブ経路は長らく到達不能だったため、実機での実行実績がまだ無い。
+  実機検証を通すまでは未検証コードとして扱う。詳細は `.memory/doc-drift.md`。
 
 ---
 
