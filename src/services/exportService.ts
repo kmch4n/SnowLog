@@ -13,11 +13,23 @@ import { getFavoriteResorts } from "../database/repositories/favoriteResortRepos
 import { getAllDiaryEntries } from "../database/repositories/diaryEntryRepository";
 import { getAllPreferences } from "../database/repositories/appPreferenceRepository";
 import { t } from "../i18n";
-import type { Tag, VideoWithTags } from "../types";
-import { parseTechniques } from "../utils/parseTechniques";
+import type { Tag } from "../types";
 
-/** Bump when the export payload shape changes */
-const SCHEMA_VERSION = 1;
+import { ExportError, backupFileName, buildExportPayload } from "./exportPayload";
+
+const BACKUP_FILE_PREFIX = "snowlog-backup-";
+
+/**
+ * Upper bound on how long we wait for the share sheet.
+ *
+ * `expo-sharing`'s iOS module leaves two of four completion cases unhandled —
+ * notably "user picked an activity, that activity did not complete" — so the
+ * promise can hang forever and latch the caller's in-progress flag. Nothing
+ * runs after the sheet and the file is already written, so giving up waiting is
+ * harmless. Long enough for a real share (composing a mail, picking a folder),
+ * short enough that the settings row is not stuck until the app restarts.
+ */
+const SHARE_SHEET_TIMEOUT_MS = 60_000;
 
 /**
  * Fallback for when the batched tag query fails: fetch one video at a time and
@@ -39,9 +51,51 @@ async function collectTagsPerVideo(videoIds: string[]): Promise<Map<string, Tag[
 }
 
 /**
+ * Delete backups an earlier run left behind.
+ *
+ * The file is deliberately not deleted after a successful share: `shareAsync`
+ * resolves when the sheet is dismissed, which can precede the receiving
+ * extension finishing its read. Nothing needs the file afterwards, and
+ * `cacheDirectory` is purgeable by iOS, so sweeping on the next run is enough
+ * to bound disk use without racing anyone.
+ */
+async function sweepStaleBackups(directory: string): Promise<void> {
+    try {
+        const names = await FileSystem.readDirectoryAsync(directory);
+        await Promise.all(
+            names
+                .filter(
+                    (name) =>
+                        name.startsWith(BACKUP_FILE_PREFIX) && name.endsWith(".json")
+                )
+                .map((name) =>
+                    FileSystem.deleteAsync(`${directory}${name}`, {
+                        idempotent: true,
+                    }).catch(() => {})
+                )
+        );
+    } catch {
+        // A failed sweep must not block the export itself
+    }
+}
+
+/**
  * Export all user data as a full-backup JSON and open the system share sheet.
+ *
+ * Throws `ExportError` when the message is safe to show the user; anything
+ * else that escapes is internal and the caller must not display it.
  */
 export async function exportAllToJSON(): Promise<void> {
+    const directory = FileSystem.cacheDirectory;
+    if (!directory) {
+        throw new ExportError(t("settings.export.sharingUnavailable"));
+    }
+    if (!(await Sharing.isAvailableAsync())) {
+        throw new ExportError(t("settings.export.sharingUnavailable"));
+    }
+
+    await sweepStaleBackups(directory);
+
     const [videos, allTags, techniqueOptions, favoriteResorts, diaryEntries, preferences] =
         await Promise.all([
             getAllVideos(),
@@ -52,10 +106,10 @@ export async function exportAllToJSON(): Promise<void> {
             getAllPreferences(),
         ]);
 
-    // Attach per-video tags. One batched query covers the whole library; if it
-    // fails we drop back to the per-video path, which tolerates a single bad row
-    // rather than exporting every video with no tags at all.
-    const videoIds = videos.map((v) => v.id);
+    // One batched query covers the whole library; if it fails we drop back to
+    // the per-video path, which tolerates a single bad row rather than
+    // exporting every video with no tags at all.
+    const videoIds = videos.map((video) => video.id);
     let tagsByVideoId: Map<string, Tag[]>;
     try {
         tagsByVideoId = await getTagsForVideos(videoIds);
@@ -63,74 +117,33 @@ export async function exportAllToJSON(): Promise<void> {
         tagsByVideoId = await collectTagsPerVideo(videoIds);
     }
 
-    const videosWithTags: VideoWithTags[] = videos.map((video) => ({
-        ...video,
-        techniques: parseTechniques(video.techniques),
-        tags: tagsByVideoId.get(video.id) ?? [],
-    }));
-
-    const exportData = {
-        schemaVersion: SCHEMA_VERSION,
-        appVersion: Constants.expoConfig?.version ?? "unknown",
-        exportedAt: new Date().toISOString(),
-        videos: videosWithTags.map((v) => ({
-            id: v.id,
-            assetId: v.assetId,
-            filename: v.filename,
-            thumbnailUri: v.thumbnailUri,
-            duration: v.duration,
-            capturedAt: v.capturedAt,
-            skiResortName: v.skiResortName,
-            memo: v.memo,
-            title: v.title,
-            techniques: v.techniques,
-            isFileAvailable: v.isFileAvailable === 1,
-            isFavorite: v.isFavorite === 1,
-            createdAt: v.createdAt,
-            updatedAt: v.updatedAt,
-            tags: v.tags.map((t) => ({ id: t.id, name: t.name, type: t.type })),
-        })),
-        tags: allTags.map((t) => ({ id: t.id, name: t.name, type: t.type })),
-        techniqueOptions: techniqueOptions.map((o) => ({
-            name: o.name,
-            sortOrder: o.sortOrder,
-        })),
+    const now = new Date();
+    const payload = buildExportPayload({
+        videos,
+        tagsByVideoId,
+        allTags,
+        techniqueOptions,
         favoriteResorts,
-        diaryEntries: diaryEntries.map((d) => ({
-            dateKey: d.dateKey,
-            skiResortName: d.skiResortName,
-            weather: d.weather,
-            snowCondition: d.snowCondition,
-            impressions: d.impressions,
-            temperature: d.temperature,
-            companions: d.companions,
-            fatigueLevel: d.fatigueLevel,
-            expenses: d.expenses,
-            numberOfRuns: d.numberOfRuns,
-            createdAt: d.createdAt,
-            updatedAt: d.updatedAt,
-        })),
-        preferences: preferences.map((p) => ({ key: p.key, value: p.value })),
-    };
+        diaryEntries,
+        preferences,
+        appVersion: Constants.expoConfig?.version ?? "unknown",
+        exportedAt: now.toISOString(),
+    });
 
-    const json = JSON.stringify(exportData, null, 4);
-    const fileUri = `${FileSystem.documentDirectory}snowlog_backup_${Date.now()}.json`;
-    await FileSystem.writeAsStringAsync(fileUri, json, {
+    const fileUri = `${directory}${backupFileName(now)}`;
+    await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(payload, null, 4), {
         encoding: FileSystem.EncodingType.UTF8,
     });
 
-    try {
-        const isSharingAvailable = await Sharing.isAvailableAsync();
-        if (!isSharingAvailable) {
-            throw new Error(t("settings.export.sharingUnavailable"));
-        }
-
-        await Sharing.shareAsync(fileUri, {
+    // The timer is left dangling on the happy path; a single 60s timeout is not
+    // worth the bookkeeping to cancel, and it holds no reference to the payload.
+    await Promise.race([
+        Sharing.shareAsync(fileUri, {
             mimeType: "application/json",
             dialogTitle: t("settings.export.shareDialogTitle"),
-        });
-    } finally {
-        // Clean up temp file regardless of outcome
-        await FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => {});
-    }
+        }),
+        new Promise<void>((resolve) => {
+            setTimeout(resolve, SHARE_SHEET_TIMEOUT_MS);
+        }),
+    ]);
 }
