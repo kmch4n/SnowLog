@@ -266,16 +266,14 @@ export const en: Translations = {
             },
         },
         export: {
-            title: "Export",
-            description: "Export every video and its metadata as a single JSON file.",
-            buttonLabel: "Export as JSON",
+            exporting: "Exporting...",
             headerButton: "Export",
             shareDialogTitle: "Export SnowLog data",
             sharingUnavailable: "Sharing is not available on this device.",
             webUnsupportedTitle: "Web not supported",
             webUnsupportedBody: "Export is available only in the iOS app.",
-            success: "Export completed",
             failed: "Export failed",
+            failedBody: "Could not export your data. Please try again later.",
         },
         storageCleanup: {
             action: "Delete",

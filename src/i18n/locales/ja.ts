@@ -264,16 +264,14 @@ export const ja = {
             },
         },
         export: {
-            title: "エクスポート",
-            description: "全ての動画とメタデータを JSON ファイルにまとめて書き出します。",
-            buttonLabel: "JSON でエクスポート",
+            exporting: "書き出し中...",
             headerButton: "書き出し",
             shareDialogTitle: "SnowLogデータをエクスポート",
             sharingUnavailable: "この端末では共有機能が使用できません。",
             webUnsupportedTitle: "Web未対応",
             webUnsupportedBody: "エクスポート機能はiOSアプリでのみ利用できます。",
-            success: "エクスポートを完了しました",
             failed: "エクスポートに失敗しました",
+            failedBody: "データを書き出せませんでした。時間をおいてもう一度試してください。",
         },
         storageCleanup: {
             action: "削除する",
