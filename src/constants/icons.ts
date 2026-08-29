@@ -22,6 +22,7 @@ export const IconNames = {
         web: "chevron_right",
     },
     trash: { ios: "trash", android: "delete", web: "delete" },
+    share: { ios: "square.and.arrow.up", android: "ios_share", web: "ios_share" },
     warning: {
         ios: "exclamationmark.triangle.fill",
         android: "warning",

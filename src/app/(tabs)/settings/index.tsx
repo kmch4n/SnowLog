@@ -6,6 +6,8 @@ import { Icon } from "@/components/ui/Icon";
 import { Colors } from "@/constants/colors";
 import { IconNames } from "@/constants/icons";
 import { useTranslation } from "@/i18n/useTranslation";
+import { ExportError } from "@/services/exportPayload";
+import { exportAllToJSON } from "@/services/exportService";
 import { hapticError, hapticSuccess, hapticWarning } from "@/services/hapticsService";
 import { cleanupOrphanedFiles } from "@/services/orphanedFileCleanupService";
 
@@ -26,6 +28,7 @@ export default function SettingsScreen() {
     const router = useRouter();
     const { t } = useTranslation();
     const [isCleaning, setIsCleaning] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     const items = useMemo<SettingsItem[]>(
         () => [
@@ -57,6 +60,25 @@ export default function SettingsScreen() {
         ],
         [t]
     );
+
+    async function runExport(): Promise<void> {
+        if (isExporting) return;
+        setIsExporting(true);
+        try {
+            await exportAllToJSON();
+            hapticSuccess();
+        } catch (error) {
+            hapticError();
+            Alert.alert(
+                t("settings.export.failed"),
+                error instanceof ExportError
+                    ? error.message
+                    : t("settings.export.failedBody")
+            );
+        } finally {
+            setIsExporting(false);
+        }
+    }
 
     async function runManualCleanup(): Promise<void> {
         if (isCleaning) return;
@@ -131,6 +153,44 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                 ))}
             </View>
+            <View style={[styles.section, styles.dataSection]}>
+                <TouchableOpacity
+                    style={[
+                        styles.row,
+                        styles.rowFirst,
+                        styles.rowLast,
+                        isExporting && styles.rowDisabled,
+                    ]}
+                    onPress={() => {
+                        runExport().catch(() => {});
+                    }}
+                    activeOpacity={0.7}
+                    disabled={isExporting}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: isExporting, busy: isExporting }}
+                    accessibilityLabel={t("settings.menu.export")}
+                >
+                    <View style={styles.rowContent}>
+                        <Text style={styles.rowLabel}>
+                            {isExporting
+                                ? t("settings.export.exporting")
+                                : t("settings.menu.export")}
+                        </Text>
+                        <Text style={styles.rowDescription}>
+                            {t("settings.descriptions.export")}
+                        </Text>
+                    </View>
+                    <Icon
+                        name={IconNames.share}
+                        size={22}
+                        color={Colors.textTertiary}
+                        weight="semibold"
+                        fallback="↑"
+                        accessibilityLabel={t("settings.menu.export")}
+                        style={styles.chevron}
+                    />
+                </TouchableOpacity>
+            </View>
             <View style={[styles.section, styles.maintenanceSection]}>
                 <TouchableOpacity
                     style={[
@@ -179,6 +239,9 @@ const styles = StyleSheet.create({
         overflow: "hidden",
         borderWidth: 1,
         borderColor: Colors.border,
+    },
+    dataSection: {
+        marginTop: 16,
     },
     maintenanceSection: {
         marginTop: 16,
