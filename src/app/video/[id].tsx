@@ -96,10 +96,14 @@ export default function VideoDetailScreen() {
 
     // タイトル自動保存用の debounce タイマー
     const titleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // 「保存しました」を消す 2 秒タイマー。effect が張り直されたときに前回分を
+    // 消さないと、古いタイマーが新しい保存の表示を早めに消してしまう。
+    const titleStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isInitialTitleLoad = useRef(true);
 
     // メモ自動保存用の debounce タイマー
     const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const memoStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isInitialMemoLoad = useRef(true);
 
     const clearMemoScrollTimer = useCallback(() => {
@@ -159,12 +163,18 @@ export default function VideoDetailScreen() {
             setTitleSaveStatus("saving");
             await updateTitleRef.current(titleInput.trim() || null);
             setTitleSaveStatus("saved");
-            setTimeout(() => setTitleSaveStatus("idle"), 2000);
+            titleStatusTimerRef.current = setTimeout(
+                () => setTitleSaveStatus("idle"),
+                2000
+            );
         }, 1000);
 
         return () => {
             if (titleTimerRef.current) {
                 clearTimeout(titleTimerRef.current);
+            }
+            if (titleStatusTimerRef.current) {
+                clearTimeout(titleStatusTimerRef.current);
             }
         };
     }, [titleInput]);
@@ -187,12 +197,18 @@ export default function VideoDetailScreen() {
             await updateMemoRef.current(memoInput);
             setMemoSaveStatus("saved");
             // 2秒後にステータスをリセット
-            setTimeout(() => setMemoSaveStatus("idle"), 2000);
+            memoStatusTimerRef.current = setTimeout(
+                () => setMemoSaveStatus("idle"),
+                2000
+            );
         }, 1000);
 
         return () => {
             if (memoTimerRef.current) {
                 clearTimeout(memoTimerRef.current);
+            }
+            if (memoStatusTimerRef.current) {
+                clearTimeout(memoStatusTimerRef.current);
             }
         };
     }, [memoInput]);
