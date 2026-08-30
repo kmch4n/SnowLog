@@ -10,6 +10,8 @@ import { areVideoListsEqual } from "../utils/videoListEquality";
 
 interface FetchVideosOptions {
     showLoading?: boolean;
+    /** Lets the focus effect discard a result whose filter is no longer current. */
+    isCancelled?: () => boolean;
 }
 
 /**
@@ -52,6 +54,10 @@ export function useVideos(filter?: FilterOptions) {
 
     const fetchVideos = useCallback(async (options: FetchVideosOptions = {}) => {
         const showLoading = options.showLoading ?? true;
+        // フィルターの変更は debounce されておらず、`useFocusEffect` はコールバックの
+        // identity 変化で即座に再実行されるため取得が重なる。遅れて解決した古い
+        // フィルターの結果を書き込まないようにする。
+        const isCancelled = options.isCancelled ?? (() => false);
         if (showLoading) {
             setIsLoading(true);
         }
@@ -62,6 +68,7 @@ export function useVideos(filter?: FilterOptions) {
             // タグ情報を付加し、techniques を JSON 文字列からパース
             // タグは 1 クエリでまとめて引く（動画ごとに引くと件数に比例して往復が増える）
             const tagsByVideoId = await getTagsForVideos(rawVideos.map((v) => v.id));
+            if (isCancelled()) return;
             const videosWithTags = rawVideos.map((video) => ({
                 ...video,
                 tags: tagsByVideoId.get(video.id) ?? [],
@@ -72,8 +79,12 @@ export function useVideos(filter?: FilterOptions) {
                 areVideoListsEqual(current, videosWithTags) ? current : videosWithTags
             );
         } catch (e) {
-            setError(e instanceof Error ? e.message : t("errors.videoLoadFailed"));
+            if (!isCancelled()) {
+                setError(e instanceof Error ? e.message : t("errors.videoLoadFailed"));
+            }
         } finally {
+            // ここだけガードしない。取り消された取得がフラグを下ろしても
+            // 「スピナーが一瞬早く消える」だけで次の描画が正す。
             setIsLoading(false);
         }
     }, [stableFilter]);
@@ -81,7 +92,11 @@ export function useVideos(filter?: FilterOptions) {
     // 画面にフォーカスが戻るたびにリロード（削除・編集の反映）
     useFocusEffect(
         useCallback(() => {
-            fetchVideos({ showLoading: false });
+            let cancelled = false;
+            fetchVideos({ showLoading: false, isCancelled: () => cancelled });
+            return () => {
+                cancelled = true;
+            };
         }, [fetchVideos])
     );
 

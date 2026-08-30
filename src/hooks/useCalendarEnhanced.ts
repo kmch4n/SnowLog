@@ -90,9 +90,17 @@ export function useCalendarEnhanced() {
             setDiaryDateKeys(new Set());
             return;
         }
-        getDiaryDateKeysInRange(dateKeyRange.from, dateKeyRange.to).then(
-            (keys) => setDiaryDateKeys(new Set(keys))
-        );
+
+        // 月を素早く送ると取得が重なる。遅れて解決した古い月の結果で
+        // 表示中の月の日記ドットを上書きしないよう、破棄する。
+        let cancelled = false;
+        getDiaryDateKeysInRange(dateKeyRange.from, dateKeyRange.to).then((keys) => {
+            if (!cancelled) setDiaryDateKeys(new Set(keys));
+        });
+
+        return () => {
+            cancelled = true;
+        };
     }, [dateKeyRange, diaryRefreshKey]);
 
     // --- DayInfo マップ ---

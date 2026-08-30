@@ -26,27 +26,46 @@ export function useVideoDetail(videoId: string) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchVideo = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const raw = await getVideoById(videoId);
-            if (!raw) {
-                setError(t("videoDetail.notFound"));
-                return;
+    /**
+     * `isCancelled` は他の 3 フックと形を揃えるための防御であって、現状の導線で
+     * 発火する経路は無い。`/video/[id]` へは全て `router.push` / `replace` で入り、
+     * 毎回新しい画面インスタンスが `videoId` を固定して載るため、マウント済みの
+     * インスタンスで `videoId` が変わることがない（`_layout.tsx` に `getId` も無い）。
+     * 動画間をスワイプで移動する UI を将来入れるとインスタンスが再利用されるので、
+     * そのときに効く。
+     */
+    const fetchVideo = useCallback(
+        async (isCancelled: () => boolean = () => false) => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const raw = await getVideoById(videoId);
+                if (isCancelled()) return;
+                if (!raw) {
+                    setError(t("videoDetail.notFound"));
+                    return;
+                }
+                const tags = await getTagsForVideo(videoId);
+                if (isCancelled()) return;
+                const techniques = parseTechniques(raw.techniques as string | null);
+                setVideo({ ...raw, tags, techniques });
+            } catch (e) {
+                if (!isCancelled()) {
+                    setError(e instanceof Error ? e.message : t("videoDetail.loadFailed"));
+                }
+            } finally {
+                setIsLoading(false);
             }
-            const tags = await getTagsForVideo(videoId);
-            const techniques = parseTechniques(raw.techniques as string | null);
-            setVideo({ ...raw, tags, techniques });
-        } catch (e) {
-            setError(e instanceof Error ? e.message : t("videoDetail.loadFailed"));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [videoId]);
+        },
+        [videoId]
+    );
 
     useEffect(() => {
-        fetchVideo();
+        let cancelled = false;
+        fetchVideo(() => cancelled);
+        return () => {
+            cancelled = true;
+        };
     }, [fetchVideo]);
 
     /** タイトルを更新する（debounceはUI側で実装） */
