@@ -164,6 +164,7 @@ export const en: Translations = {
             calendar: "Calendar",
             duplicateCandidates: "Duplicate candidates",
             export: "Export",
+            import: "Restore from backup",
             storageCleanup: "Delete unused files",
         },
         descriptions: {
@@ -173,6 +174,7 @@ export const en: Translations = {
             calendar: "Change week start and default view",
             duplicateCandidates: "Review and clean up potential duplicates",
             export: "Export the entire library to JSON",
+            import: "Restore your log from an exported JSON file",
             storageCleanup: "Delete unused thumbnails and managed video files",
         },
         techniques: {
@@ -274,6 +276,32 @@ export const en: Translations = {
             webUnsupportedBody: "Export is available only in the iOS app.",
             failed: "Export failed",
             failedBody: "Could not export your data. Please try again later.",
+        },
+        import: {
+            importing: "Restoring...",
+            action: "Restore",
+            confirmTitle: "Restore this backup?",
+            confirmBody: "This will bring in {{videos}} video(s), {{diary}} diary entry(ies) and {{tags}} tag(s).
+
+The backup does not contain the video files themselves. On a different device the videos cannot be played and no thumbnails will appear.",
+            completedTitle: "Restored",
+            completedBody: "Brought in {{videos}} video(s) and {{diary}} diary entry(ies).",
+            completedWithSkipped: "Brought in {{videos}} video(s) and {{diary}} diary entry(ies).
+{{skipped}} were already present and were skipped.",
+            unavailableNote: "
+
+{{count}} of them were added as unplayable because their video file could not be found.",
+            nothingTitle: "Nothing to restore",
+            nothingBody: "This file contained no data that could be restored.",
+            failed: "Restore failed",
+            errors: {
+                notBackup: "This file does not look like a SnowLog backup.",
+                newerVersion: "This backup was written by a newer version of SnowLog. Update the app and try again.",
+                readFailed: "Could not read the file.",
+                writeFailed: "Something went wrong while bringing the data in. Please try again.",
+            },
+            webUnsupportedTitle: "Web not supported",
+            webUnsupportedBody: "Restore is available only in the iOS app.",
         },
         storageCleanup: {
             action: "Delete",

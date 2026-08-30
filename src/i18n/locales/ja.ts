@@ -162,6 +162,7 @@ export const ja = {
             calendar: "カレンダー",
             duplicateCandidates: "重複の候補",
             export: "エクスポート",
+            import: "バックアップから復元",
             storageCleanup: "不要ファイルを削除",
         },
         descriptions: {
@@ -171,6 +172,7 @@ export const ja = {
             calendar: "週始まりや既定ビューを変更します",
             duplicateCandidates: "重複の可能性がある動画を確認・整理します",
             export: "ライブラリ全体を JSON でエクスポートします",
+            import: "書き出した JSON からログを復元します",
             storageCleanup: "使われていないサムネイルや管理動画ファイルを削除します",
         },
         techniques: {
@@ -272,6 +274,32 @@ export const ja = {
             webUnsupportedBody: "エクスポート機能はiOSアプリでのみ利用できます。",
             failed: "エクスポートに失敗しました",
             failedBody: "データを書き出せませんでした。時間をおいてもう一度試してください。",
+        },
+        import: {
+            importing: "復元中...",
+            action: "復元する",
+            confirmTitle: "この内容を復元しますか？",
+            confirmBody: "動画 {{videos}} 件、日記 {{diary}} 件、タグ {{tags}} 件を取り込みます。
+
+動画ファイル自体はバックアップに含まれません。別の端末では動画を再生できず、サムネイルも表示されません。",
+            completedTitle: "復元しました",
+            completedBody: "動画 {{videos}} 件、日記 {{diary}} 件を取り込みました。",
+            completedWithSkipped: "動画 {{videos}} 件、日記 {{diary}} 件を取り込みました。
+{{skipped}} 件はすでに登録済みのため飛ばしました。",
+            unavailableNote: "
+
+うち {{count}} 件は動画ファイルが見つからないため、再生できない状態で登録しました。",
+            nothingTitle: "取り込むものがありません",
+            nothingBody: "このファイルには復元できるデータが含まれていませんでした。",
+            failed: "復元に失敗しました",
+            errors: {
+                notBackup: "このファイルは SnowLog のバックアップではないようです。",
+                newerVersion: "このバックアップは新しいバージョンの SnowLog で書き出されています。アプリを更新してからお試しください。",
+                readFailed: "ファイルを読み込めませんでした。",
+                writeFailed: "データの取り込み中に問題が発生しました。もう一度お試しください。",
+            },
+            webUnsupportedTitle: "Web未対応",
+            webUnsupportedBody: "復元機能はiOSアプリでのみ利用できます。",
         },
         storageCleanup: {
             action: "削除する",
