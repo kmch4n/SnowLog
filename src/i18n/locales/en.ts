@@ -281,16 +281,11 @@ export const en: Translations = {
             importing: "Restoring...",
             action: "Restore",
             confirmTitle: "Restore this backup?",
-            confirmBody: "This will bring in {{videos}} video(s), {{diary}} diary entry(ies) and {{tags}} tag(s).
-
-The backup does not contain the video files themselves. On a different device the videos cannot be played and no thumbnails will appear.",
+            confirmBody: "This will bring in {{videos}} video(s), {{diary}} diary entry(ies) and {{tags}} tag(s).\n\nThe backup does not contain the video files themselves. On a different device the videos cannot be played and no thumbnails will appear.",
             completedTitle: "Restored",
             completedBody: "Brought in {{videos}} video(s) and {{diary}} diary entry(ies).",
-            completedWithSkipped: "Brought in {{videos}} video(s) and {{diary}} diary entry(ies).
-{{skipped}} were already present and were skipped.",
-            unavailableNote: "
-
-{{count}} of them were added as unplayable because their video file could not be found.",
+            completedWithSkipped: "Brought in {{videos}} video(s) and {{diary}} diary entry(ies).\n{{skipped}} were already present and were skipped.",
+            unavailableNote: "\n\n{{count}} of them were added as unplayable because their video file could not be found.",
             nothingTitle: "Nothing to restore",
             nothingBody: "This file contained no data that could be restored.",
             failed: "Restore failed",

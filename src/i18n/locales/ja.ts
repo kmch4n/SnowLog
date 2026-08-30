@@ -279,16 +279,11 @@ export const ja = {
             importing: "復元中...",
             action: "復元する",
             confirmTitle: "この内容を復元しますか？",
-            confirmBody: "動画 {{videos}} 件、日記 {{diary}} 件、タグ {{tags}} 件を取り込みます。
-
-動画ファイル自体はバックアップに含まれません。別の端末では動画を再生できず、サムネイルも表示されません。",
+            confirmBody: "動画 {{videos}} 件、日記 {{diary}} 件、タグ {{tags}} 件を取り込みます。\n\n動画ファイル自体はバックアップに含まれません。別の端末では動画を再生できず、サムネイルも表示されません。",
             completedTitle: "復元しました",
             completedBody: "動画 {{videos}} 件、日記 {{diary}} 件を取り込みました。",
-            completedWithSkipped: "動画 {{videos}} 件、日記 {{diary}} 件を取り込みました。
-{{skipped}} 件はすでに登録済みのため飛ばしました。",
-            unavailableNote: "
-
-うち {{count}} 件は動画ファイルが見つからないため、再生できない状態で登録しました。",
+            completedWithSkipped: "動画 {{videos}} 件、日記 {{diary}} 件を取り込みました。\n{{skipped}} 件はすでに登録済みのため飛ばしました。",
+            unavailableNote: "\n\nうち {{count}} 件は動画ファイルが見つからないため、再生できない状態で登録しました。",
             nothingTitle: "取り込むものがありません",
             nothingBody: "このファイルには復元できるデータが含まれていませんでした。",
             failed: "復元に失敗しました",
