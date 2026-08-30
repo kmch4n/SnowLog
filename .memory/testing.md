@@ -8,7 +8,7 @@ status: active
 
 ## テストは存在するが `npm test` では走らない
 
-**`scripts/tests/` に `node:test` ベースのテストが 14 ファイル・108 ケースある**（2026-08-30 時点。実測値）。
+**`scripts/tests/` に `node:test` ベースのテストが 15 ファイル・112 ケースある**（2026-08-30 時点。実測値）。
 ほかに `scripts/tests/helpers/` があるが、これはテストではなく共有ハーネス（後述）。
 
 かつて `.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
@@ -27,6 +27,7 @@ status: active
 - `photosErrors.test.cjs`
 - `tagRepository.test.cjs`
 - `versionUtils.test.cjs`
+- `webShimParity.test.cjs`
 - `videoDetailKeyboardAccessory.test.cjs`
 - `videoListEquality.test.cjs`
 
@@ -57,12 +58,12 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 ## テストの性質は 2 種類ある — 一括りにしないこと
 
 方式が異なる。**「SnowLog のテストはソース文字列を見ているだけ」は誤り**（2026-07-15 に実地確認）。
-振る舞い検証が 12 本・正規表現が 2 本で、いまや前者が多数派。
+振る舞い検証が 12 本・ソース読み取りが 3 本で、いまや前者が多数派。
 
 | 方式 | ファイル | 性質 |
 | --- | --- | --- |
 | **振る舞いを検証**（12 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` / `exportPayload` / `tagRepository` / `appPreferenceRepository` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる。末尾 2 本は実 SQLite を使う（後述） |
-| **ソース正規表現**（2 本） | `homeSwipeDelete` / `videoDetailKeyboardAccessory` | `readFileSync` + `assert.match`。実装の書き方を固定するスナップショット |
+| **ソース読み取り**（3 本） | `homeSwipeDelete` / `videoDetailKeyboardAccessory` / `webShimParity` | `readFileSync` してソース文字列を見る。前 2 本は実装の書き方を固定するスナップショット。`webShimParity` だけ性質が違う（後述） |
 
 正規表現方式の 2 本だけが次の弱点を持つ。
 
@@ -71,6 +72,17 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 
 リファクタでこの 2 本が落ちたら、まず**テストが実装の変更に追随していないだけではないか**を疑う。
 実際 `homeSwipeDelete` の失敗はこれ（上記）。一方、振る舞い検証の 3 本が落ちたら**本物の退行を疑ってよい**。
+
+### `webShimParity` は同じ弱点を持たない（2026-08-30 追加）
+
+ソースを読む点は同じだが、**特定の書き方を固定していない**。native と `.web` の 2 ファイルから
+export 名を取り出して突き合わせるだけなので、両方で同じリネームをすれば緑のまま通る。
+上の 2 本のような「抽象化しただけで落ちる」性質は無い。
+
+代わりに固有の弱点がある。**パーサが壊れると検査が素通りする。** `export { … } from` を読む分岐を落としても、
+`mediaService` は native と shim の両方が同じ re-export 行を使っているため両側から同時に名前が消え、
+差分が空になってパリティ検査は緑のままになる（変異で実測）。そのためファイル内に
+**パーサ自身を検査するケースと、ペアが 0 件でないことを確かめるケースを置いてある。この 2 つを冗長として消さないこと。**
 
 ## assert を書いたら変異させて確かめる（緑は何も証明しない）
 

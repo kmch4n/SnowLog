@@ -51,35 +51,33 @@ status: active
 
 ## 3. ファイルサイズ規約の逸脱
 
-`.claude/CLAUDE.md` と `.codex/AGENTS.md` はファイルを ~500〜700 行に収めるよう定めているが、`src/app/video-import.tsx` は約 1,300 行あり大きく超えている。規約違反として認識されており、分割候補。
+`.claude/CLAUDE.md` と `.codex/AGENTS.md` はファイルを ~500〜700 行に収めるよう定めているが、
+`src/app/video-import.tsx` は **1,371 行**あり大きく超えている。`src/` で規約を超えているのはこの 1 ファイルだけ。
+作業は Issue [#80](https://github.com/kmch4n/SnowLog/issues/80) で管理している。
 
 ---
 
-## 参考: `.web` シムの export 欠落は体系的（Issue [#74](https://github.com/kmch4n/SnowLog/issues/74)）
+## 解消済み: `.web` シムの export 欠落（Issue [#74](https://github.com/kmch4n/SnowLog/issues/74)）
 
 2026-07-25 に Issue #71（`mediaService.web.ts` が `isSyntheticAssetId` を落としていた）を直す過程で、
-native と `.web` の export を全ペア突き合わせたところ、**同種の欠落が他に 10 件**あった。
+native と `.web` の export を全ペア突き合わせたところ、**同種の欠落が他に 9 件**あった
+（Issue #74 のタイトルと本文は 10 件と書いているが、同じ Issue の表は 9 件しか挙げておらず、実測も 9 件。
+`videoRepository` 5 / `tagRepository` 1 / `techniqueOptionRepository` 1 / `managedVideoFileService` 1 / `thumbnailService` 1）。
 
-| シム | native にあって `.web` に無い export |
-| --- | --- |
-| `videoRepository.web.ts` | `bulkSetFavorite` / `deleteVideos` / `getExistingAssetIds` / `getVideosWithSuspiciousCapturedAt` / `updateVideoThumbnailUri` |
-| `tagRepository.web.ts` | `deleteCustomTag` |
-| `techniqueOptionRepository.web.ts` | `reorderTechniqueOptions` |
-| `managedVideoFileService.web.ts` | `getManagedVideoDirectoryUri` |
-| `thumbnailService.web.ts` | `getThumbnailDirectoryUri` |
+**2026-08-30 に 9 件すべて埋めた。手作業での再確認はもう要らない。**
+`scripts/tests/webShimParity.test.cjs` が全 native/`.web` ペアを突き合わせ、
+シム側に足りない export があればスイートを落とす。
 
-`tsc --noEmit` はこれを検出できない。specifier は native 側に解決され、`.web` への差し替えは Metro のバンドル時だけだからである。
-呼び出し元に `.web` companion があるものは実害が無い（例: `getManagedVideoDirectoryUri` の唯一の利用者
-`orphanedFileCleanupService` は自前の `.web` を持つ）が、`deleteVideos` / `bulkSetFavorite` のようにホーム
-（`src/app/(tabs)/index/index.tsx`、`.web` 無し）から辿れるものは Web で `TypeError` になる。
+この検査について、消す前に知っておくべきこと。
 
-再確認コマンド:
-
-```bash
-for f in src/database/repositories/*.ts src/services/*.ts; do
-    case "$f" in *.web.ts) continue;; esac
-    w="${f%.ts}.web.ts"; [ -f "$w" ] || continue
-    diff <(grep -oE "^export (async )?function [a-zA-Z]+" "$f" | grep -oE "[a-zA-Z]+$" | sort) \
-         <(grep -oE "^export (async )?function [a-zA-Z]+" "$w" | grep -oE "[a-zA-Z]+$" | sort)
-done
-```
+- **値 export だけを見る。** 型 export は実行時に消え、型の参照は必ず native 側に解決されるので、
+  シムに型が無くても `TypeError` にも型エラーにもならない。型パリティを強制すると、
+  誰も読まない型をシムに再宣言させるだけになる。
+- **`tsc` はこの種の乖離を検出できない。** specifier は native に解決され、`.web` への差し替えは
+  Metro のバンドル時だけだからである。だからテストが要る。
+- **パーサ自身を検査するケースを消さないこと。** `export { … } from` を読む分岐を壊しても
+  **パリティ検査は緑のまま**通る。`mediaService` は native と shim の両方が同じ re-export 行を使っており、
+  両側から同時に同じ名前が消えて差分が空になるためである（2026-08-30 に変異で実測）。
+  この失敗を捕まえるのは `the parser understands re-export and plain function forms` だけ。
+- **`export *` はサポート外の形式として扱い、シム対に現れたら落とす。** 黙って読み飛ばすと
+  検査が素通りする。`src/database/index.ts:16` に 1 件あるが、`.web.ts` の相方が無いのでペア一覧に入らない。
