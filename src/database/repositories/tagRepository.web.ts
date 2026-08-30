@@ -66,3 +66,7 @@ export async function removeTagFromVideo(_videoId: string, _tagId: number): Prom
 export async function setTagsForVideo(_videoId: string, _tagIds: number[]): Promise<void> {
     // Web では保存しない
 }
+
+export async function deleteCustomTag(_tagId: number): Promise<void> {
+    // Web では保存しない
+}

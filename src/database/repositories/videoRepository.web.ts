@@ -183,6 +183,17 @@ export async function getSkiResortNamesForCapturedDay(
     return [...new Set(names)];
 }
 
+export async function bulkSetFavorite(
+    _videoIds: string[],
+    _isFavorite: boolean
+): Promise<void> {
+    return;
+}
+
+export async function deleteVideos(_videoIds: string[]): Promise<void> {
+    return;
+}
+
 export async function getRecentSkiResortNames(limit = 3): Promise<string[]> {
     const names: string[] = [];
     for (const video of [...MOCK_VIDEOS].sort((a, b) => b.capturedAt - a.capturedAt)) {

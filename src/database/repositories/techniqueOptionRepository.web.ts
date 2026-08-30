@@ -15,3 +15,9 @@ export async function insertTechniqueOption(_name: string): Promise<void> {
 export async function deleteTechniqueOption(_id: number): Promise<void> {
     // Web では保存しない
 }
+
+// ネイティブ側は Drizzle の同期トランザクションなので Promise を返さない。
+// 呼び出し側が await していても無害だが、シグネチャは native に合わせる。
+export function reorderTechniqueOptions(_orderedIds: number[]): void {
+    // Web では保存しない
+}
