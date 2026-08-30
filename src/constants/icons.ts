@@ -23,6 +23,11 @@ export const IconNames = {
     },
     trash: { ios: "trash", android: "delete", web: "delete" },
     share: { ios: "square.and.arrow.up", android: "ios_share", web: "ios_share" },
+    restore: {
+        ios: "square.and.arrow.down",
+        android: "file_download",
+        web: "file_download",
+    },
     warning: {
         ios: "exclamationmark.triangle.fill",
         android: "warning",
