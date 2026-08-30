@@ -1,6 +1,6 @@
 ---
 title: 非自明な配線とデータ契約
-updated: 2026-07-30
+updated: 2026-08-31
 status: active
 ---
 
@@ -75,3 +75,9 @@ Stack（`GestureHandlerRootView` + `ThemeProvider` でラップ）は上記と�
     - `weekStartDay` だけが camelCase。**歴史的な事故によるもので、データマイグレーションなしに snake_case へ変えてはいけない。**
     - 言語ピッカー削除（`bab0b45`）が残した `app_locale` 行は、起動時に `seedTechniqueOptions` の隣で削除される。キー名は `app_locale` であって `locale` ではない。
     - **`exportService` は全設定を verbatim でダンプする**ので、ここにキーを増やすとバックアップ JSON にもそのまま載る。
+    - **エクスポートは全部出すが、インポートは 2 つしか戻さない。** 復元対象は
+      `home_sort_order` と `weekStartDay` だけで、許可リストは
+      `src/services/importPayload.ts` の `RESTORABLE_PREFERENCE_KEYS`。
+      `thumbnail_migration_version` / `capturedAt_repair_version` を書き戻すと、
+      新規インストールで当該マイグレーションが「済み」と判定されて飛ぶ。
+      **キーを増やしたときは、復元してよいものかをここで判断すること。**

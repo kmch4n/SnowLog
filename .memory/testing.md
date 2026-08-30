@@ -1,6 +1,6 @@
 ---
 title: テストの実態と実行方法
-updated: 2026-08-30
+updated: 2026-08-31
 status: active
 ---
 
@@ -8,7 +8,7 @@ status: active
 
 ## テストは存在するが `npm test` では走らない
 
-**`scripts/tests/` に `node:test` ベースのテストが 16 ファイル・126 ケースある**（2026-08-30 時点。実測値）。
+**`scripts/tests/` に `node:test` ベースのテストが 17 ファイル・149 ケースある**（2026-08-31 時点。実測値）。
 ほかに `scripts/tests/helpers/` があるが、これはテストではなく共有ハーネス（後述）。
 
 かつて `.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
@@ -23,6 +23,7 @@ status: active
 - `duplicateDetectionService.test.cjs`
 - `exportPayload.test.cjs`
 - `geoUtils.test.cjs`
+- `importPayload.test.cjs`
 - `homeSwipeDelete.test.cjs`
 - `parseTechniques.test.cjs`
 - `photosErrors.test.cjs`
@@ -42,7 +43,7 @@ node --test "scripts/tests/*.test.cjs"
 
 glob をクォートで囲むこと。**`node --test scripts/tests/` のようなディレクトリ指定は Node 25 / Windows で `MODULE_NOT_FOUND` になり動かない**（2026-07-15 に確認）。
 
-## 全 126 件 pass（2026-08-30 時点）
+## 全 149 件 pass（2026-08-31 時点）
 
 かつて `homeSwipeDelete.test.cjs` の「iOS-style icon and compact system red surface」ケースが
 main で 1 件落ち続けていた。原因は**テストの陳腐化**（動作の退行ではない）。
@@ -59,11 +60,11 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 ## テストの性質は 2 種類ある — 一括りにしないこと
 
 方式が異なる。**「SnowLog のテストはソース文字列を見ているだけ」は誤り**（2026-07-15 に実地確認）。
-振る舞い検証が 13 本・ソース読み取りが 3 本で、いまや前者が多数派。
+振る舞い検証が 14 本・ソース読み取りが 3 本で、いまや前者が多数派。
 
 | 方式 | ファイル | 性質 |
 | --- | --- | --- |
-| **振る舞いを検証**（13 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` / `exportPayload` / `duplicateDetectionService` / `tagRepository` / `appPreferenceRepository` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる。末尾 2 本は実 SQLite を使う（後述） |
+| **振る舞いを検証**（14 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` / `exportPayload` / `importPayload` / `duplicateDetectionService` / `tagRepository` / `appPreferenceRepository` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる。末尾 2 本は実 SQLite を使う（後述） |
 | **ソース読み取り**（3 本） | `homeSwipeDelete` / `videoDetailKeyboardAccessory` / `webShimParity` | `readFileSync` してソース文字列を見る。前 2 本は実装の書き方を固定するスナップショット。`webShimParity` だけ性質が違う（後述） |
 
 正規表現方式の 2 本だけが次の弱点を持つ。
