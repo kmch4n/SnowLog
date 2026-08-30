@@ -8,7 +8,7 @@ status: active
 
 ## テストは存在するが `npm test` では走らない
 
-**`scripts/tests/` に `node:test` ベースのテストが 15 ファイル・112 ケースある**（2026-08-30 時点。実測値）。
+**`scripts/tests/` に `node:test` ベースのテストが 16 ファイル・126 ケースある**（2026-08-30 時点。実測値）。
 ほかに `scripts/tests/helpers/` があるが、これはテストではなく共有ハーネス（後述）。
 
 かつて `.codex/AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
@@ -20,6 +20,7 @@ status: active
 - `bulkImportProgressUtils.test.cjs`
 - `calendarUtils.test.cjs`
 - `dateUtils.test.cjs`
+- `duplicateDetectionService.test.cjs`
 - `exportPayload.test.cjs`
 - `geoUtils.test.cjs`
 - `homeSwipeDelete.test.cjs`
@@ -41,7 +42,7 @@ node --test "scripts/tests/*.test.cjs"
 
 glob をクォートで囲むこと。**`node --test scripts/tests/` のようなディレクトリ指定は Node 25 / Windows で `MODULE_NOT_FOUND` になり動かない**（2026-07-15 に確認）。
 
-## 全 112 件 pass（2026-08-30 時点）
+## 全 126 件 pass（2026-08-30 時点）
 
 かつて `homeSwipeDelete.test.cjs` の「iOS-style icon and compact system red surface」ケースが
 main で 1 件落ち続けていた。原因は**テストの陳腐化**（動作の退行ではない）。
@@ -58,11 +59,11 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 ## テストの性質は 2 種類ある — 一括りにしないこと
 
 方式が異なる。**「SnowLog のテストはソース文字列を見ているだけ」は誤り**（2026-07-15 に実地確認）。
-振る舞い検証が 12 本・ソース読み取りが 3 本で、いまや前者が多数派。
+振る舞い検証が 13 本・ソース読み取りが 3 本で、いまや前者が多数派。
 
 | 方式 | ファイル | 性質 |
 | --- | --- | --- |
-| **振る舞いを検証**（12 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` / `exportPayload` / `tagRepository` / `appPreferenceRepository` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる。末尾 2 本は実 SQLite を使う（後述） |
+| **振る舞いを検証**（13 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` / `exportPayload` / `duplicateDetectionService` / `tagRepository` / `appPreferenceRepository` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる。末尾 2 本は実 SQLite を使う（後述） |
 | **ソース読み取り**（3 本） | `homeSwipeDelete` / `videoDetailKeyboardAccessory` / `webShimParity` | `readFileSync` してソース文字列を見る。前 2 本は実装の書き方を固定するスナップショット。`webShimParity` だけ性質が違う（後述） |
 
 正規表現方式の 2 本だけが次の弱点を持つ。
@@ -107,6 +108,30 @@ export 名を取り出して突き合わせるだけなので、両方で同じ�
   ありそうな実バグで変異させる
 - **通るのが正しい変異もある。** `geoUtils` の null 座標ガードは実データに該当が無く到達不能なので、
   削除しても通る。これは assert の欠陥ではない
+
+### 実例: フィクスチャが甘くて assert が無効だった（2026-08-30）
+
+`duplicateDetectionService` にテストを足したとき、「ファイル名のコピー標識が正規化される」テストが
+**`stripTrailingCopyMarkers` を丸ごと削除しても緑のまま**通った。原因は assert ではなくフィクスチャ。
+3 本の動画に同じ `capturedAt` と同じ `duration` を与えていたため、
+`durationDiff 0`（+2）と `capturedAtDiff 0`（+3）だけで `score >= 5` のショートカットに乗り、
+**ファイル名が何であれグループが成立**していた。撮影時刻と長さをばらして、
+ファイル名バケット経由でしか一致しない状況にして初めて assert が効くようになった。
+
+教訓: 「その assert が守るはずの入力経路以外で、テストが通ってしまわないか」を確認する。
+変異させて緑だったとき、疑うべきは assert だけでなくフィクスチャの方でもある。
+
+### 変異が効かない箇所は「到達不能なコード」を意味することがある
+
+同じモジュールで、次の 2 箇所はどう変異させてもテストが落ちない。**assert の欠陥ではなく、コードが到達不能**である。
+
+- `buildGroups` の `groupIds.length < 2` — 直前の `!adjacency.has(video.id)` と冗長。
+  adjacency にある動画は必ず隣接を 1 つ以上持つので、連結成分は常に 2 件以上になる。
+  **片方だけ消しても挙動が変わらない**ので、片方を消して「テストが無い」と結論しないこと。
+- `sharedReasons.slice(0, 4)` — 理由は 4 分類（長さ / 撮影時刻 / ファイル名 / スキー場）で
+  ペアあたり各 1 件まで、かつ `intersectReasons` は縮めるだけなので 5 件目が構造的に発生しない。
+
+どちらも「落ちようがない assert」になるため、テストを書いていない。
 
 ## アーキテクチャ上の単一窓口は lint で守る（テストではない）
 
