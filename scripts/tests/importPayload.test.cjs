@@ -96,7 +96,7 @@ test("a minimal valid backup parses to empty collections", () => {
 test("a newer schemaVersion is rejected as newer", () => {
     assert.throws(
         () => parseExportPayload(makeBackup({ schemaVersion: 2 })),
-        (error) => error instanceof ImportError && /newer/i.test(error.message)
+        (error) => error instanceof ImportError && error.code === "newerVersion"
     );
 });
 
@@ -104,7 +104,7 @@ test("a missing or non-numeric schemaVersion is rejected", () => {
     for (const bad of [undefined, "1", null, 0, -1]) {
         assert.throws(
             () => parseExportPayload(makeBackup({ schemaVersion: bad })),
-            ImportError,
+            (error) => error instanceof ImportError && error.code === "notBackup",
             `expected rejection for schemaVersion ${JSON.stringify(bad)}`
         );
     }
@@ -114,7 +114,7 @@ test("a payload that is not an object is rejected", () => {
     for (const bad of [null, undefined, [], "x", 42, true]) {
         assert.throws(
             () => parseExportPayload(bad),
-            ImportError,
+            (error) => error instanceof ImportError && error.code === "notBackup",
             `expected rejection for ${JSON.stringify(bad)}`
         );
     }

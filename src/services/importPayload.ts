@@ -27,10 +27,21 @@ export const RESTORABLE_PREFERENCE_KEYS = ["home_sort_order", "weekStartDay"] as
 
 const TAG_TYPES: readonly TagType[] = ["technique", "skier", "custom"];
 
-/** A failure whose message is safe to show the user verbatim. */
+/**
+ * Why a file was refused. A **code**, not a sentence: this module cannot reach
+ * i18n — importing `../i18n` would pull in `expo-localization` and stop
+ * `scripts/tests/` from compiling it — so the caller looks the wording up under
+ * `settings.import.errors.<code>`.
+ */
+export type ImportErrorCode = "notBackup" | "newerVersion";
+
+/** A refusal the UI can explain. Carries a code so the copy stays localised. */
 export class ImportError extends Error {
-    constructor(message: string) {
-        super(message);
+    readonly code: ImportErrorCode;
+
+    constructor(code: ImportErrorCode) {
+        super(code);
+        this.code = code;
         this.name = "ImportError";
     }
 }
@@ -227,17 +238,15 @@ function isRestorablePreferenceKey(key: string): boolean {
  */
 export function parseExportPayload(raw: unknown): ImportPlan {
     if (!isRow(raw)) {
-        throw new ImportError("The file is not a SnowLog backup.");
+        throw new ImportError("notBackup");
     }
 
     const schemaVersion = requiredNumber(raw.schemaVersion);
     if (schemaVersion == null || schemaVersion < 1) {
-        throw new ImportError("The file is not a SnowLog backup.");
+        throw new ImportError("notBackup");
     }
     if (schemaVersion > IMPORT_SUPPORTED_SCHEMA_VERSION) {
-        throw new ImportError(
-            "This backup was written by a newer version of SnowLog. Update the app and try again."
-        );
+        throw new ImportError("newerVersion");
     }
 
     const skipped: ImportSkipCounts = {
