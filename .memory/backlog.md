@@ -1,6 +1,6 @@
 ---
 title: バックログ
-updated: 2026-07-25
+updated: 2026-08-30
 status: active
 ---
 
@@ -8,27 +8,52 @@ status: active
 
 コードや git log からは読み取れない「これからやりたいこと」の置き場。
 
-**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-07-25 時点で open 7 件）、
+**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-08-30 時点で open 15 件）、
 やることは基本すべて Issue 化されている。ここに同じ内容を書くと二重管理になり、必ず片方が腐る。
 このファイルには **Issue になっていないものだけ** を置く。Issue 化できたらここから消す。
 
 ## Issue 化されていない項目
 
-- **`src/app/video-import.tsx` の分割** — 約 1,300 行で、規約の ~500〜700 行を大きく超過。アプリの中核機能なので分割は慎重に。
+**現在なし。** 唯一残っていた `src/app/video-import.tsx` の分割は
+[#80](https://github.com/kmch4n/SnowLog/issues/80) になった。この節が空であることが本来あるべき状態で、
+何か思いついたら Issue にしてここには書かない。
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
-作業前にこの対応表を見て、既存 Issue を確認する。
+作業前にこの対応表を見て、既存 Issue を確認する。**2026-08-30 時点の open 15 件すべて**を載せている。
+古い表は新しく立った Issue を落としたまま残っていて役に立たなかったので、更新するときは
+`gh issue list --state open` から作り直すこと。追記していくと必ず漏れる。
 
 | テーマ | Issue |
 | --- | --- |
-| JSON エクスポートの導線復活とインポート実装 | [#72](https://github.com/kmch4n/SnowLog/issues/72) |
+| Web が起動時にクラッシュする（`openDatabaseSync` 不在） | [#84](https://github.com/kmch4n/SnowLog/issues/84) |
+| 未参照の i18n キー 93 件 | [#83](https://github.com/kmch4n/SnowLog/issues/83) |
+| CI 不在 | [#82](https://github.com/kmch4n/SnowLog/issues/82) |
+| 改行コード方針が `.gitattributes` に無い | [#81](https://github.com/kmch4n/SnowLog/issues/81) |
+| `video-import.tsx` の分割 | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
+| アクセシビリティ（72 個中 66 個の touchable に role/label 無し） | [#79](https://github.com/kmch4n/SnowLog/issues/79) |
+| Expo SDK 55 の依存 26 件が期待バージョン未満 | [#78](https://github.com/kmch4n/SnowLog/issues/78) |
 | `.web` シムの export 欠落 | [#74](https://github.com/kmch4n/SnowLog/issues/74) |
-| Large Title ヘッダー / Liquid Glass の拡張 | [#47](https://github.com/kmch4n/SnowLog/issues/47) / [#46](https://github.com/kmch4n/SnowLog/issues/46) |
-| iCloud ダウンロードの制御 / カスタムタグ UI / Reels 取り込み / コンテキストメニュー | [#70](https://github.com/kmch4n/SnowLog/issues/70) / [#69](https://github.com/kmch4n/SnowLog/issues/69) / [#54](https://github.com/kmch4n/SnowLog/issues/54) / [#45](https://github.com/kmch4n/SnowLog/issues/45) |
+| JSON エクスポートの導線復活とインポート実装 | [#72](https://github.com/kmch4n/SnowLog/issues/72) |
+| iCloud ダウンロードの制御 | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
+| カスタムタグ UI の見直し | [#69](https://github.com/kmch4n/SnowLog/issues/69) |
+| Reels 取り込みの検討 | [#54](https://github.com/kmch4n/SnowLog/issues/54) |
+| Large Title ヘッダー | [#47](https://github.com/kmch4n/SnowLog/issues/47) |
+| Liquid Glass の拡張 | [#46](https://github.com/kmch4n/SnowLog/issues/46) |
+| ホームの長押し選択をコンテキストメニューに | [#45](https://github.com/kmch4n/SnowLog/issues/45) |
 
-この表は open のものだけを載せる（2026-07-25 時点で open は 8 件）。
-`#37`（Error Boundary）と `#38`（テスト基盤）は closed なので落とした。
+### #72 と #74 はコードが入っているのに open
+
+「もう終わっているのでは」と読まれないように理由を書いておく。どちらも**残りが手元で確認できない作業**である。
+
+- **[#72](https://github.com/kmch4n/SnowLog/issues/72)** — エクスポートの導線・実装・テストは 2026-08-30 に入った
+  （`ef9b345`〜`de59d88`）。残りは **実機での検証**（このコードは一度も実機で走っていない）と
+  **JSON インポートの実装**。インポートが無い限り機種変更はできないので、README と `pr/web` の
+  「移行できない」という記述は正しいまま。
+- **[#74](https://github.com/kmch4n/SnowLog/issues/74)** — 9 件の export 欠落は埋め、
+  `scripts/tests/webShimParity.test.cjs` で再発を止めた（`cd0a746`〜`e2d5e05`）。
+  残りは受け入れ基準の「Web で 4 操作をクリックして確認」だけだが、
+  **[#84](https://github.com/kmch4n/SnowLog/issues/84) で Web が起動しないため実行できない。**
 
 ## 完了済み（2026-03-26 に挙がっていた 3 件）
 

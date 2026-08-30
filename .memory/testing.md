@@ -41,7 +41,7 @@ node --test "scripts/tests/*.test.cjs"
 
 glob をクォートで囲むこと。**`node --test scripts/tests/` のようなディレクトリ指定は Node 25 / Windows で `MODULE_NOT_FOUND` になり動かない**（2026-07-15 に確認）。
 
-## 全 58 件 pass（2026-07-16 時点）
+## 全 112 件 pass（2026-08-30 時点）
 
 かつて `homeSwipeDelete.test.cjs` の「iOS-style icon and compact system red surface」ケースが
 main で 1 件落ち続けていた。原因は**テストの陳腐化**（動作の退行ではない）。
@@ -232,7 +232,7 @@ PR 前には `npm run lint` も実行する。
 
 ```bash
 cd pr/pv
-node --test "src/*.test.ts"   # 15 件
+node --test "src/*.test.ts"   # 4 ファイル・22 件
 npx tsc --noEmit
 npx remotion compositions     # 尺が意図どおりか
 ```
@@ -240,7 +240,7 @@ npx remotion compositions     # 尺が意図どおりか
 - `tsc` へのコンパイルは不要。**Node 25 の型ストリッピングで `.ts` を直接実行する。**
   そのため `src` 内の相対 import は**必ず拡張子付き**（`./script.ts`）で書く。
 - **緑のテストは何も保証しない。** ここで実際に起きた事故:
-  - `tsc` も 15 件のテストも通ったまま、テロップがスマホのモックに隠れて 78 秒中 33 秒が読めなかった。
+  - `tsc` も 22 件のテストも通ったまま、テロップがスマホのモックに隠れて 78 秒中 33 秒が読めなかった。
   - `timeline.ts` に `node:fs` が混入し、Studio が起動しなくなる状態でテストは全て緑だった。
     `calculateMetadata` は**ブラウザ文脈**（Studio はページ内、レンダリングはヘッドレス Chrome）で
     評価される。`Root.tsx` から辿れるモジュールに `node:` / `import.meta.url` / `process` を入れてはいけない。
