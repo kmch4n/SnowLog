@@ -183,6 +183,28 @@ export async function getSkiResortNamesForCapturedDay(
     return [...new Set(names)];
 }
 
+// 未インポートのアセットだけを返す native と同じく、ここでは常に空集合を返す。
+// このファイルの getVideoByAssetId もモックデータを見ずに null を返しており、
+// 「まだ取り込まれていない」で一貫させる。
+export async function getExistingAssetIds(_assetIds: string[]): Promise<Set<string>> {
+    return new Set();
+}
+
+// native は生の行を返すが、このファイルの読み取りはすべて VideoWithTags で
+// 揃えてあるのでそれに合わせる。Web からは呼ばれない（_layout に .web がある）。
+export async function getVideosWithSuspiciousCapturedAt(
+    _minValidTimestamp: number
+): Promise<VideoWithTags[]> {
+    return [];
+}
+
+export async function updateVideoThumbnailUri(
+    _id: string,
+    _thumbnailUri: string
+): Promise<void> {
+    return;
+}
+
 export async function bulkSetFavorite(
     _videoIds: string[],
     _isFavorite: boolean

@@ -36,3 +36,8 @@ export async function deleteManagedVideoFile(
 ): Promise<void> {
     // Web stub
 }
+
+// Web に管理ディレクトリは存在しない。getManagedVideoFileUri と同じく空文字を返す。
+export function getManagedVideoDirectoryUri(): string {
+    return "";
+}

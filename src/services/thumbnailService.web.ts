@@ -26,3 +26,8 @@ export async function generateAndSaveThumbnail(
 export async function deleteThumbnail(_stored: string): Promise<void> {
     // no-op
 }
+
+// Web にサムネイルディレクトリは存在しない。
+export function getThumbnailDirectoryUri(): string {
+    return "";
+}
