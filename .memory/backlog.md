@@ -8,7 +8,7 @@ status: active
 
 コードや git log からは読み取れない「これからやりたいこと」の置き場。
 
-**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-08-30 時点で open 15 件）、
+**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-08-31 時点で open 14 件）、
 やることは基本すべて Issue 化されている。ここに同じ内容を書くと二重管理になり、必ず片方が腐る。
 このファイルには **Issue になっていないものだけ** を置く。Issue 化できたらここから消す。
 
@@ -20,12 +20,13 @@ status: active
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
-作業前にこの対応表を見て、既存 Issue を確認する。**2026-08-30 時点の open 15 件すべて**を載せている。
+作業前にこの対応表を見て、既存 Issue を確認する。**2026-08-31 時点の open 14 件すべて**を載せている。
 古い表は新しく立った Issue を落としたまま残っていて役に立たなかったので、更新するときは
 `gh issue list --state open` から作り直すこと。追記していくと必ず漏れる。
 
 | テーマ | Issue |
 | --- | --- |
+| 復元した動画を新端末の写真ライブラリに再リンクする | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
 | Web が起動時にクラッシュする（`openDatabaseSync` 不在） | [#84](https://github.com/kmch4n/SnowLog/issues/84) |
 | 未参照の i18n キー 93 件 | [#83](https://github.com/kmch4n/SnowLog/issues/83) |
 | CI 不在 | [#82](https://github.com/kmch4n/SnowLog/issues/82) |
@@ -33,8 +34,6 @@ status: active
 | `video-import.tsx` の分割 | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
 | アクセシビリティ（72 個中 66 個の touchable に role/label 無し） | [#79](https://github.com/kmch4n/SnowLog/issues/79) |
 | Expo SDK 55 の依存 26 件が期待バージョン未満 | [#78](https://github.com/kmch4n/SnowLog/issues/78) |
-| `.web` シムの export 欠落 | [#74](https://github.com/kmch4n/SnowLog/issues/74) |
-| JSON エクスポートの導線復活とインポート実装 | [#72](https://github.com/kmch4n/SnowLog/issues/72) |
 | iCloud ダウンロードの制御 | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
 | カスタムタグ UI の見直し | [#69](https://github.com/kmch4n/SnowLog/issues/69) |
 | Reels 取り込みの検討 | [#54](https://github.com/kmch4n/SnowLog/issues/54) |
@@ -42,18 +41,20 @@ status: active
 | Liquid Glass の拡張 | [#46](https://github.com/kmch4n/SnowLog/issues/46) |
 | ホームの長押し選択をコンテキストメニューに | [#45](https://github.com/kmch4n/SnowLog/issues/45) |
 
-### #72 と #74 はコードが入っているのに open
+### バックアップ往復（#72）と `.web` シム（#74）は closed
 
-「もう終わっているのでは」と読まれないように理由を書いておく。どちらも**残りが手元で確認できない作業**である。
+2026-08-31 に両方 close した。**ただしどちらも「完全に確認が済んだ」という意味ではない**ので、
+再提案・再調査の前にここを読むこと。
 
-- **[#72](https://github.com/kmch4n/SnowLog/issues/72)** — エクスポート（2026-08-30）とインポート（2026-08-31）の
-  実装・テストは入った。残りは **実機での検証だけ**。`expo-document-picker` を足したので
-  **dev client の再ビルドが先に要る**。なおバックアップはメタデータのみで動画ファイルを含まないため、
-  別端末ではログしか戻らない。README と `pr/web` の「移行できない」という記述は**まだ正しい**。
-- **[#74](https://github.com/kmch4n/SnowLog/issues/74)** — 9 件の export 欠落は埋め、
-  `scripts/tests/webShimParity.test.cjs` で再発を止めた（`cd0a746`〜`e2d5e05`）。
-  残りは受け入れ基準の「Web で 4 操作をクリックして確認」だけだが、
-  **[#84](https://github.com/kmch4n/SnowLog/issues/84) で Web が起動しないため実行できない。**
+- **[#72](https://github.com/kmch4n/SnowLog/issues/72)** — エクスポートとインポートの実装・テストは入った。
+  **実機での実行実績はまだ無い。** `expo-document-picker` がネイティブモジュールなので dev client の
+  再ビルドが要る。実機検証のチェックリストは Issue のコメントに残してある。
+  未検証である旨は [doc-drift.md](doc-drift.md) 項目 1 にも書いてあり、**そちらはまだ消していない。**
+  なおバックアップはメタデータのみなので、別端末では動画が戻らない。再リンクは #85。
+- **[#74](https://github.com/kmch4n/SnowLog/issues/74)** — export 欠落 9 件は埋め、
+  `scripts/tests/webShimParity.test.cjs` で再発を止めた。受け入れ基準の
+  「Web で 4 操作をクリックして確認」だけは **#84 で Web が起動しないため永久に満たせない**ので、
+  そこを待たずに close した。Web を復活させるなら起点は #84。
 
 ## 完了済み（2026-03-26 に挙がっていた 3 件）
 
