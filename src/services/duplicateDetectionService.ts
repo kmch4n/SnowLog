@@ -1,10 +1,32 @@
 import type { VideoWithTags } from "@/types";
 
+/**
+ * 一致理由の識別子。値は `settings.duplicateCandidates.reasons.<key>` の
+ * サフィックスそのもので、画面側は `t()` に渡すだけでよい。
+ *
+ * 以前はここで日本語の表示文字列を組み立て、画面側が対応表で翻訳キーに
+ * 引き直していた。その形だとこちらの文言を 1 文字変えるだけで対応表が外れ、
+ * フォールバックで**英語ユーザーに日本語が出る**のに何も検知されない。
+ * union にしてあるのはタイポをコンパイルエラーにするためで、`string[]` に
+ * 戻すと同じ穴が開く。
+ */
+export type DuplicateReasonKey =
+    | "durationExact"
+    | "durationWithinOne"
+    | "durationWithinTwo"
+    | "capturedAtExact"
+    | "capturedAtWithinFive"
+    | "capturedAtWithinMinute"
+    | "filenameNearlyExact"
+    | "filenameSimilar"
+    | "resortExact"
+    | "mixed";
+
 export interface DuplicateCandidateGroup {
     id: string;
     confidence: "high" | "medium";
     similarityScore: number;
-    reasons: string[];
+    reasons: DuplicateReasonKey[];
     videos: VideoWithTags[];
 }
 
@@ -12,7 +34,7 @@ interface PairMatch {
     leftId: string;
     rightId: string;
     score: number;
-    reasons: string[];
+    reasons: DuplicateReasonKey[];
 }
 
 function stripTrailingCopyMarkers(filename: string): string {
@@ -54,7 +76,7 @@ function hasStrictPartialFilenameMatch(left: string, right: string): boolean {
         && commonPrefixLength < maxLength;
 }
 
-function intersectReasons(matches: PairMatch[]): string[] {
+function intersectReasons(matches: PairMatch[]): DuplicateReasonKey[] {
     if (matches.length === 0) {
         return [];
     }
@@ -81,7 +103,7 @@ function normalizeFilename(filename: string): string {
 }
 
 function buildPairMatch(left: VideoWithTags, right: VideoWithTags): PairMatch | null {
-    const reasons: string[] = [];
+    const reasons: DuplicateReasonKey[] = [];
     let score = 0;
 
     const durationDiff = Math.abs(left.duration - right.duration);
@@ -97,36 +119,36 @@ function buildPairMatch(left: VideoWithTags, right: VideoWithTags): PairMatch | 
 
     if (durationDiff === 0) {
         score += 2;
-        reasons.push("長さが一致");
+        reasons.push("durationExact");
     } else if (durationDiff <= 1) {
         score += 1;
-        reasons.push("長さの差が1秒以内");
+        reasons.push("durationWithinOne");
     } else if (durationDiff <= 2) {
-        reasons.push("長さの差が2秒以内");
+        reasons.push("durationWithinTwo");
     }
 
     if (capturedAtDiff === 0) {
         score += 3;
-        reasons.push("撮影時刻が一致");
+        reasons.push("capturedAtExact");
     } else if (capturedAtDiff <= 5) {
         score += 2;
-        reasons.push("撮影時刻の差が5秒以内");
+        reasons.push("capturedAtWithinFive");
     } else if (capturedAtDiff <= 60) {
         score += 1;
-        reasons.push("撮影時刻の差が1分以内");
+        reasons.push("capturedAtWithinMinute");
     }
 
     if (exactFilenameMatch) {
         score += 3;
-        reasons.push("ファイル名がほぼ一致");
+        reasons.push("filenameNearlyExact");
     } else if (partialFilenameMatch) {
         score += 1;
-        reasons.push("ファイル名が似ている");
+        reasons.push("filenameSimilar");
     }
 
     if (sameResort) {
         score += 1;
-        reasons.push("スキー場名が一致");
+        reasons.push("resortExact");
     }
 
     const shouldMatch =
@@ -229,7 +251,7 @@ function buildGroups(
             similarityScore: highestScore,
             reasons: sharedReasons.length > 0
                 ? sharedReasons.slice(0, 4)
-                : ["一致条件は動画ごとに異なります"],
+                : ["mixed"],
             videos: groupVideos,
         });
     }

@@ -26,19 +26,6 @@ function buildInitialSelectedIds(group: DuplicateCandidateGroup): Set<string> {
     return new Set(group.videos.slice(1).map((video) => video.id));
 }
 
-const DUPLICATE_REASON_KEYS: Record<string, string> = {
-    "長さが一致": "durationExact",
-    "長さの差が1秒以内": "durationWithinOne",
-    "長さの差が2秒以内": "durationWithinTwo",
-    "撮影時刻が一致": "capturedAtExact",
-    "撮影時刻の差が5秒以内": "capturedAtWithinFive",
-    "撮影時刻の差が1分以内": "capturedAtWithinMinute",
-    "ファイル名がほぼ一致": "filenameNearlyExact",
-    "ファイル名が似ている": "filenameSimilar",
-    "スキー場名が一致": "resortExact",
-    "一致条件は動画ごとに異なります": "mixed",
-};
-
 function DuplicateGroupCard({
     group,
     isDeleting,
@@ -129,9 +116,7 @@ function DuplicateGroupCard({
                     {group.reasons.map((reason) => (
                         <View key={reason} style={styles.reasonChip}>
                             <Text style={styles.reasonText}>
-                                {DUPLICATE_REASON_KEYS[reason]
-                                    ? t(`settings.duplicateCandidates.reasons.${DUPLICATE_REASON_KEYS[reason]}`)
-                                    : reason}
+                                {t(`settings.duplicateCandidates.reasons.${reason}`)}
                             </Text>
                         </View>
                     ))}

@@ -109,9 +109,9 @@ test("an identical pair groups with high confidence", () => {
     assert.equal(groups[0].similarityScore, 8);
     assert.equal(groups[0].confidence, "high");
     assert.deepEqual(groups[0].reasons, [
-        "長さが一致",
-        "撮影時刻が一致",
-        "ファイル名がほぼ一致",
+        "durationExact",
+        "capturedAtExact",
+        "filenameNearlyExact",
     ]);
 });
 
@@ -121,7 +121,7 @@ test("the same resort adds a point and a reason", () => {
         makeVideo({ id: "b", filename: "IMG_0001.MOV", capturedAt: 1000, skiResortName: "志賀高原" }),
     ]);
     assert.equal(groups[0].similarityScore, 9);
-    assert.ok(groups[0].reasons.includes("スキー場名が一致"));
+    assert.ok(groups[0].reasons.includes("resortExact"));
 });
 
 // The reason a filename bucket exists alongside the 60-second window: an exact
@@ -180,7 +180,7 @@ test("a pair reaches the threshold on score alone, with neither shortcut", () =>
     assert.equal(groups.length, 1);
     assert.deepEqual(idsOf(groups[0]), ["a", "b"]);
     assert.equal(groups[0].similarityScore, 5);
-    assert.ok(groups[0].reasons.includes("ファイル名が似ている"));
+    assert.ok(groups[0].reasons.includes("filenameSimilar"));
 });
 
 // 60 seconds apart is inside the comparison window but scores only 3
@@ -228,7 +228,7 @@ test("a group whose pairs share no reason falls back to the mixed label", () => 
     ]);
     assert.equal(groups.length, 1);
     assert.deepEqual(idsOf(groups[0]), ["a", "b", "c"]);
-    assert.deepEqual(groups[0].reasons, ["一致条件は動画ごとに異なります"]);
+    assert.deepEqual(groups[0].reasons, ["mixed"]);
 });
 
 test("videos inside a group are newest first", () => {
