@@ -292,6 +292,7 @@ export const ja = {
                 newerVersion: "このバックアップは新しいバージョンの SnowLog で書き出されています。アプリを更新してからお試しください。",
                 readFailed: "ファイルを読み込めませんでした。",
                 writeFailed: "データの取り込み中に問題が発生しました。もう一度お試しください。",
+                webUnsupported: "復元機能はiOSアプリでのみ利用できます。",
             },
             webUnsupportedTitle: "Web未対応",
             webUnsupportedBody: "復元機能はiOSアプリでのみ利用できます。",

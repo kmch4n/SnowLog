@@ -33,7 +33,12 @@ const TAG_TYPES: readonly TagType[] = ["technique", "skier", "custom"];
  * `scripts/tests/` from compiling it — so the caller looks the wording up under
  * `settings.import.errors.<code>`.
  */
-export type ImportErrorCode = "notBackup" | "newerVersion";
+export type ImportErrorCode =
+    | "notBackup"
+    | "newerVersion"
+    | "readFailed"
+    | "writeFailed"
+    | "webUnsupported";
 
 /** A refusal the UI can explain. Carries a code so the copy stays localised. */
 export class ImportError extends Error {

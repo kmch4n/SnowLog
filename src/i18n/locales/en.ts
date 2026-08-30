@@ -294,6 +294,7 @@ export const en: Translations = {
                 newerVersion: "This backup was written by a newer version of SnowLog. Update the app and try again.",
                 readFailed: "Could not read the file.",
                 writeFailed: "Something went wrong while bringing the data in. Please try again.",
+                webUnsupported: "Restore is available only in the iOS app.",
             },
             webUnsupportedTitle: "Web not supported",
             webUnsupportedBody: "Restore is available only in the iOS app.",
