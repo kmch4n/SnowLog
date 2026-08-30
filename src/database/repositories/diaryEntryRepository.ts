@@ -88,3 +88,20 @@ export async function deleteDiaryEntry(dateKey: string): Promise<void> {
         .delete(diaryEntries)
         .where(eq(diaryEntries.dateKey, dateKey));
 }
+
+/**
+ * バックアップ復元用に日記を挿入する。既存の dateKey はスキップし、書き込んだ件数を返す。
+ *
+ * `upsertDiaryEntry` は createdAt / updatedAt を現在時刻で上書きするため復元に使えない。
+ * バックアップ側の記録時刻をそのまま残す。
+ */
+export async function insertDiaryEntriesForRestore(
+    rows: DiaryEntryInsert[]
+): Promise<number> {
+    let inserted = 0;
+    for (const row of rows) {
+        const result = await db.insert(diaryEntries).values(row).onConflictDoNothing();
+        if (result.changes === 1) inserted += 1;
+    }
+    return inserted;
+}

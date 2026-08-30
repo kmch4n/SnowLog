@@ -288,3 +288,24 @@ export async function getExistingAssetIds(
         .where(inArray(videos.assetId, assetIds));
     return new Set(rows.map((r) => r.assetId));
 }
+
+/**
+ * バックアップ復元用に動画を挿入し、**実際に書き込んだ id** を返す。
+ *
+ * 件数ではなく id を返すのが要点。`setTagsForVideo` は既存リンクを全削除して
+ * から張り直すため、スキップした動画に対して呼ぶとユーザーがバックアップ後に
+ * 付けたタグを消してしまう。さらに `assetId` は unique だが `id` とは独立で、
+ * 同じ写真が別 UUID で既に入っている場合は挿入がスキップされるので、その id を
+ * `video_tags` に挿すと外部キー違反で落ちる（`foreign_keys = ON`）。
+ *
+ * 1 行ずつ挿すのは `changes` で「入ったかどうか」を確実に取るため。
+ * `ON CONFLICT DO NOTHING` でスキップされた行は `changes` に数えられない。
+ */
+export async function insertVideosForRestore(rows: VideoInsert[]): Promise<string[]> {
+    const insertedIds: string[] = [];
+    for (const row of rows) {
+        const result = await db.insert(videos).values(row).onConflictDoNothing();
+        if (result.changes === 1) insertedIds.push(row.id);
+    }
+    return insertedIds;
+}

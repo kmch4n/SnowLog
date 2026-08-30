@@ -34,3 +34,20 @@ export function reorderTechniqueOptions(orderedIds: number[]): void {
         }
     });
 }
+
+/**
+ * バックアップ復元用に種別を挿入する。既存の name はスキップし、書き込んだ件数を返す。
+ *
+ * `insertTechniqueOption` は sortOrder を現在の件数から算出するため復元に使えない。
+ * バックアップ側の並び順をそのまま持ち込む必要がある。
+ */
+export async function insertTechniqueOptionsForRestore(
+    rows: { name: string; sortOrder: number }[]
+): Promise<number> {
+    let inserted = 0;
+    for (const row of rows) {
+        const result = await db.insert(techniqueOptions).values(row).onConflictDoNothing();
+        if (result.changes === 1) inserted += 1;
+    }
+    return inserted;
+}

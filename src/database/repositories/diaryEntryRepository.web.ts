@@ -37,3 +37,9 @@ export async function upsertDiaryEntry(
 export async function deleteDiaryEntry(_dateKey: string): Promise<void> {
     // Web では保存しない
 }
+
+export async function insertDiaryEntriesForRestore(
+    _rows: DiaryEntryInsert[]
+): Promise<number> {
+    return 0;
+}

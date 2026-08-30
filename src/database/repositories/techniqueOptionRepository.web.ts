@@ -21,3 +21,9 @@ export async function deleteTechniqueOption(_id: number): Promise<void> {
 export function reorderTechniqueOptions(_orderedIds: number[]): void {
     // Web では保存しない
 }
+
+export async function insertTechniqueOptionsForRestore(
+    _rows: { name: string; sortOrder: number }[]
+): Promise<number> {
+    return 0;
+}

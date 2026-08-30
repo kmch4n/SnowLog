@@ -226,3 +226,7 @@ export async function getRecentSkiResortNames(limit = 3): Promise<string[]> {
     }
     return names;
 }
+
+export async function insertVideosForRestore(_rows: VideoInsert[]): Promise<string[]> {
+    return [];
+}
