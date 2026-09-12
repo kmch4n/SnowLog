@@ -70,6 +70,11 @@ status: active
 
 判定関数と `"synthetic:"` プレフィックスは 2026-07-25 に `src/utils/assetId.ts` へ集約した（Issue #71）。
 
+2026-09-12 追記: この判定は「写真ライブラリ上の身元があるか」と「バイトがどこにあるか」の
+2 つを 1 つの述語で兼ねている。保存方式をユーザーが選べるようにすると両者は一致しなくなるため、
+`videos.storage_mode` 列へ分離する案を [#86](https://github.com/kmch4n/SnowLog/issues/86) に書いた。
+そこが入ればこの節の記述（コピーは synthetic のときだけ）は丸ごと書き換えになる。
+
 ## 3. ファイルサイズ規約の逸脱
 
 `.claude/CLAUDE.md` と `.codex/AGENTS.md` はファイルを ~500〜700 行に収めるよう定めているが、
