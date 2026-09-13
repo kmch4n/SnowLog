@@ -112,6 +112,40 @@ export type AppPreferenceInsert = typeof appPreferences.$inferInsert;
 export type AppPreferenceSelect = typeof appPreferences.$inferSelect;
 
 /**
+ * 動画取得ジョブテーブル（#86 §6）
+ *
+ * 「まだ `videos` の行になっていない取り込み意図」と「既存行をコピーへ変換する
+ * 意図」を、アプリを落としても失わないために持つ。
+ *
+ * 完了したジョブは残さない。取り込みが成功した動画は `videos` にあり、ジョブ表に
+ * 残骸を置くと「ライブラリの件数」と「キューの件数」が二重計上になる。残るのは
+ * 未完了・失敗・待機中のものだけ。
+ */
+export const videoTransferJobs = sqliteTable("video_transfer_jobs", {
+    // 操作の所有トークンも兼ねる。遅れて届いたコールバックがこの ID を持たなければ
+    // 何も書き換えられない
+    id: text("id").primaryKey(),
+    // 保持中のジョブ間で一意。同じアセットに 2 本のジョブを走らせない
+    assetId: text("asset_id").notNull().unique(),
+    // 'import' | 'convert'
+    kind: text("kind").notNull(),
+    // import では採番済みの新しい動画 ID、convert では既存の動画 ID。
+    // import の時点では行が無いので FK は張らない
+    videoId: text("video_id").notNull(),
+    // 'pending' | 'running' | 'waiting_wifi' | 'paused' | 'failed'
+    state: text("state").notNull(),
+    // version 1 の検証済みスナップショット（メタデータ・取り込み意図・最終パス）
+    payloadJson: text("payload_json").notNull(),
+    // MediaFailureCode のいずれか、未失敗なら null
+    errorCode: text("error_code"),
+    createdAt: int("created_at").notNull(),
+    updatedAt: int("updated_at").notNull(),
+});
+
+export type VideoTransferJobInsert = typeof videoTransferJobs.$inferInsert;
+export type VideoTransferJobSelect = typeof videoTransferJobs.$inferSelect;
+
+/**
  * 日記エントリーテーブル
  * 1日1エントリー（dateKey で一意）
  */
