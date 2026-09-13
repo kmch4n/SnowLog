@@ -2,18 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 
 import { getTagsForVideo, setTagsForVideo } from "../database/repositories/tagRepository";
 import {
-    deleteVideo as deleteVideoFromDb,
     getVideoById,
     toggleFavorite as toggleFavoriteInDb,
     updateVideoMeta,
 } from "../database/repositories/videoRepository";
 import { hapticLight } from "../services/hapticsService";
-import {
-    deleteManagedPath,
-    managedPathExists,
-} from "../services/managedVideoFileService";
+import { managedPathExists } from "../services/managedVideoFileService";
 import { checkAssetExists } from "../services/mediaService";
-import { deleteThumbnail } from "../services/thumbnailService";
+import { deleteVideoWithCleanup } from "../services/videoDeletionService";
 import { t } from "../i18n";
 import type { VideoWithTags } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
@@ -140,16 +136,16 @@ export function useVideoDetail(videoId: string) {
         return checkAssetExists(video.assetId);
     }, [video]);
 
-    /** 動画レコードを削除する（動画ファイル自体は削除しない） */
+    /**
+     * 動画レコードと所有ファイルを削除する。
+     *
+     * 順序（行が先、ファイルが後）を自前で持たず共有サービスへ委ねる。以前は
+     * ここと一括削除がそれぞれ手順を書いていて、どちらもファイルを先に消して
+     * いた——失敗すると再生できない行が残る。
+     */
     const removeVideo = useCallback(async () => {
-        if (video?.thumbnailUri) {
-            await deleteThumbnail(video.thumbnailUri);
-        }
-        if (video?.managedVideoPath) {
-            await deleteManagedPath(video.managedVideoPath);
-        }
-        await deleteVideoFromDb(videoId);
-    }, [videoId, video]);
+        await deleteVideoWithCleanup(videoId);
+    }, [videoId]);
 
     return {
         video,
