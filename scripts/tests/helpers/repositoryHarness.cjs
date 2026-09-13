@@ -88,14 +88,24 @@ function absolutiseBareRequires(dir) {
     }
 }
 
-function applyMigrations(sqlite) {
+/**
+ * Replay `drizzle/` into `sqlite`, from `startIndex` up to but not including
+ * `endIndex`, and return the number now applied.
+ *
+ * The range exists so a test can stand up the schema as it was *before* a
+ * migration and exercise a real data backfill against it. Creating the rows
+ * after every migration has run tests a different thing: the backfill would
+ * see columns that did not exist when the rows were written (Issue #86 §5).
+ */
+function applyMigrations(sqlite, startIndex = 0, endIndex = Infinity) {
     const migrationsDir = path.join(repoRoot, "drizzle");
     const journal = JSON.parse(
         fs.readFileSync(path.join(migrationsDir, "meta", "_journal.json"), "utf8")
     );
-    for (const entry of journal.entries) {
+    const last = Math.min(journal.entries.length, endIndex);
+    for (let index = startIndex; index < last; index += 1) {
         const sql = fs.readFileSync(
-            path.join(migrationsDir, `${entry.tag}.sql`),
+            path.join(migrationsDir, `${journal.entries[index].tag}.sql`),
             "utf8"
         );
         for (const statement of sql.split("--> statement-breakpoint")) {
@@ -103,21 +113,25 @@ function applyMigrations(sqlite) {
             if (trimmed) sqlite.exec(trimmed);
         }
     }
-    return journal.entries.length;
+    return last;
 }
 
 /**
  * @param {string[]} entryPoints repo-relative `.ts` paths to compile
+ * @param {{ stopAfterMigrations?: number }} [options] apply only the first N
+ *   migrations, leaving the rest for `applyRemainingMigrations()`. Omit it and
+ *   every migration is applied up front, exactly as before.
  * @returns {{
  *   load: (relativePath: string) => any,
  *   sqlite: InstanceType<typeof DatabaseSync>,
  *   queries: { sql: string, params: unknown[], method: string }[],
  *   resetQueries: () => void,
  *   migrationCount: number,
+ *   applyRemainingMigrations: () => number,
  *   cleanup: () => void,
  * }}
  */
-function createRepositoryHarness(entryPoints) {
+function createRepositoryHarness(entryPoints, options = {}) {
     const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "snowlog-repo-test-"));
 
     compile(entryPoints, outDir);
@@ -125,7 +139,11 @@ function createRepositoryHarness(entryPoints) {
 
     const sqlite = new DatabaseSync(":memory:");
     sqlite.exec("PRAGMA foreign_keys = ON");
-    const migrationCount = applyMigrations(sqlite);
+    let appliedMigrations = applyMigrations(
+        sqlite,
+        0,
+        options.stopAfterMigrations ?? Infinity
+    );
 
     const queries = [];
     function runQuery(sql, params, method) {
@@ -172,7 +190,13 @@ function createRepositoryHarness(entryPoints) {
         resetQueries: () => {
             queries.length = 0;
         },
-        migrationCount,
+        get migrationCount() {
+            return appliedMigrations;
+        },
+        applyRemainingMigrations: () => {
+            appliedMigrations = applyMigrations(sqlite, appliedMigrations);
+            return appliedMigrations;
+        },
         cleanup,
     };
 }
