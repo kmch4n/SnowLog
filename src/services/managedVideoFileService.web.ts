@@ -16,13 +16,6 @@ export async function persistManagedVideoFile(
     throw new Error(t("errors.managedFilesUnsupported"));
 }
 
-export async function managedVideoFileExists(
-    _videoId: string,
-    _filename?: string | null
-): Promise<boolean> {
-    return false;
-}
-
 // Web に管理ディレクトリは存在しない。getManagedVideoFileUri と同じく空文字を返す。
 export function getManagedVideoDirectoryUri(): string {
     return "";

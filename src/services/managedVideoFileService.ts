@@ -86,13 +86,3 @@ export async function deleteManagedPath(relativePath: string): Promise<void> {
         idempotent: true,
     }).catch(() => {});
 }
-
-export async function managedVideoFileExists(
-    videoId: string,
-    filename?: string | null
-): Promise<boolean> {
-    const uri = getManagedVideoFileUri(videoId, filename);
-    const info = await FileSystem.getInfoAsync(uri);
-    return info.exists;
-}
-

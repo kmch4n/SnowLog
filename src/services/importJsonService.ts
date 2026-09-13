@@ -11,8 +11,8 @@ import type { DiaryEntryInsert, VideoInsert } from "../database/schema";
 
 import { ImportError, parseExportPayload } from "./importPayload";
 import type { ImportPlan, ImportableTag } from "./importPayload";
-import { managedVideoFileExists } from "./managedVideoFileService";
-import { checkAssetExists, isSyntheticAssetId } from "./mediaService";
+import { managedPathExists } from "./managedVideoFileService";
+import { checkAssetExists } from "./mediaService";
 import { THUMBNAIL_MISSING_SENTINEL, thumbnailFileExists } from "./thumbnailService";
 
 /**
@@ -110,9 +110,15 @@ async function resolveDeviceState(
     // Nothing in the app ever sets isFileAvailable back to 1 — video/[id].tsx
     // only ever clears it — so this cannot be deferred to a later repair pass,
     // and the backup's own value is wrong the moment the phone changes.
-    const available = isSyntheticAssetId(video.assetId)
-        ? await managedVideoFileExists(video.id, video.filename)
-        : await checkAssetExists(video.assetId);
+    //
+    // A copy is checked against its own file and nothing else. Finding the
+    // original still in Photos does not make it available: the bytes this row
+    // points at are the app's copy, which this device may never have had.
+    const available =
+        video.storageMode === "copy"
+            ? video.managedVideoPath != null &&
+              (await managedPathExists(video.managedVideoPath))
+            : await checkAssetExists(video.assetId);
 
     const thumbnailUri = (await thumbnailFileExists(video.thumbnailUri))
         ? video.thumbnailUri
@@ -175,6 +181,8 @@ export async function applyImportPlan(plan: ImportPlan): Promise<ImportSummary> 
             techniques: video.techniques != null ? JSON.stringify(video.techniques) : null,
             isFileAvailable,
             isFavorite: video.isFavorite,
+            storageMode: video.storageMode,
+            managedVideoPath: video.managedVideoPath,
             createdAt: video.createdAt,
             updatedAt: video.updatedAt,
         });

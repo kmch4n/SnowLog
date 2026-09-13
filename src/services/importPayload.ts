@@ -11,9 +11,20 @@
  * video cannot deny the user the rest of their log.
  */
 import type { TagType } from "../types";
+import { isSyntheticAssetId } from "../utils/assetId";
+import { buildManagedVideoPath, validateManagedVideoPath } from "../utils/managedVideoPath";
+import { isVideoStorageMode, type VideoStorageMode } from "../utils/videoStorageMode";
 
-/** The only payload shape this build knows how to read. */
-export const IMPORT_SUPPORTED_SCHEMA_VERSION = 1;
+/**
+ * The payload shapes this build knows how to read.
+ *
+ * v1 has no storage mode, so it is inferred: a synthetic assetId meant a
+ * managed copy back then, which is exactly what the in-app migration derives
+ * (#86 section 8). v2 carries the mode and the relative path explicitly.
+ *
+ * A version outside this list is refused rather than guessed at.
+ */
+export const IMPORT_SUPPORTED_SCHEMA_VERSIONS = [1, 2] as const;
 
 /**
  * Preferences that describe the user rather than the device.
@@ -69,6 +80,10 @@ export interface ImportableVideo {
     techniques: string[] | null;
     isFileAvailable: number;
     isFavorite: number;
+    /** Explicit in v2, inferred from the assetId in v1. */
+    storageMode: VideoStorageMode;
+    /** Relative `videos/<id>.<ext>` for a copy, null otherwise. Never absolute. */
+    managedVideoPath: string | null;
     createdAt: number;
     updatedAt: number;
     /** Resolved against the local database by name and type, never by stored id. */
@@ -164,7 +179,52 @@ function parseTagRef(value: unknown): ImportableTag | null {
     return { name, type };
 }
 
-function parseVideo(value: unknown): ImportableVideo | null {
+/**
+ * Resolve the storage mode and its path, or `null` to skip the row.
+ *
+ * A row is refused, never repaired, when the two disagree: a `reference` that
+ * claims a file, a `copy` whose path belongs to another video, a path that
+ * escapes the managed directory or names a remote resource. Repairing would
+ * mean guessing which half of a self-contradictory record is true, and the
+ * wrong guess attaches one video's bytes to another video's metadata.
+ */
+function parseStorage(
+    value: Row,
+    schemaVersion: number,
+    id: string,
+    assetId: string,
+    filename: string
+): { storageMode: VideoStorageMode; managedVideoPath: string | null } | null {
+    if (schemaVersion < 2) {
+        // v1 predates the column. A synthetic assetId was the only way a row
+        // could own a file, so it is the only thing that can imply `copy`.
+        if (!isSyntheticAssetId(assetId)) {
+            return { storageMode: "reference", managedVideoPath: null };
+        }
+        return { storageMode: "copy", managedVideoPath: buildManagedVideoPath(id, filename) };
+    }
+
+    if (!isVideoStorageMode(value.storageMode)) return null;
+    const storageMode = value.storageMode;
+    const rawPath = value.managedVideoPath;
+
+    if (storageMode === "reference") {
+        // A reference owns nothing, and a synthetic reference cannot exist:
+        // there is no Photos asset behind a synthetic id to refer to.
+        if (rawPath != null) return null;
+        if (isSyntheticAssetId(assetId)) return null;
+        return { storageMode, managedVideoPath: null };
+    }
+
+    // A copy may legitimately carry no path — an explicitly unavailable record
+    // whose id was never safe to use as a filename.
+    if (rawPath == null) return { storageMode, managedVideoPath: null };
+    if (typeof rawPath !== "string") return null;
+    if (!validateManagedVideoPath(rawPath, id)) return null;
+    return { storageMode, managedVideoPath: rawPath };
+}
+
+function parseVideo(value: unknown, schemaVersion: number): ImportableVideo | null {
     if (!isRow(value)) return null;
 
     const id = requiredString(value.id);
@@ -174,6 +234,9 @@ function parseVideo(value: unknown): ImportableVideo | null {
     if (id == null || assetId == null || filename == null || capturedAt == null) {
         return null;
     }
+
+    const storage = parseStorage(value, schemaVersion, id, assetId, filename);
+    if (storage == null) return null;
 
     const techniques = Array.isArray(value.techniques)
         ? value.techniques.filter((item): item is string => typeof item === "string")
@@ -192,6 +255,8 @@ function parseVideo(value: unknown): ImportableVideo | null {
         techniques: techniques != null && techniques.length > 0 ? techniques : null,
         isFileAvailable: value.isFileAvailable === true ? 1 : 0,
         isFavorite: value.isFavorite === true ? 1 : 0,
+        storageMode: storage.storageMode,
+        managedVideoPath: storage.managedVideoPath,
         createdAt: numberOrZero(value.createdAt),
         updatedAt: numberOrZero(value.updatedAt),
         tagRefs: asArray(value.tags)
@@ -250,7 +315,7 @@ export function parseExportPayload(raw: unknown): ImportPlan {
     if (schemaVersion == null || schemaVersion < 1) {
         throw new ImportError("notBackup");
     }
-    if (schemaVersion > IMPORT_SUPPORTED_SCHEMA_VERSION) {
+    if (!(IMPORT_SUPPORTED_SCHEMA_VERSIONS as readonly number[]).includes(schemaVersion)) {
         throw new ImportError("newerVersion");
     }
 
@@ -264,8 +329,9 @@ export function parseExportPayload(raw: unknown): ImportPlan {
 
     const videos: ImportableVideo[] = [];
     const seenVideoIds = new Set<string>();
+    const claimedPaths = new Set<string>();
     for (const candidate of asArray(raw.videos)) {
-        const video = parseVideo(candidate);
+        const video = parseVideo(candidate, schemaVersion);
         if (video == null) {
             skipped.videos += 1;
             continue;
@@ -273,6 +339,20 @@ export function parseExportPayload(raw: unknown): ImportPlan {
         // A duplicated id would collide on insert; the first wins so the
         // outcome does not depend on insertion order.
         if (seenVideoIds.has(video.id)) continue;
+
+        // Two rows cannot own one file. Compared case-insensitively because the
+        // unique index is, and because the filesystem underneath may be too.
+        // The loser is counted rather than silently dropped, and keeps nothing:
+        // sharing ownership would let one row's deletion take another's media.
+        if (video.managedVideoPath != null) {
+            const claim = video.managedVideoPath.toLowerCase();
+            if (claimedPaths.has(claim)) {
+                skipped.videos += 1;
+                continue;
+            }
+            claimedPaths.add(claim);
+        }
+
         seenVideoIds.add(video.id);
         videos.push(video);
     }

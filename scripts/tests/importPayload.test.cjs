@@ -94,10 +94,20 @@ test("a minimal valid backup parses to empty collections", () => {
 });
 
 test("a newer schemaVersion is rejected as newer", () => {
+    // Retargeted from 2 to 3 when v2 landed (#86). The accepted-version case
+    // below keeps this retarget from quietly deleting the coverage: without it,
+    // widening the supported list again would go unnoticed here.
     assert.throws(
-        () => parseExportPayload(makeBackup({ schemaVersion: 2 })),
+        () => parseExportPayload(makeBackup({ schemaVersion: 3 })),
         (error) => error instanceof ImportError && error.code === "newerVersion"
     );
+});
+
+test("every supported schemaVersion is accepted", () => {
+    for (const version of [1, 2]) {
+        const plan = parseExportPayload(makeBackup({ schemaVersion: version }));
+        assert.deepEqual(plan.videos, [], `version ${version} was not accepted`);
+    }
 });
 
 test("a missing or non-numeric schemaVersion is rejected", () => {
@@ -324,6 +334,9 @@ test("only the allowlisted preferences survive", () => {
         { key: "home_sort_order", value: "newest" },
         { key: "weekStartDay", value: "monday" },
     ]);
+    // Pinned: a migration marker would skip the migration it guards, and
+    // #86 section 8 additionally bars the media priority from travelling —
+    // policy is confirmed on the destination device, never restored onto it.
     assert.deepEqual([...RESTORABLE_PREFERENCE_KEYS].sort(), [
         "home_sort_order",
         "weekStartDay",
@@ -390,4 +403,124 @@ test("a missing collection is treated as empty rather than fatal", () => {
     assert.deepEqual(plan.tags, []);
     assert.deepEqual(plan.diaryEntries, []);
     assert.deepEqual(plan.preferences, []);
+});
+
+// --- storage mode (#86) --------------------------------------------------
+
+function v2(videos) {
+    return makeBackup({ schemaVersion: 2, videos });
+}
+
+test("a v1 normal video restores as a reference", () => {
+    const plan = parseExportPayload(
+        makeBackup({ videos: [makeExportedVideo({ assetId: "PHAsset-1" })] })
+    );
+    assert.equal(plan.videos[0].storageMode, "reference");
+    assert.equal(plan.videos[0].managedVideoPath, null);
+});
+
+test("a v1 synthetic video restores as a copy with a derived path", () => {
+    // v1 predates the column, and back then a synthetic assetId was the only
+    // way a row could own a file.
+    const plan = parseExportPayload(
+        makeBackup({
+            videos: [
+                makeExportedVideo({ assetId: "synthetic:1", filename: "clip.mp4" }),
+            ],
+        })
+    );
+    assert.equal(plan.videos[0].storageMode, "copy");
+    assert.equal(plan.videos[0].managedVideoPath, "videos/v1.mp4");
+});
+
+test("a v2 row keeps the mode and path it was written with", () => {
+    const plan = parseExportPayload(
+        v2([
+            makeExportedVideo({
+                assetId: "synthetic:1",
+                storageMode: "copy",
+                managedVideoPath: "videos/v1.mov",
+            }),
+        ])
+    );
+    assert.equal(plan.videos[0].storageMode, "copy");
+    assert.equal(plan.videos[0].managedVideoPath, "videos/v1.mov");
+});
+
+test("a v2 copy may be explicitly unavailable with no path", () => {
+    const plan = parseExportPayload(
+        v2([
+            makeExportedVideo({
+                assetId: "synthetic:1",
+                storageMode: "copy",
+                managedVideoPath: null,
+            }),
+        ])
+    );
+    assert.equal(plan.videos[0].storageMode, "copy");
+    assert.equal(plan.videos[0].managedVideoPath, null);
+});
+
+test("a v2 row whose mode and path contradict each other is skipped", () => {
+    // Each of these is self-contradictory, and repairing one would mean
+    // guessing which half is true.
+    const contradictions = [
+        { storageMode: "reference", managedVideoPath: "videos/v1.mov" },
+        { storageMode: "copy", managedVideoPath: "videos/other.mov" },
+        { storageMode: "copy", managedVideoPath: "videos/../v1.mov" },
+        { storageMode: "copy", managedVideoPath: "https://example.com/v1.mov" },
+        { storageMode: "copy", managedVideoPath: "/videos/v1.mov" },
+        { storageMode: "copy", managedVideoPath: 42 },
+        { storageMode: "managed", managedVideoPath: null },
+        { storageMode: undefined, managedVideoPath: null },
+    ];
+    for (const bad of contradictions) {
+        const plan = parseExportPayload(
+            v2([makeExportedVideo({ assetId: "synthetic:1", ...bad })])
+        );
+        assert.deepEqual(plan.videos, [], JSON.stringify(bad));
+        assert.equal(plan.skipped.videos, 1, JSON.stringify(bad));
+    }
+});
+
+test("a v2 synthetic reference cannot exist and is skipped", () => {
+    // There is no Photos asset behind a synthetic id for a reference to name.
+    const plan = parseExportPayload(
+        v2([
+            makeExportedVideo({
+                assetId: "synthetic:1",
+                storageMode: "reference",
+                managedVideoPath: null,
+            }),
+        ])
+    );
+    assert.deepEqual(plan.videos, []);
+    assert.equal(plan.skipped.videos, 1);
+});
+
+test("two rows cannot claim one managed file", () => {
+    // Distinct ids on purpose: identical ids are already stopped by the id
+    // dedup, which would make this pass without the path check existing. The
+    // only way two valid rows collide is a basename differing by case, since
+    // the basename has to be the owning id.
+    const plan = parseExportPayload(
+        v2([
+            makeExportedVideo({
+                id: "v1",
+                assetId: "synthetic:1",
+                storageMode: "copy",
+                managedVideoPath: "videos/v1.mov",
+            }),
+            makeExportedVideo({
+                id: "V1",
+                assetId: "synthetic:2",
+                storageMode: "copy",
+                managedVideoPath: "videos/V1.mov",
+            }),
+        ])
+    );
+    assert.equal(plan.videos.length, 1);
+    assert.equal(plan.videos[0].id, "v1");
+    assert.equal(plan.videos[0].managedVideoPath, "videos/v1.mov");
+    assert.equal(plan.skipped.videos, 1);
 });
