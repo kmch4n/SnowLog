@@ -1,6 +1,6 @@
 ---
 title: テストの実態と実行方法
-updated: 2026-08-31
+updated: 2026-09-13
 status: active
 ---
 
@@ -225,6 +225,25 @@ import しており、そこがモジュール読み込み時に `expo-sqlite` �
 `index.js` より上はすべて出荷コードそのもの。スキーマも手書きコピーではなく出荷マイグレーションなので腐らない。
 proxy のコールバックが全クエリを記録するので、**往復回数を assert できる**のがこの方式の要。
 `tagRepository.test.cjs` の「バッチは 1 クエリ / 単件版は動画 3 件で 5 クエリ」がそれ。
+
+### マイグレーションの途中で止められる（2026-09-13 追加）
+
+`createRepositoryHarness(entryPoints, { stopAfterMigrations: n })` で最初の n 本だけ適用し、
+`harness.applyRemainingMigrations()` で残りを流せる。**移行前のスキーマに行を作ってから移行を走らせる**
+ためのもの。全マイグレーション適用後に行を作ると、移行コードは「その行が書かれた当時は存在しなかった列」を
+見た状態から始まってしまい、検証したいものと別のものを検証することになる（実例: `videoStorageMigration.test.cjs`）。
+
+オプションを省いたときの挙動は変えていないので、既存のリポジトリテストには影響しない。
+
+### sqlite-proxy でもトランザクションは本物（2026-09-13 追加・実測）
+
+`drizzle-orm/sqlite-proxy` は `db.transaction()` を投げずに受け、**`begin` / `commit` / `rollback` を
+クエリコールバックへ実際に流す**。ハーネスはそれを `node:sqlite` に渡しているので、原子性は本物である。
+
+したがって「クエリの形を見て原子性を主張する」必要はない。`videoStorageMigration.test.cjs` は
+`BEFORE UPDATE ... RAISE(ABORT)` トリガで特定行の更新だけを落とし、**先に成功していた行も
+マーカーも巻き戻ること**を確かめている。なお unique index 衝突での注入は使えない——
+プランナが SQL を発行する前に衝突を解消してしまい、プランナが動いたことしか証明しない。
 
 ### 踏んだ落とし穴（3 つとも実測）
 

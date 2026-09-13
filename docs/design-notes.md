@@ -87,7 +87,7 @@ video-import.tsx
 
 - **iCloud 未ダウンロードアセット**への対応が必要だった。取り込み時に `shouldDownloadFromNetwork` を指定してオンデマンド取得させ、UI 側では進捗を表示する導線を追加した。
 - **ユーザーが写真アプリ側で元動画を削除した場合**、参照切れが発生する。これを検出するため `isFileAvailable` フラグを導入し、`updateFileAvailability` による健全性チェックを通じて、参照切れ動画が表示されてもアプリ全体がクラッシュしない導線を `useVideoDetail` 側で徹底した。
-- **「一切複製しない」は正確ではない。** 写真ライブラリのアセットとして扱えない動画（`assetId` が `synthetic:` 始まり）に限り、`managedVideoFileService.persistManagedVideoFile()` が動画本体を `documentDirectory/videos/` へ複製する。この複製は動画削除時とアンインストール時に消える。保存ポリシーの全体は [`SnowLog.md` §10](../SnowLog.md) にある。
+- **「一切複製しない」は正確ではない。** 動画本体を `documentDirectory/videos/` へ複製する行がある。どの行がそうかは `videos.storage_mode` が `copy` かどうかで決まり、実体の位置は `videos.managed_video_path` が持つ（#86）。現状 `copy` になるのは写真ライブラリのアセットとして扱えない動画（`assetId` が `synthetic:` 始まり）だけだが、判定の根拠は `assetId` の形ではなく列である。この複製は動画削除時とアンインストール時に消える。保存ポリシーの全体は [`SnowLog.md` §10](../SnowLog.md) にある。
 
 結果として、ネットワーク不要・初期同期ゼロで即起動でき、通常の写真ライブラリ動画については
 端末ストレージを二重消費しないアプリとして成立している。

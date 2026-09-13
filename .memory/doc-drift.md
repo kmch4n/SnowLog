@@ -1,6 +1,6 @@
 ---
 title: ドキュメントとコードの乖離
-updated: 2026-08-30
+updated: 2026-09-13
 status: active
 ---
 
@@ -59,21 +59,27 @@ status: active
   加えて **Web サイトは出荷済みアプリを説明するもの**で、この機能はまだ release に載っていない。
   `.codex/release-prompt.md` の更新対象に `pr/web` の FAQ が含まれているので、release 手順を踏めば拾える。
 
-## 2. `schema.ts` のコメント『動画ファイルのコピーは保持しない（参照方式）』は不正確
+## 2. 【解消済み 2026-09-13】保存方式が `assetId` の形から推測されていた
 
-`src/database/schema.ts:5` のコメントに反して、`managedVideoFileService.persistManagedVideoFile()`
-が `${FileSystem.documentDirectory}videos/` へ動画本体を `copyAsync` する。
+かつて `src/database/schema.ts:5` のコメントは「動画ファイルのコピーは保持しない（参照方式）」と
+書いていたが、実際には `isSyntheticAssetId(asset.id)` が真のとき
+`managedVideoFileService.persistManagedVideoFile()` が動画本体を `documentDirectory/videos/` へ
+`copyAsync` していた。判定が「写真ライブラリ上の身元があるか」と「バイトがどこにあるか」の
+2 つを 1 つの述語で兼ねていたのが原因。
 
-発動条件は `isSyntheticAssetId(asset.id)`（assetId が `"synthetic:"` 始まり = 写真ライブラリのアセットとして扱えない動画）の場合のみで、
-`src/services/importService.ts` が唯一の呼び出し箇所。通常の写真ライブラリ動画は参照のみで正しい。
-コピーは動画削除時（`videoDeletionService.ts`）とアンインストール時に消える。
+[#86](https://github.com/kmch4n/SnowLog/issues/86) の Task B で分離した。
 
-判定関数と `"synthetic:"` プレフィックスは 2026-07-25 に `src/utils/assetId.ts` へ集約した（Issue #71）。
+- 保存方式は `videos.storage_mode`（`reference` / `copy`）が持ち、実体の位置は
+  `videos.managed_video_path`（`videos/<id>.<ext>` の相対パス）が持つ。
+- 既存行は起動時のバックフィルで一度だけ埋める（`storageMigrationService`）。
+  掃除・サムネイル修復・撮影日修復はこれが commit するまで走らない。
+- `isSyntheticAssetId` は**身元の判定としてだけ**残った。現在の利用箇所は 2 つ、
+  `video/[id].tsx` の `canOpenPhotosApp` と `_layout.tsx` の撮影日修復スキップ。
+  コピーした動画にも写真ライブラリ側の原本がありうるので、この 2 つは保存方式では判定できない。
 
-2026-09-12 追記: この判定は「写真ライブラリ上の身元があるか」と「バイトがどこにあるか」の
-2 つを 1 つの述語で兼ねている。保存方式をユーザーが選べるようにすると両者は一致しなくなるため、
-`videos.storage_mode` 列へ分離する案を [#86](https://github.com/kmch4n/SnowLog/issues/86) に書いた。
-そこが入ればこの節の記述（コピーは synthetic のときだけ）は丸ごと書き換えになる。
+**まだ一致していない点**: 方式をユーザーが選ぶ UI はまだ無い。取り込み時は今も
+「synthetic なら copy」で、身元と保存方式は結果的に一致している。両者が分かれるのは
+#86 の Task C 以降。
 
 ## 3. ファイルサイズ規約の逸脱
 

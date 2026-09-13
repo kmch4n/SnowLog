@@ -1,6 +1,6 @@
 ---
 title: 非自明な配線とデータ契約
-updated: 2026-08-31
+updated: 2026-09-13
 status: active
 ---
 
@@ -68,7 +68,12 @@ Stack（`GestureHandlerRootView` + `ThemeProvider` でラップ）は上記と�
 
 スキーマの正は `src/database/schema.ts`、テーブル一覧は `SnowLog.md` §6。ここは非自明な点だけ。
 
-- `videos.techniques` は JSON 文字列。`parseTechniques` でパースする。動画ファイルは動かさない（参照方式）— `documentDirectory` に置くのはサムネイルと管理コピーのみ。
+- `videos.techniques` は JSON 文字列。`parseTechniques` でパースする。
+- `videos.storage_mode` が保存方式（`reference` / `copy`）、`videos.managed_video_path` が `copy` の実体の相対パス。
+  絶対 URI を保存してはいけない（iOS がコンテナを再配置する）。解決は `managedVideoFileService.managedPathToUri`。
+  **起動順の制約**: `storageMigrationService.migrateVideoStorage()` が commit するまで、サムネイル修復・
+  孤児ファイル掃除・撮影日修復を走らせない。掃除は `managed_video_path` で所有を判定するため、
+  バックフィル前に走ると管理コピーを孤児と誤認する（`_layout.tsx` のバリア）。
 - `tags(name, type)` が一意（migration `0007`）。`tag.type` ∈ `"technique" | "skier" | "custom"`。
 - `favorite_resorts.name` が一意。`diary_entries.dateKey`（YYYY-MM-DD）が一意 — 1 日 1 エントリ。
 - `app_preferences` は key-value ストア。**現在実際に使われているキー**: `capturedAt_repair_version` / `thumbnail_migration_version` / `home_sort_order` / `weekStartDay` / `dismissed_update_prompt_version`。
