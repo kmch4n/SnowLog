@@ -7,6 +7,7 @@ import { t } from "../i18n";
 import type { FilterOptions, VideoWithTags } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
 import { areVideoListsEqual } from "../utils/videoListEquality";
+import { normalizeVideoStorageMode } from "../utils/videoStorageMode";
 
 interface FetchVideosOptions {
     showLoading?: boolean;
@@ -73,6 +74,7 @@ export function useVideos(filter?: FilterOptions) {
                 ...video,
                 tags: tagsByVideoId.get(video.id) ?? [],
                 techniques: parseTechniques(video.techniques as string | null),
+                storageMode: normalizeVideoStorageMode(video.storageMode),
             }));
 
             setVideos((current) =>

@@ -2,6 +2,9 @@
  * アプリ全体で使用する型定義
  */
 
+// 動画の保存方式。正典は utils 側に置く（単独コンパイルの制約のため）
+import type { VideoStorageMode } from "../utils/videoStorageMode";
+
 // タグの種別
 export type TagType = "technique" | "skier" | "custom";
 
@@ -11,6 +14,8 @@ export interface Tag {
     name: string;
     type: TagType;
 }
+
+export type { VideoStorageMode };
 
 // 動画レコード（DBから取得した生データ）
 export interface Video {
@@ -30,6 +35,10 @@ export interface Video {
     isFileAvailable: number;
     // お気に入り状態（1: お気に入り、0: 通常）
     isFavorite: number;
+    // 保存方式。身元（synthetic かどうか）とは別の軸（#86）
+    storageMode: VideoStorageMode;
+    // copy のときの相対パス `videos/<video-id>.<ext>`、reference のときは null
+    managedVideoPath: string | null;
     createdAt: number;
     updatedAt: number;
 }

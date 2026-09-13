@@ -72,6 +72,8 @@ export async function getDashboardStats(_season: Season): Promise<DashboardStats
                 techniques: ["大回り", "カービング"],
                 isFileAvailable: 1,
                 isFavorite: 1,
+                storageMode: "reference",
+                managedVideoPath: null,
                 createdAt: 1706800000,
                 updatedAt: 1706800000,
                 tags: [
@@ -92,6 +94,8 @@ export async function getDashboardStats(_season: Season): Promise<DashboardStats
                 techniques: ["小回り", "コブ"],
                 isFileAvailable: 1,
                 isFavorite: 0,
+                storageMode: "reference",
+                managedVideoPath: null,
                 createdAt: 1707660000,
                 updatedAt: 1707660000,
                 tags: [
@@ -112,6 +116,8 @@ export async function getDashboardStats(_season: Season): Promise<DashboardStats
                 techniques: ["パウダー"],
                 isFileAvailable: 1,
                 isFavorite: 0,
+                storageMode: "reference",
+                managedVideoPath: null,
                 createdAt: 1708870000,
                 updatedAt: 1708870000,
                 tags: [{ id: 5, name: "パウダー", type: "technique" }],

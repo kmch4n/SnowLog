@@ -1,8 +1,17 @@
+import { sql } from "drizzle-orm";
 import { int, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /**
  * 動画テーブル
- * 動画ファイルのコピーは保持しない（参照方式）
+ *
+ * 保存方式は行ごとに `storageMode` が持つ。`reference` は写真ライブラリを参照し
+ * アプリ側にバイトを持たない。`copy` はアプリ管理下にファイルを持ち、その相対
+ * パスが `managedVideoPath` に入る（#86）。
+ *
+ * それ以前は「synthetic な assetId かどうか」が保存方式の判定を兼ねていたが、
+ * ユーザーが方式を選べるようになると「写真ライブラリ上の身元があるか」と
+ * 「バイトがどこにあるか」は一致しなくなる。身元の判定は今も
+ * `isSyntheticAssetId` の仕事で、保存方式の判定だけがこの列に移った。
  */
 export const videos = sqliteTable("videos", {
     id: text("id").primaryKey(),
@@ -21,9 +30,21 @@ export const videos = sqliteTable("videos", {
     isFileAvailable: int("is_file_available").notNull().default(1),
     // お気に入り状態（1: お気に入り、0: 通常）
     isFavorite: int("is_favorite").notNull().default(0),
+    // 保存方式（'reference': 写真ライブラリ参照 / 'copy': アプリ管理下にコピー）
+    storageMode: text("storage_mode").notNull().default("reference"),
+    // copy のときの相対パス `videos/<video-id>.<ext>`、reference のときは null。
+    // iOS はアプリコンテナを再配置するので絶対 URI を保存してはいけない。
+    managedVideoPath: text("managed_video_path"),
     createdAt: int("created_at").notNull(),
     updatedAt: int("updated_at").notNull(),
-});
+}, (table) => [
+    // 1 つのファイルを 2 行が所有することを表現できなくする。大文字小文字を
+    // 区別しないファイルシステム上でも所有権を排他にするため lower() を挟む。
+    // NULL 同士は衝突しないので reference 行はいくつでも並ぶ。
+    uniqueIndex("videos_managed_video_path_unique").on(
+        sql`lower(${table.managedVideoPath})`
+    ),
+]);
 
 /**
  * タグマスターテーブル

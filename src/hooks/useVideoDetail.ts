@@ -17,6 +17,7 @@ import { deleteThumbnail } from "../services/thumbnailService";
 import { t } from "../i18n";
 import type { VideoWithTags } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
+import { normalizeVideoStorageMode } from "../utils/videoStorageMode";
 
 /**
  * 動画1件の詳細情報を取得・更新するカスタムフック
@@ -48,7 +49,12 @@ export function useVideoDetail(videoId: string) {
                 const tags = await getTagsForVideo(videoId);
                 if (isCancelled()) return;
                 const techniques = parseTechniques(raw.techniques as string | null);
-                setVideo({ ...raw, tags, techniques });
+                setVideo({
+                    ...raw,
+                    tags,
+                    techniques,
+                    storageMode: normalizeVideoStorageMode(raw.storageMode),
+                });
             } catch (e) {
                 if (!isCancelled()) {
                     setError(e instanceof Error ? e.message : t("videoDetail.loadFailed"));

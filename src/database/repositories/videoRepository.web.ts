@@ -18,6 +18,8 @@ const MOCK_VIDEOS: VideoWithTags[] = [
         techniques: ["large-turns", "carving"],
         isFileAvailable: 1,
         isFavorite: 1,
+        storageMode: "reference",
+        managedVideoPath: null,
         createdAt: 1706800000,
         updatedAt: 1706800000,
         tags: [
@@ -38,6 +40,8 @@ const MOCK_VIDEOS: VideoWithTags[] = [
         techniques: ["short-turns", "moguls"],
         isFileAvailable: 1,
         isFavorite: 0,
+        storageMode: "reference",
+        managedVideoPath: null,
         createdAt: 1707660000,
         updatedAt: 1707660000,
         tags: [
@@ -58,6 +62,8 @@ const MOCK_VIDEOS: VideoWithTags[] = [
         techniques: ["powder"],
         isFileAvailable: 1,
         isFavorite: 0,
+        storageMode: "reference",
+        managedVideoPath: null,
         createdAt: 1708870000,
         updatedAt: 1708870000,
         tags: [{ id: 5, name: "Powder", type: "technique" }],

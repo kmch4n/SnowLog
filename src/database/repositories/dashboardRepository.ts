@@ -7,6 +7,7 @@ import { and, desc, gte, lte } from "drizzle-orm";
 import { db, videos } from "../index";
 import { toDateKey } from "../../utils/dateUtils";
 import { parseTechniques } from "../../utils/parseTechniques";
+import { normalizeVideoStorageMode } from "../../utils/videoStorageMode";
 import type {
     DashboardStats,
     DashboardSummary,
@@ -154,6 +155,7 @@ export async function getDashboardStats(season: Season): Promise<DashboardStats>
         return {
             ...v,
             techniques: parsed,
+            storageMode: normalizeVideoStorageMode(v.storageMode),
             tags: [], // hook側でタグを付与
         };
     });
