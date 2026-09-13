@@ -554,6 +554,7 @@ export const ja = {
         thumbnailGenerationFailed: "サムネイルの生成に失敗しました",
         unknown: "不明なエラーが発生しました",
         dbInitFailed: "DBの初期化に失敗しました",
+        storageMigrationFailed: "動画ライブラリの準備に失敗しました",
         videoLoadFailed: "動画の取得に失敗しました。",
         boundary: {
             title: "問題が発生しました",

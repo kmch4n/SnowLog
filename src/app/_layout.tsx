@@ -8,6 +8,7 @@ import {
     Alert,
     InteractionManager,
     Linking,
+    Pressable,
     StyleSheet,
     Text,
     useColorScheme,
@@ -18,6 +19,7 @@ import { ErrorBoundaryScreen } from "@/components/ErrorBoundaryScreen";
 import { ThumbnailMigrationScreen } from "@/components/ThumbnailMigrationScreen";
 import { Colors } from "@/constants/colors";
 import { db } from "@/database";
+import { migrateVideoStorage } from "@/services/storageMigrationService";
 import {
     deletePreference,
     getPreference,
@@ -132,6 +134,16 @@ async function repairInvalidCapturedAt() {
 type ThumbnailMigrationPhase = "pending" | "running" | "done";
 
 /**
+ * 保存方式バックフィルの状態。
+ *
+ * `done` になるまで、サムネイル修復・孤児ファイル掃除・撮影日修復を含む一切の
+ * 後続処理を走らせない。掃除系は `storage_mode` で所有ファイルを判定するため、
+ * バックフィル前に動くと managed ファイルを孤児と誤認しうる（#86 §5）。
+ * 失敗は握り潰さず、再試行できる画面を出して止める。
+ */
+type StorageMigrationPhase = "pending" | "done" | "failed";
+
+/**
  * ルートレイアウト
  * アプリ起動時にDBマイグレーションとサムネイル修復を実行してから画面を表示する。
  * サムネイル修復はアップデート後の初回起動時のみ走り、専用ロード画面を表示する。
@@ -140,6 +152,9 @@ export default function RootLayout() {
     const colorScheme = useColorScheme();
     const { t } = useTranslation();
     const { success, error } = useMigrations(db, migrations);
+    const [storagePhase, setStoragePhase] =
+        useState<StorageMigrationPhase>("pending");
+    const [storageAttempt, setStorageAttempt] = useState(0);
     const [thumbnailPhase, setThumbnailPhase] =
         useState<ThumbnailMigrationPhase>("pending");
     const [thumbnailProgress, setThumbnailProgress] = useState({
@@ -149,6 +164,25 @@ export default function RootLayout() {
 
     useEffect(() => {
         if (!success) return;
+
+        let cancelled = false;
+        setStoragePhase("pending");
+        migrateVideoStorage()
+            .then(() => {
+                if (!cancelled) setStoragePhase("done");
+            })
+            .catch(() => {
+                // 握り潰さない。中途半端な状態で掃除を走らせる方が危険。
+                if (!cancelled) setStoragePhase("failed");
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [success, storageAttempt]);
+
+    useEffect(() => {
+        if (storagePhase !== "done") return;
         seedTechniqueOptions().catch(() => {});
         // bab0b45 removed the in-app language picker but left behind the row it
         // wrote. Nothing reads it, yet exportService dumps every preference, so
@@ -179,7 +213,7 @@ export default function RootLayout() {
         return () => {
             cancelled = true;
         };
-    }, [success]);
+    }, [storagePhase]);
 
     useEffect(() => {
         if (thumbnailPhase !== "done") return;
@@ -235,6 +269,31 @@ export default function RootLayout() {
     }
 
     if (!success) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color={Colors.alpineBlue} />
+            </View>
+        );
+    }
+
+    if (storagePhase === "failed") {
+        return (
+            <View style={styles.center}>
+                <Text style={styles.errorText}>
+                    {t("errors.storageMigrationFailed")}
+                </Text>
+                <Pressable
+                    accessibilityRole="button"
+                    onPress={() => setStorageAttempt((attempt) => attempt + 1)}
+                    style={styles.retryButton}
+                >
+                    <Text style={styles.retryLabel}>{t("common.retry")}</Text>
+                </Pressable>
+            </View>
+        );
+    }
+
+    if (storagePhase === "pending") {
         return (
             <View style={styles.center}>
                 <ActivityIndicator size="large" color={Colors.alpineBlue} />
@@ -373,5 +432,17 @@ const styles = StyleSheet.create({
     errorDetail: {
         fontSize: 12,
         color: Colors.textSecondary,
+    },
+    retryButton: {
+        marginTop: 16,
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 8,
+        backgroundColor: Colors.alpineBlue,
+    },
+    retryLabel: {
+        fontSize: 15,
+        fontWeight: "600",
+        color: Colors.headerText,
     },
 });

@@ -556,6 +556,7 @@ export const en: Translations = {
         thumbnailGenerationFailed: "Failed to generate the thumbnail",
         unknown: "An unknown error occurred",
         dbInitFailed: "Failed to initialize the database",
+        storageMigrationFailed: "Could not prepare the video library",
         videoLoadFailed: "Failed to load videos.",
         boundary: {
             title: "Something went wrong",
