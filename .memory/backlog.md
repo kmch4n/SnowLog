@@ -26,7 +26,7 @@ status: active
 
 | テーマ | Issue |
 | --- | --- |
-| 動画の保存方式の選択。Task B（列・移行・バックアップ v2）は実装済み、Task C 以降が残り | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
+| 動画の保存方式の選択。Task B と Task D の中核は実装済み。残るは Task A（計測基盤）・C（ネイティブ）・E・F・G と実機検証 | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
 | 復元した動画を新端末の写真ライブラリに再リンクする | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
 | Web が起動時にクラッシュする（`openDatabaseSync` 不在） | [#84](https://github.com/kmch4n/SnowLog/issues/84) |
 | 未参照の i18n キー 93 件 | [#83](https://github.com/kmch4n/SnowLog/issues/83) |
