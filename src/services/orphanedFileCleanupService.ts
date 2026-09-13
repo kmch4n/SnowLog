@@ -4,9 +4,8 @@ import { getAllVideos } from "@/database/repositories/videoRepository";
 
 import {
     getManagedVideoDirectoryUri,
-    getManagedVideoFileUri,
+    managedPathToUri,
 } from "./managedVideoFileService";
-import { isSyntheticAssetId } from "./mediaService";
 import {
     getThumbnailDirectoryUri,
     toRelativeThumbnailPath,
@@ -121,9 +120,13 @@ export async function cleanupOrphanedFiles(
             referencedThumbnails.add(thumbnailFileName);
         }
 
-        if (isSyntheticAssetId(video.assetId)) {
-            const managedUri = getManagedVideoFileUri(video.id, video.filename);
-            const managedFileName = fileNameFromUri(managedUri);
+        // 所有権は行が持つパスだけが決める。パスの無い copy 行は何も守らない
+        // ——が、ファイルも消さない。掃除側は「参照されていない」ファイルしか
+        // 消さないので、実体は孤児として残り、手動で復旧できる（#86 §5）。
+        if (video.managedVideoPath) {
+            const managedFileName = fileNameFromUri(
+                managedPathToUri(video.managedVideoPath)
+            );
             if (managedFileName) {
                 referencedManagedVideos.add(managedFileName);
             }

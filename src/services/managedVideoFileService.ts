@@ -55,6 +55,38 @@ export async function persistManagedVideoFile(
     return destinationUri;
 }
 
+/**
+ * DB に入っている相対パスを、いまのコンテナ基準の絶対 URI へ解決する。
+ *
+ * iOS はアップデートや復元でアプリコンテナのパスを変えるため、絶対 URI を保存
+ * してはならない。保存するのは `videos/<id>.<ext>` だけで、解決は毎回ここで行う。
+ */
+export function managedPathToUri(relativePath: string): string {
+    return `${FileSystem.documentDirectory}${relativePath}`;
+}
+
+/** 相対パスのファイルが実在すれば絶対 URI、無ければ null */
+export async function resolveManagedPath(
+    relativePath: string
+): Promise<string | null> {
+    const uri = managedPathToUri(relativePath);
+    const info = await FileSystem.getInfoAsync(uri);
+    return info.exists ? uri : null;
+}
+
+/** 相対パスのファイルが実在するか */
+export async function managedPathExists(relativePath: string): Promise<boolean> {
+    const info = await FileSystem.getInfoAsync(managedPathToUri(relativePath));
+    return info.exists;
+}
+
+/** 相対パスのファイルを削除する。存在しなくてもエラーにしない */
+export async function deleteManagedPath(relativePath: string): Promise<void> {
+    await FileSystem.deleteAsync(managedPathToUri(relativePath), {
+        idempotent: true,
+    }).catch(() => {});
+}
+
 export async function managedVideoFileExists(
     videoId: string,
     filename?: string | null
@@ -64,19 +96,3 @@ export async function managedVideoFileExists(
     return info.exists;
 }
 
-export async function resolveManagedVideoFileUri(
-    videoId: string,
-    filename?: string | null
-): Promise<string | null> {
-    const uri = getManagedVideoFileUri(videoId, filename);
-    const info = await FileSystem.getInfoAsync(uri);
-    return info.exists ? uri : null;
-}
-
-export async function deleteManagedVideoFile(
-    videoId: string,
-    filename?: string | null
-): Promise<void> {
-    const uri = getManagedVideoFileUri(videoId, filename);
-    await FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
-}

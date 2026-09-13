@@ -4,10 +4,11 @@ import { deleteVideo, insertVideo } from "../database/repositories/videoReposito
 import { setTagsForVideo } from "../database/repositories/tagRepository";
 import { getCurrentLocale, t } from "../i18n";
 import {
-    deleteManagedVideoFile,
+    deleteManagedPath,
     getManagedVideoFileUri,
     persistManagedVideoFile,
 } from "./managedVideoFileService";
+import { buildManagedVideoPath } from "../utils/managedVideoPath";
 import { isSyntheticAssetId } from "./mediaService";
 import { protectFilesFromOrphanedCleanup } from "./orphanedFileCleanupService";
 import {
@@ -42,8 +43,14 @@ export async function importVideo(
     }
 
     const assetCreationTime = asset.creationTime;
+    // 取り込み元に写真ライブラリ上の身元が無いものだけがコピーになる。この段階では
+    // 保存方式はまだユーザーが選べないので、身元と保存方式は一致したままでよい。
+    // 一致しなくなるのは方式選択が入ってから（#86 §5）。
     const isSyntheticImport = isSyntheticAssetId(asset.id);
     const videoId = randomUUID();
+    const managedVideoPath = isSyntheticImport
+        ? buildManagedVideoPath(videoId, asset.filename)
+        : null;
     const protectedFileUris = [`${getThumbnailDirectoryUri()}${videoId}.jpg`];
 
     if (isSyntheticImport) {
@@ -86,6 +93,10 @@ export async function importVideo(
                 memo: metadata.memo,
                 techniques: metadata.techniques.length > 0 ? JSON.stringify(metadata.techniques) : null,
                 isFileAvailable: 1,
+                // 列の既定値に頼らず明示的に書く。既定は `reference` なので、
+                // 頼ると synthetic の取り込みが参照方式として記録されてしまう。
+                storageMode: isSyntheticImport ? "copy" : "reference",
+                managedVideoPath,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -96,8 +107,8 @@ export async function importVideo(
         } catch (error) {
             await deleteVideo(videoId).catch(() => {});
             await deleteThumbnail(thumbnailUri).catch(() => {});
-            if (isSyntheticImport) {
-                await deleteManagedVideoFile(videoId, asset.filename).catch(() => {});
+            if (managedVideoPath) {
+                await deleteManagedPath(managedVideoPath).catch(() => {});
             }
             throw error;
         }

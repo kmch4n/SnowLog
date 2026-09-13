@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { updateFileAvailability } from "@/database/repositories/videoRepository";
-import { resolveManagedVideoFileUri } from "@/services/managedVideoFileService";
+import { resolveManagedPath } from "@/services/managedVideoFileService";
 import { getAssetInfoWithDownload, isSyntheticAssetId, requestMediaPermissions } from "@/services/mediaService";
 import {
     Alert,
@@ -228,14 +228,17 @@ export default function VideoDetailScreen() {
         if (video.isFileAvailable === 1) {
             (async () => {
                 try {
-                    if (isSyntheticAssetId(video.assetId)) {
-                        const managedUri = await resolveManagedVideoFileUri(
-                            video.id,
-                            video.filename
-                        );
+                    if (video.storageMode === "copy") {
+                        // アプリが持つコピーは写真ライブラリを一切見ない。権限が
+                        // 拒否されていても、元の写真が消えていても再生できる。
+                        const managedUri = video.managedVideoPath
+                            ? await resolveManagedPath(video.managedVideoPath)
+                            : null;
                         if (managedUri) {
                             setVideoUri(managedUri);
                         } else {
+                            // コピーが見つからない。写真ライブラリへ黙って
+                            // フォールバックしない——別物を掴むことになる。
                             await updateFileAvailability(video.id, false);
                             refreshRef.current();
                         }

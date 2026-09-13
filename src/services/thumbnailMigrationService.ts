@@ -6,8 +6,8 @@ import {
     getAllVideos,
     updateVideoThumbnailUri,
 } from "@/database/repositories/videoRepository";
-import { resolveManagedVideoFileUri } from "./managedVideoFileService";
-import { getAssetInfo, isSyntheticAssetId } from "./mediaService";
+import { resolveManagedPath } from "./managedVideoFileService";
+import { getAssetInfo } from "./mediaService";
 import {
     THUMBNAIL_MISSING_SENTINEL,
     generateAndSaveThumbnail,
@@ -58,14 +58,14 @@ async function regenerateThumbnail(video: {
     id: string;
     assetId: string;
     filename: string;
+    storageMode: string;
+    managedVideoPath: string | null;
 }): Promise<string | null> {
     try {
-        if (isSyntheticAssetId(video.assetId)) {
+        if (video.storageMode === "copy") {
             // Managed video file — resolve path against current container
-            const managedUri = await resolveManagedVideoFileUri(
-                video.id,
-                video.filename
-            );
+            if (!video.managedVideoPath) return null;
+            const managedUri = await resolveManagedPath(video.managedVideoPath);
             if (!managedUri) return null;
             return await generateAndSaveThumbnail(managedUri, video.id);
         }
@@ -115,6 +115,8 @@ export async function runThumbnailMigration(
                 id: video.id,
                 assetId: video.assetId,
                 filename: video.filename,
+                storageMode: video.storageMode,
+                managedVideoPath: video.managedVideoPath,
             });
 
             if (regenerated) {

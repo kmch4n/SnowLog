@@ -3,8 +3,8 @@ import {
     getVideoById,
 } from "@/database/repositories/videoRepository";
 
-import { deleteManagedVideoFile } from "./managedVideoFileService";
-import { isSyntheticAssetId } from "./mediaService";
+import { deleteManagedPath } from "./managedVideoFileService";
+
 import { deleteThumbnail } from "./thumbnailService";
 
 export async function deleteVideosWithCleanup(videoIds: string[]): Promise<void> {
@@ -24,8 +24,11 @@ export async function deleteVideosWithCleanup(videoIds: string[]): Promise<void>
                     tasks.push(deleteThumbnail(video.thumbnailUri));
                 }
 
-                if (isSyntheticAssetId(video.assetId)) {
-                    tasks.push(deleteManagedVideoFile(video.id, video.filename));
+                // パスが無い copy 行（移行時に ID が安全でなかったもの）は、
+                // 消すべきファイルを特定できない。捏造したパスで消しに行くより
+                // 孤児として残す方が安全。
+                if (video.managedVideoPath) {
+                    tasks.push(deleteManagedPath(video.managedVideoPath));
                 }
 
                 return tasks;

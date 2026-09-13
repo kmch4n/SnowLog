@@ -9,10 +9,10 @@ import {
 } from "../database/repositories/videoRepository";
 import { hapticLight } from "../services/hapticsService";
 import {
-    deleteManagedVideoFile,
-    managedVideoFileExists,
+    deleteManagedPath,
+    managedPathExists,
 } from "../services/managedVideoFileService";
-import { checkAssetExists, isSyntheticAssetId } from "../services/mediaService";
+import { checkAssetExists } from "../services/mediaService";
 import { deleteThumbnail } from "../services/thumbnailService";
 import { t } from "../i18n";
 import type { VideoWithTags } from "../types";
@@ -131,8 +131,11 @@ export function useVideoDetail(videoId: string) {
     /** 元ファイルの存在を確認する */
     const checkFileExists = useCallback(async (): Promise<boolean> => {
         if (!video) return false;
-        if (isSyntheticAssetId(video.assetId)) {
-            return managedVideoFileExists(video.id, video.filename);
+        if (video.storageMode === "copy") {
+            // パスの無い copy 行は所有ファイルを特定できない。Photos へ問い合わせ
+            // ても別物なので、素直に「無い」と答える。
+            if (!video.managedVideoPath) return false;
+            return managedPathExists(video.managedVideoPath);
         }
         return checkAssetExists(video.assetId);
     }, [video]);
@@ -142,8 +145,8 @@ export function useVideoDetail(videoId: string) {
         if (video?.thumbnailUri) {
             await deleteThumbnail(video.thumbnailUri);
         }
-        if (video && isSyntheticAssetId(video.assetId)) {
-            await deleteManagedVideoFile(video.id, video.filename);
+        if (video?.managedVideoPath) {
+            await deleteManagedPath(video.managedVideoPath);
         }
         await deleteVideoFromDb(videoId);
     }, [videoId, video]);
