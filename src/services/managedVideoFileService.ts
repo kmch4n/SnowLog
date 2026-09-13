@@ -1,8 +1,12 @@
 import * as FileSystem from "expo-file-system/legacy";
 
 import { t } from "../i18n";
+import {
+    MANAGED_VIDEO_DIRECTORY,
+    inferManagedExtension,
+} from "../utils/managedVideoPath";
 
-const MANAGED_VIDEO_DIR = `${FileSystem.documentDirectory}videos/`;
+const MANAGED_VIDEO_DIR = `${FileSystem.documentDirectory}${MANAGED_VIDEO_DIRECTORY}`;
 
 export function getManagedVideoDirectoryUri(): string {
     return MANAGED_VIDEO_DIR;
@@ -10,12 +14,6 @@ export function getManagedVideoDirectoryUri(): string {
 
 function isSupportedManagedVideoUri(sourceUri: string): boolean {
     return sourceUri.startsWith("file://") || sourceUri.startsWith("content://");
-}
-
-function inferExtension(filename?: string | null, uri?: string | null): string {
-    const target = filename ?? uri ?? "";
-    const match = target.match(/\.([a-zA-Z0-9]+)(?:$|\?)/);
-    return match ? match[1].toLowerCase() : "mov";
 }
 
 async function ensureManagedVideoDir(): Promise<void> {
@@ -32,7 +30,7 @@ export function getManagedVideoFileUri(
     filename?: string | null,
     sourceUri?: string | null
 ): string {
-    const extension = inferExtension(filename, sourceUri);
+    const extension = inferManagedExtension(filename ?? sourceUri ?? null);
     return `${MANAGED_VIDEO_DIR}${videoId}.${extension}`;
 }
 
