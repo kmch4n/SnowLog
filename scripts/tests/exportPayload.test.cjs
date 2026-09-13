@@ -43,6 +43,9 @@ const {
     buildExportPayload,
 } = require(path.join(outDir, "services", "exportPayload.js"));
 
+// Pinned on purpose: widening the backup format without bumping the schema
+// version has to fail here. Adding a key means editing this list in the same
+// commit as the bump (#86 added storageMode / managedVideoPath in v2).
 const VIDEO_KEYS = [
     "assetId",
     "capturedAt",
@@ -52,8 +55,10 @@ const VIDEO_KEYS = [
     "id",
     "isFavorite",
     "isFileAvailable",
+    "managedVideoPath",
     "memo",
     "skiResortName",
+    "storageMode",
     "tags",
     "techniques",
     "thumbnailUri",
@@ -90,6 +95,8 @@ function makeVideoRow(overrides = {}) {
         techniques: null,
         isFileAvailable: 1,
         isFavorite: 0,
+        storageMode: "reference",
+        managedVideoPath: null,
         createdAt: 1,
         updatedAt: 2,
         ...overrides,
@@ -132,7 +139,7 @@ function makeSource(overrides = {}) {
 
 test("stamps the schema version, app version and export time", () => {
     const payload = buildExportPayload(makeSource());
-    assert.equal(payload.schemaVersion, 1);
+    assert.equal(payload.schemaVersion, 2);
     assert.equal(payload.appVersion, "1.2.0");
     assert.equal(payload.exportedAt, "2026-01-15T00:00:00.000Z");
 });
@@ -307,4 +314,37 @@ test("backupFileName formats local date and time, zero padded", () => {
         backupFileName(new Date(2026, 11, 31, 23, 59)),
         "snowlog-backup-20261231-2359.json"
     );
+});
+
+test("a reference video exports its mode and a null managed path", () => {
+    const payload = buildExportPayload(
+        makeSource({ videos: [makeVideoRow()] })
+    );
+    assert.equal(payload.videos[0].storageMode, "reference");
+    assert.equal(payload.videos[0].managedVideoPath, null);
+});
+
+test("a copy video exports its relative path, never an absolute one", () => {
+    const payload = buildExportPayload(
+        makeSource({
+            videos: [
+                makeVideoRow({
+                    assetId: "synthetic:1",
+                    storageMode: "copy",
+                    managedVideoPath: "videos/v1.mov",
+                }),
+            ],
+        })
+    );
+    assert.equal(payload.videos[0].storageMode, "copy");
+    assert.equal(payload.videos[0].managedVideoPath, "videos/v1.mov");
+});
+
+test("an unreadable storage mode exports as reference, not copy", () => {
+    // Claiming a copy the restoring device cannot have is worse than losing the
+    // distinction: it would point playback at a file that was never written.
+    const payload = buildExportPayload(
+        makeSource({ videos: [makeVideoRow({ storageMode: "wat" })] })
+    );
+    assert.equal(payload.videos[0].storageMode, "reference");
 });

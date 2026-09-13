@@ -22,9 +22,20 @@ import type {
 } from "../database/schema";
 import type { Tag } from "../types";
 import { parseTechniques } from "../utils/parseTechniques";
+import {
+    normalizeVideoStorageMode,
+    type VideoStorageMode,
+} from "../utils/videoStorageMode";
 
-/** Bump when the export payload shape changes. */
-export const EXPORT_SCHEMA_VERSION = 1;
+/**
+ * Bump when the export payload shape changes.
+ *
+ * v2 adds `storageMode` and `managedVideoPath` to each video (#86). A build
+ * that only reads v1 refuses a v2 file outright, which is the intended
+ * behaviour: it has nowhere to put the storage mode and would restore every
+ * managed copy as a Photos reference.
+ */
+export const EXPORT_SCHEMA_VERSION = 2;
 
 /**
  * A failure whose message is safe to show the user verbatim. Anything else
@@ -50,6 +61,10 @@ export interface ExportedVideo {
     techniques: string[] | null;
     isFileAvailable: boolean;
     isFavorite: boolean;
+    /** v2 and later. `reference` keeps Photos, `copy` keeps an app-managed file. */
+    storageMode: VideoStorageMode;
+    /** v2 and later. Relative `videos/<id>.<ext>` for a copy, null otherwise. */
+    managedVideoPath: string | null;
     createdAt: number;
     updatedAt: number;
     tags: Tag[];
@@ -128,6 +143,10 @@ export function buildExportPayload(source: ExportSource): ExportPayload {
             techniques: parseTechniques(video.techniques),
             isFileAvailable: video.isFileAvailable === 1,
             isFavorite: video.isFavorite === 1,
+            storageMode: normalizeVideoStorageMode(video.storageMode),
+            // The path only. No bytes, no absolute URI, no temporary staging
+            // location: a backup describes the library, it does not carry it.
+            managedVideoPath: video.managedVideoPath,
             createdAt: video.createdAt,
             updatedAt: video.updatedAt,
             tags: (source.tagsByVideoId.get(video.id) ?? []).map((tag) => ({
