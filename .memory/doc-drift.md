@@ -83,7 +83,7 @@ status: active
 
 ## 3. ファイルサイズ規約の逸脱
 
-`.claude/CLAUDE.md` と `.codex/AGENTS.md` はファイルを ~500〜700 行に収めるよう定めているが、
+`.claude/CLAUDE.md` と `AGENTS.md` はファイルを ~500〜700 行に収めるよう定めているが、
 `src/app/video-import.tsx` は **1,371 行**あり大きく超えている。`src/` で規約を超えているのはこの 1 ファイルだけ。
 作業は Issue [#80](https://github.com/kmch4n/SnowLog/issues/80) で管理している。
 

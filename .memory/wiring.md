@@ -29,7 +29,7 @@ status: active
 
 ## ディレクトリで注意すべき点
 
-構成そのものは `.codex/AGENTS.md` にある。ここは非自明な点だけ。
+構成そのものは `AGENTS.md` にある。ここは非自明な点だけ。
 
 - `src/constants/colors.ts` — **`Colors` の定義場所はここ一箇所だけ。** 他に増やさない。
 - `drizzle/` — 生成物。**手で編集しない。** `npm run db:generate` で再生成する。

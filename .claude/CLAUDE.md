@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-@../.codex/AGENTS.md
+@../AGENTS.md
 
 The line above is an import, not a mention: Claude Code reads `CLAUDE.md` and never `AGENTS.md`,
 so without it the shared conventions would never reach this session. It expands at launch.
-**`.codex/AGENTS.md` is canonical** — if anything disagrees with it, AGENTS.md wins.
+**`AGENTS.md` is canonical** — if anything disagrees with it, AGENTS.md wins.
 
 ## Scope of this file
 
@@ -19,7 +19,7 @@ startup order, i18n, haptics, thumbnails, or `app_preferences`.
 
 | Looking for | Read |
 | --- | --- |
-| Contributor conventions (canonical) | `.codex/AGENTS.md` (imported above) |
+| Contributor conventions (canonical) | `AGENTS.md` (imported above) |
 | Cross-agent knowledge base — index first | `.memory/README.md` |
 | Startup order, non-obvious wiring, data contracts | `.memory/wiring.md` |
 | Rules both agents follow, and why | `.memory/agent-rules.md` |

@@ -6,7 +6,7 @@ status: active
 
 # エージェント共通の約束事
 
-`.claude/CLAUDE.md` と `.codex/AGENTS.md` は 2026-07-15 から git 追跡対象になったが、
+`.claude/CLAUDE.md` と `AGENTS.md` は 2026-07-15 から git 追跡対象になったが、
 **別ファイルである以上いずれ内容がずれる**。片方にしか書かれていないルールは、もう片方のエージェントからは存在しないのと同じ。
 ここには**エージェントをまたいで守るべきルールのうち、両方に書くと二重管理になるもの**を single source として置く。
 
@@ -17,18 +17,20 @@ status: active
 **Claude Code は `CLAUDE.md` しか自動で読まない。`AGENTS.md` は読まない**（リポジトリ直下に置いても読まれない）。
 これは Claude Code の仕様で、[公式ドキュメント](https://code.claude.com/docs/en/memory)に明記されている。
 
-そのため `.claude/CLAUDE.md` の冒頭に `@../.codex/AGENTS.md` という **import** を置いてある。
+そのため `.claude/CLAUDE.md` の冒頭に `@../AGENTS.md` という **import** を置いてある。
 これで起動時に AGENTS.md の実体が展開され、Claude も Codex と同じ規約を読む。
 
 - **`@` はバックティックで囲むと import されない**。CLAUDE.md 内で単にパスに言及したいときは `` `@foo` `` と書く。
   逆に import したいときはバックティックを外す。うっかり囲むと黙って無効になるので注意。
-- 相対パスは **import 元ファイル基準**で解決される（`.claude/CLAUDE.md` からなので `../.codex/`）。
+- 相対パスは **import 元ファイル基準**で解決される（`.claude/CLAUDE.md` からなので `../`）。
 - import は最大 4 ホップまでネストできる。
 - 初回は Claude Code が import の承認ダイアログを出す。**ここで拒否すると import は恒久的に無効化され、ダイアログも二度と出ない。**
 
+2026-10-21 に AGENTS.md を `.codex/AGENTS.md` からリポジトリ直下へ移した。Codex がプロジェクトの `.codex/AGENTS.md` を自動で読まなくなったため。import 先もそれに合わせて `../AGENTS.md` に変えた。
+
 **既知のトレードオフ:** CLAUDE.md と AGENTS.md は内容がかなり重複している（コーディング規約・git ルール・テスト・i18n 権限など）。
 import すると両方がコンテキストに入るため二重になる。2026-07-15 時点では、統合コストを避けて**重複を承知で許容する**判断をした。
-**両者が矛盾した場合は `.codex/AGENTS.md` を正とし、CLAUDE.md 側を直す。**
+**両者が矛盾した場合は `AGENTS.md` を正とし、CLAUDE.md 側を直す。**
 将来きれいにするなら、AGENTS.md に共通規約を集約し、CLAUDE.md を import + Claude 固有の記述だけに削るのが公式推奨の形。
 
 ## コミットに AI の痕跡を残さない
@@ -43,7 +45,7 @@ import すると両方がコンテキストに入るため二重になる。2026
 理由: ユーザーが明示的に不要と指示している。
 
 このルールは `.claude/CLAUDE.md` と `.codex/release-prompt.md`（release 手順の文脈のみ）には書かれているが、
-`.codex/AGENTS.md` の Commit & Pull Request Guidelines には**書かれていない**。
+`AGENTS.md` の Commit & Pull Request Guidelines には**書かれていない**。
 つまり Codex が通常のコミットを作るときに参照する場所には無いので、ここを single source とする。
 
 ## git の書き込み操作は事前承認なしで行ってよい（2026-07-15 方針転換）
@@ -64,7 +66,7 @@ import すると両方がコンテキストに入るため二重になる。2026
 
 2026-07-15 に方針転換した際、ユーザーは**適用範囲を SnowLog だけに限定する**判断をした（他プロジェクトの挙動を変えたくないため）。
 そのためグローバル側はあえて据え置いてある。**SnowLog 内ではプロジェクト側の記述が正**で、
-`.claude/CLAUDE.md` と `.codex/AGENTS.md` の双方に上書きする旨を明記してある。
+`.claude/CLAUDE.md` と `AGENTS.md` の双方に上書きする旨を明記してある。
 
 グローバルを読んで「禁止されている」と早合点しないこと。逆に、この緩和を他プロジェクトへ持ち出さないこと。
 
@@ -80,14 +82,14 @@ SnowLog は `main` のみの単独開発リポジトリで、**PR ワークフ�
   GitHub の Web UI 上でマージしたもの。日常の運用が変わったわけではない。
 - **author 名は 2 種類ある。どちらも本人。** `kmch4n <kmchan@kmchan.jp>` が 268 件、
   `Kotaro <47635644+kmch4n@users.noreply.github.com>` が 2 件で、後者は GitHub Web UI が使う
-  noreply アドレス（上記 2 件のマージがこれ）。`.codex/AGENTS.md` は「identity が bot に見えたら止めて報告する」と
+  noreply アドレス（上記 2 件のマージがこれ）。`AGENTS.md` は「identity が bot に見えたら止めて報告する」と
   定めているので、`git log --format=%an` で見慣れない名前を見つけた人が毎回調べ直さずに済むようここに記録する。
 
 多くのコーディングエージェントは「デフォルトブランチでは作業しない、まずブランチを切る」を既定の安全策として持っている。
 **このリポジトリではそれをしない。** 指示が無い限り `main` に直接コミットして push する。
 ブランチや PR を挟むと、ここの履歴の慣習から外れる。
 
-`.codex/AGENTS.md` の Commit & Pull Request Guidelines は PR の書き方に触れているが、
+`AGENTS.md` の Commit & Pull Request Guidelines は PR の書き方に触れているが、
 これは PR を作る場合の指針であって、PR を作れという意味ではない。
 
 ### コミットは分割する

@@ -12,7 +12,7 @@ SnowLog のドキュメントは役割で分かれている。**本書は「な�
 | --- | --- |
 | 現在の実装仕様（データモデル、画面フロー、起動処理、責務分担、i18n、保存ポリシー） | [`SnowLog.md`](../SnowLog.md) |
 | **技術選定の理由、設計判断とその経緯** | **本書** |
-| 開発規約・コマンド・テストの走らせ方 | [`.claude/CLAUDE.md`](../.claude/CLAUDE.md) / [`.codex/AGENTS.md`](../.codex/AGENTS.md) |
+| 開発規約・コマンド・テストの走らせ方 | [`.claude/CLAUDE.md`](../.claude/CLAUDE.md) / [`AGENTS.md`](../AGENTS.md) |
 | ドキュメントとコードの既知の乖離 | [`.memory/doc-drift.md`](../.memory/doc-drift.md) |
 | テストの方針と落とし穴 | [`.memory/testing.md`](../.memory/testing.md) |
 | プロダクトとしての紹介 | [`README.md`](../README.md) |

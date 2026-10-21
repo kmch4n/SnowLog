@@ -8,7 +8,7 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 各エージェントが持つ**プライベートなメモリ機能に知識を溜めると、他のエージェントから参照できず暗黙知になる**。
 それを防ぐため、エージェントをまたいで共有すべき知識はすべてこのフォルダに置き、リポジトリと一緒にバージョン管理する。
 
-`.memory/` は git 追跡対象。エージェント指示ファイル（`.claude/CLAUDE.md` / `.codex/AGENTS.md` / `.codex/release-prompt.md`）も
+`.memory/` は git 追跡対象。エージェント指示ファイル（`.claude/CLAUDE.md` / `AGENTS.md` / `.codex/release-prompt.md`）も
 2026-07-15 に `.gitignore` から外して追跡対象にした。**個人・マシンローカル用の `.claude/settings.local.json` だけは除外**している。
 
 ## 対象読者
@@ -38,7 +38,7 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 | テーブル定義 | `src/database/schema.ts` |
 | アーキテクチャ・機能仕様 | `SnowLog.md` |
 | 技術選定の理由・設計判断の経緯 | `docs/design-notes.md` |
-| コーディング規約・エージェント向け指示 | `.codex/AGENTS.md` / `.claude/CLAUDE.md` |
+| コーディング規約・エージェント向け指示 | `AGENTS.md` / `.claude/CLAUDE.md` |
 | **やること・バグ・改善提案** | **GitHub Issues**（`kmch4n/SnowLog`） |
 | 上記から読み取れない知識・判断の背景・既知の乖離 | **`.memory/`（ここ）** |
 
