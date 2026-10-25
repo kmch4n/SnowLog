@@ -7,8 +7,12 @@ import { Stack } from "expo-router";
 import { useColorScheme } from "react-native";
 
 import { ErrorBoundaryScreen } from "@/components/ErrorBoundaryScreen";
+import { installWebAlert, WebAlertHost } from "@/components/WebAlertHost";
 import { Colors } from "@/constants/colors";
 import { useTranslation } from "@/i18n/useTranslation";
+
+// react-native-web の Alert.alert は何もしないので、確認ダイアログを出せる実装に差し替える
+installWebAlert();
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
@@ -83,6 +87,7 @@ export default function RootLayout() {
                     }}
                 />
             </Stack>
+            <WebAlertHost />
         </ThemeProvider>
     );
 }
