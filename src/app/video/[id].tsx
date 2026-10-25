@@ -33,8 +33,10 @@ import { useVideoDetail } from "@/hooks/useVideoDetail";
 import { useSkiResortSuggestions } from "@/hooks/useSkiResortSuggestions";
 import { useTranslation } from "@/i18n/useTranslation";
 import { formatDateTime, formatDuration, formatDurationDecimal } from "@/utils/dateUtils";
+import { createDebouncedTask } from "@/utils/debouncedTask";
 
 const MEMO_INPUT_ACCESSORY_ID = "video-detail-memo-accessory";
+const AUTOSAVE_DELAY_MS = 1000;
 
 /** セクション間の薄いディバイダー */
 function SectionDivider() {
@@ -85,26 +87,18 @@ export default function VideoDetailScreen() {
         return screenWidth / aspectRatio;
     }, [assetInfoMeta, screenWidth, screenHeight]);
 
-    // Stable refs for callbacks used inside debounce effects
-    // (avoids adding them to deps, which would reset the debounce timer)
-    const updateTitleRef = useRef(updateTitle);
-    updateTitleRef.current = updateTitle;
-    const updateMemoRef = useRef(updateMemo);
-    updateMemoRef.current = updateMemo;
+    // Stable ref so the media-resolution effect can refresh without depending on it
     const refreshRef = useRef(refresh);
     refreshRef.current = refresh;
 
-    // タイトル自動保存用の debounce タイマー
-    const titleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    // 「保存しました」を消す 2 秒タイマー。effect が張り直されたときに前回分を
+    // タイトル / メモ自動保存用の debounce。保留中の保存は画面を離れるときに
+    // 捨てずに flush する（入力から 1 秒以内に戻っても編集が残るように）。
+    const [titleSave] = useState(() => createDebouncedTask(AUTOSAVE_DELAY_MS));
+    const [memoSave] = useState(() => createDebouncedTask(AUTOSAVE_DELAY_MS));
+    // 「保存しました」を消す 2 秒タイマー。入力が変わったときに前回分を
     // 消さないと、古いタイマーが新しい保存の表示を早めに消してしまう。
     const titleStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const isInitialTitleLoad = useRef(true);
-
-    // メモ自動保存用の debounce タイマー
-    const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const memoStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const isInitialMemoLoad = useRef(true);
 
     const clearMemoScrollTimer = useCallback(() => {
         if (memoScrollTimerRef.current) {
@@ -147,71 +141,64 @@ export default function VideoDetailScreen() {
         clearMemoScrollTimer();
     }, [clearMemoScrollTimer]);
 
-    // タイトルが変更されたら1秒後に自動保存
-    useEffect(() => {
-        if (isInitialTitleLoad.current) {
-            isInitialTitleLoad.current = false;
-            return;
-        }
-
-        if (titleTimerRef.current) {
-            clearTimeout(titleTimerRef.current);
-        }
-
-        setTitleSaveStatus("idle");
-        titleTimerRef.current = setTimeout(async () => {
-            setTitleSaveStatus("saving");
-            await updateTitleRef.current(titleInput.trim() || null);
-            setTitleSaveStatus("saved");
-            titleStatusTimerRef.current = setTimeout(
-                () => setTitleSaveStatus("idle"),
-                2000
-            );
-        }, 1000);
-
-        return () => {
-            if (titleTimerRef.current) {
-                clearTimeout(titleTimerRef.current);
-            }
+    // タイトルが編集されたら1秒後に自動保存。保存の予約はユーザーの入力からだけ
+    // 行う——video からの初期値の流し込みは保存しない。
+    const handleTitleChange = useCallback(
+        (text: string) => {
+            setTitleInput(text);
             if (titleStatusTimerRef.current) {
                 clearTimeout(titleStatusTimerRef.current);
             }
-        };
-    }, [titleInput]);
+            setTitleSaveStatus("idle");
+            // updateTitle はこの描画時点の動画に束縛されている
+            titleSave.schedule(async () => {
+                setTitleSaveStatus("saving");
+                await updateTitle(text.trim() || null);
+                setTitleSaveStatus("saved");
+                titleStatusTimerRef.current = setTimeout(
+                    () => setTitleSaveStatus("idle"),
+                    2000
+                );
+            });
+        },
+        [titleSave, updateTitle]
+    );
 
-    // メモが変更されたら1秒後に自動保存
+    // メモが編集されたら1秒後に自動保存
+    const handleMemoChange = useCallback(
+        (text: string) => {
+            setMemoInput(text);
+            if (memoStatusTimerRef.current) {
+                clearTimeout(memoStatusTimerRef.current);
+            }
+            setMemoSaveStatus("idle");
+            memoSave.schedule(async () => {
+                setMemoSaveStatus("saving");
+                await updateMemo(text);
+                setMemoSaveStatus("saved");
+                // 2秒後にステータスをリセット
+                memoStatusTimerRef.current = setTimeout(
+                    () => setMemoSaveStatus("idle"),
+                    2000
+                );
+            });
+        },
+        [memoSave, updateMemo]
+    );
+
+    // 画面を離れるとき、保留中の保存は捨てずに今すぐ実行する
     useEffect(() => {
-        // 初回ロード時（video.memo → memoInput への同期）は保存しない
-        if (isInitialMemoLoad.current) {
-            isInitialMemoLoad.current = false;
-            return;
-        }
-
-        if (memoTimerRef.current) {
-            clearTimeout(memoTimerRef.current);
-        }
-
-        setMemoSaveStatus("idle");
-        memoTimerRef.current = setTimeout(async () => {
-            setMemoSaveStatus("saving");
-            await updateMemoRef.current(memoInput);
-            setMemoSaveStatus("saved");
-            // 2秒後にステータスをリセット
-            memoStatusTimerRef.current = setTimeout(
-                () => setMemoSaveStatus("idle"),
-                2000
-            );
-        }, 1000);
-
         return () => {
-            if (memoTimerRef.current) {
-                clearTimeout(memoTimerRef.current);
+            titleSave.flush();
+            memoSave.flush();
+            if (titleStatusTimerRef.current) {
+                clearTimeout(titleStatusTimerRef.current);
             }
             if (memoStatusTimerRef.current) {
                 clearTimeout(memoStatusTimerRef.current);
             }
         };
-    }, [memoInput]);
+    }, [titleSave, memoSave]);
 
     // The video whose title and memo the inputs were last seeded from.
     const seededVideoIdRef = useRef<string | null>(null);
@@ -223,15 +210,16 @@ export default function VideoDetailScreen() {
 
         // Seed the text inputs only when a different video loads. A refetch after
         // a save (favourite, tags, the other field's autosave) must not overwrite
-        // what the user is typing or re-arm the initial-load guards, which would
-        // revert the input and drop its pending save.
+        // what the user is typing.
         if (seededVideoIdRef.current === video.id) return;
+        // Pending edits belong to the previous video; save them before replacing
+        // the inputs. A no-op on first load.
+        titleSave.flush();
+        memoSave.flush();
         seededVideoIdRef.current = video.id;
-        isInitialTitleLoad.current = true;
         setTitleInput(video.title ?? "");
-        isInitialMemoLoad.current = true;
         setMemoInput(video.memo);
-    }, [video]);
+    }, [video, titleSave, memoSave]);
 
     // Every save refetches the row and hands back a new `video` object. Only the
     // fields below decide what the player plays, so the source is resolved again
@@ -318,13 +306,16 @@ export default function VideoDetailScreen() {
                     text: t("common.delete"),
                     style: "destructive",
                     onPress: async () => {
+                        // 削除する行へ保留中の編集を書き込まない
+                        titleSave.cancel();
+                        memoSave.cancel();
                         await removeVideo();
                         router.back();
                     },
                 },
             ]
         );
-    }, [removeVideo, router, t]);
+    }, [removeVideo, router, t, titleSave, memoSave]);
 
     const handleSaveSkiResort = useCallback(
         async (name: string | null) => {
@@ -411,7 +402,7 @@ export default function VideoDetailScreen() {
                         <TextInput
                             style={styles.titleInput}
                             value={titleInput}
-                            onChangeText={setTitleInput}
+                            onChangeText={handleTitleChange}
                             placeholder={video.filename}
                             placeholderTextColor={Colors.textTertiary}
                             returnKeyType="done"
@@ -518,7 +509,7 @@ export default function VideoDetailScreen() {
                     <TextInput
                         style={styles.memoInput}
                         value={memoInput}
-                        onChangeText={setMemoInput}
+                        onChangeText={handleMemoChange}
                         placeholder={t("videoDetail.memoPlaceholder")}
                         multiline
                         numberOfLines={6}
