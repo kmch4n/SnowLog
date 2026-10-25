@@ -108,16 +108,25 @@ function dumpDom(chrome, url) {
         "--disable-gpu",
         "--no-sandbox",
         "--no-first-run",
+        // Without these two, Chrome on a desktop session waits ~25 s at exit for
+        // the keyring over D-Bus — on every route.
+        "--password-store=basic",
         "--lang=en-US",
         "--virtual-time-budget=15000",
         "--dump-dom",
         url,
     ];
+    const env = { ...process.env, DBUS_SESSION_BUS_ADDRESS: "/dev/null" };
     return new Promise((resolve, reject) => {
-        execFile(chrome, args, { timeout: 90_000, maxBuffer: 64 * 1024 * 1024 }, (error, stdout) => {
-            if (error) reject(error);
-            else resolve(stdout);
-        });
+        execFile(
+            chrome,
+            args,
+            { env, timeout: 90_000, maxBuffer: 64 * 1024 * 1024 },
+            (error, stdout) => {
+                if (error) reject(error);
+                else resolve(stdout);
+            }
+        );
     });
 }
 
