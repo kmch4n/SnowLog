@@ -88,6 +88,10 @@ export async function deleteTransferJob(id: string): Promise<void> {
  * 消えたのにタグが付かない（ユーザーが入力した情報を黙って捨てる）という中間
  * 状態ができる。どちらもファイルは既に確定しているので、やり直しでは直らない。
  *
+ * コールバックは同期で書き、各文を `.run()` / `.all()` で実行すること。出荷ドライバ
+ * `drizzle-orm/expo-sqlite` のトランザクションは同期で、async コールバックは最初の
+ * `await` で COMMIT され、残りの文はトランザクションの外で走る。
+ *
  * タグ ID は挿入の直前に引き直す。選択からここまでの間にタグが消えていたら、
  * 黙って落とさずジョブを残す判断ができるよう `false` を返す。
  */
@@ -96,25 +100,26 @@ export async function commitImportedVideoWithTags(
     tagIds: number[],
     jobId: string
 ): Promise<boolean> {
-    return db.transaction(async (tx) => {
+    return db.transaction((tx) => {
         if (tagIds.length > 0) {
-            const existing = await tx
+            const existing = tx
                 .select({ id: tags.id })
                 .from(tags)
-                .where(inArray(tags.id, tagIds));
+                .where(inArray(tags.id, tagIds))
+                .all();
             // 選択からここまでの間にタグが消えている。動画だけ入れてタグを
             // 黙って落とすと、ユーザーが入力した情報が理由も告げず消える。
             // 何も書かずに戻り、ジョブは失敗として残す（#86 §6）。
             if (existing.length !== tagIds.length) return false;
         }
 
-        await tx.insert(videos).values(row);
+        tx.insert(videos).values(row).run();
         if (tagIds.length > 0) {
-            await tx
-                .insert(videoTags)
-                .values(tagIds.map((tagId) => ({ videoId: row.id, tagId })));
+            tx.insert(videoTags)
+                .values(tagIds.map((tagId) => ({ videoId: row.id, tagId })))
+                .run();
         }
-        await tx.delete(videoTransferJobs).where(eq(videoTransferJobs.id, jobId));
+        tx.delete(videoTransferJobs).where(eq(videoTransferJobs.id, jobId)).run();
         return true;
     });
 }
@@ -126,6 +131,8 @@ export async function commitImportedVideoWithTags(
  * 行そのものは作り直さない。ID・メタデータ・タグ・作成日時は変換の前後で
  * 同一でなければならず、消して入れ直すとその保証が消える。
  *
+ * `commitImportedVideoWithTags` と同じく、コールバックは同期で書く。
+ *
  * @returns 対象行がまだ `reference` として存在していれば true
  */
 export async function commitConvertedVideo(
@@ -134,30 +141,31 @@ export async function commitConvertedVideo(
     updatedAt: number,
     jobId: string
 ): Promise<boolean> {
-    return db.transaction(async (tx) => {
-        const current = await tx
+    return db.transaction((tx) => {
+        const current = tx
             .select({ storageMode: videos.storageMode })
             .from(videos)
             .where(eq(videos.id, videoId))
-            .limit(1);
+            .limit(1)
+            .all();
 
         // 変換中に行が消された、あるいは既にコピーになっている。どちらの場合も
         // 作り直さない——消された行を復活させるのは利用者の意図に反する。
         if (current.length === 0 || current[0].storageMode !== "reference") {
-            await tx.delete(videoTransferJobs).where(eq(videoTransferJobs.id, jobId));
+            tx.delete(videoTransferJobs).where(eq(videoTransferJobs.id, jobId)).run();
             return false;
         }
 
-        await tx
-            .update(videos)
+        tx.update(videos)
             .set({
                 storageMode: "copy",
                 managedVideoPath: relativePath,
                 isFileAvailable: 1,
                 updatedAt,
             })
-            .where(eq(videos.id, videoId));
-        await tx.delete(videoTransferJobs).where(eq(videoTransferJobs.id, jobId));
+            .where(eq(videos.id, videoId))
+            .run();
+        tx.delete(videoTransferJobs).where(eq(videoTransferJobs.id, jobId)).run();
         return true;
     });
 }

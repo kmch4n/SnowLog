@@ -3,15 +3,22 @@
 // What matters here is not that the queries return rows, but that the two
 // commit functions are all-or-nothing. Both finish a transfer whose file is
 // already on disk, so a partial write cannot be fixed by retrying.
+//
+// The harness runs the shipped `drizzle-orm/expo-sqlite` driver. Its
+// transactions are synchronous, so an async callback commits at its first
+// `await`; under the sqlite-proxy default the rollback cases would pass anyway.
+// Those cases fail the *last* statement (the job delete) through a trigger, so
+// every earlier write has to be rolled back for them to pass.
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
 const { createRepositoryHarness } = require("./helpers/repositoryHarness.cjs");
 
-const harness = createRepositoryHarness([
-    "src/database/repositories/videoTransferJobRepository.ts",
-]);
+const harness = createRepositoryHarness(
+    ["src/database/repositories/videoTransferJobRepository.ts"],
+    { driver: "expo-sqlite" }
+);
 
 test.after(() => harness.cleanup());
 
@@ -68,6 +75,20 @@ function makeVideoRow(overrides = {}) {
 
 function countRows(table) {
     return sqlite.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
+}
+
+/** Make deleting this job fail, for the duration of `body`. */
+async function withFailingJobDelete(jobId, body) {
+    sqlite.exec(`
+        CREATE TRIGGER fail_job_delete BEFORE DELETE ON video_transfer_jobs
+        WHEN OLD.id = '${jobId}'
+        BEGIN SELECT RAISE(ABORT, 'injected failure'); END;
+    `);
+    try {
+        await body();
+    } finally {
+        sqlite.exec("DROP TRIGGER fail_job_delete");
+    }
 }
 
 function reset() {
@@ -181,6 +202,24 @@ test("a duplicate assetId rolls the whole commit back", async () => {
     assert.equal(countRows("video_transfer_jobs"), 1, "the job is not lost");
 });
 
+test("a failure at the job delete rolls back the video and its tags", async () => {
+    reset();
+    sqlite.prepare("INSERT INTO tags (id, name, type) VALUES (1, 'Carving', 'technique')").run();
+    sqlite.prepare("INSERT INTO tags (id, name, type) VALUES (2, 'Powder', 'custom')").run();
+    await insertTransferJob(makeJob());
+
+    await withFailingJobDelete("job-1", async () => {
+        await assert.rejects(
+            () => commitImportedVideoWithTags(makeVideoRow(), [1, 2], "job-1"),
+            /injected failure/
+        );
+    });
+
+    assert.equal(countRows("videos"), 0, "the video insert must roll back");
+    assert.equal(countRows("video_tags"), 0, "the tag links must roll back");
+    assert.equal(countRows("video_transfer_jobs"), 1);
+});
+
 // --- committing a conversion ---------------------------------------------
 
 test("converting flips the existing row in place and drops the job", async () => {
@@ -262,5 +301,33 @@ test("two rows cannot end up owning one managed file", async () => {
 
     const row = sqlite.prepare("SELECT * FROM videos WHERE id = 'v1'").get();
     assert.equal(row.storage_mode, "reference", "the source survives a failed conversion");
+    assert.equal(countRows("video_transfer_jobs"), 1);
+});
+
+test("a failure at the job delete rolls back the conversion", async () => {
+    reset();
+    await insertTransferJob(makeJob({ kind: "convert" }));
+    sqlite
+        .prepare(
+            `INSERT INTO videos
+                (id, asset_id, filename, thumbnail_uri, duration, captured_at,
+                 memo, is_file_available, is_favorite, storage_mode,
+                 managed_video_path, created_at, updated_at)
+             VALUES ('v1','PHAsset-1','clip.mov','t.jpg',12,1706774400,'',0,0,'reference',NULL,5,5)`
+        )
+        .run();
+
+    await withFailingJobDelete("job-1", async () => {
+        await assert.rejects(
+            () => commitConvertedVideo("v1", "videos/v1.mov", 900, "job-1"),
+            /injected failure/
+        );
+    });
+
+    const row = sqlite.prepare("SELECT * FROM videos WHERE id = 'v1'").get();
+    assert.equal(row.storage_mode, "reference", "the row update must roll back");
+    assert.equal(row.managed_video_path, null);
+    assert.equal(row.is_file_available, 0);
+    assert.equal(row.updated_at, 5);
     assert.equal(countRows("video_transfer_jobs"), 1);
 });
