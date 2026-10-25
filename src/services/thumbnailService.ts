@@ -1,6 +1,8 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as VideoThumbnails from "expo-video-thumbnails";
 
+import { isSafeThumbnailPath } from "@/utils/thumbnailPath";
+
 /**
  * Thumbnails are stored as RELATIVE paths in the database (e.g. `thumbnails/<id>.jpg`)
  * and resolved against the current `FileSystem.documentDirectory` at read time.
@@ -127,8 +129,13 @@ export async function generateAndSaveThumbnail(
  */
 export async function deleteThumbnail(stored: string): Promise<void> {
     if (stored === THUMBNAIL_MISSING_SENTINEL) return;
-    const absolute = resolveThumbnailUri(stored);
-    if (absolute === THUMBNAIL_MISSING_SENTINEL) return;
+    // Delete only a plain file directly inside thumbnails/. resolveThumbnailUri
+    // passes unknown formats and `..` through, and the stored value may come
+    // from a restored backup, so it must not decide what gets deleted. A refused
+    // file is left for orphanedFileCleanupService once its row is gone.
+    const relative = toRelativeThumbnailPath(stored);
+    if (relative == null || !isSafeThumbnailPath(relative)) return;
+    const absolute = `${FileSystem.documentDirectory}${relative}`;
     const info = await FileSystem.getInfoAsync(absolute);
     if (info.exists) {
         await FileSystem.deleteAsync(absolute);
