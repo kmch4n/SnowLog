@@ -219,27 +219,41 @@ export default function VideoDetailScreen() {
         setTitleInput(video.title ?? "");
         isInitialMemoLoad.current = true;
         setMemoInput(video.memo);
-        setVideoUri(null);
-        setAssetInfoMeta(null);
         // technique タグは TechniqueSelector で管理するため除外する
         setTagIds(video.tags.filter((t) => t.type !== "technique").map((t) => t.id));
+    }, [video]);
+
+    // Every save refetches the row and hands back a new `video` object. Only the
+    // fields below decide what the player plays, so the source is resolved again
+    // only when one of them changes — not on every autosave, which would unmount
+    // the player and re-request an iCloud asset each time.
+    const playbackVideoId = video?.id;
+    const playbackIsFileAvailable = video?.isFileAvailable;
+    const playbackStorageMode = video?.storageMode;
+    const playbackManagedVideoPath = video?.managedVideoPath;
+    const playbackAssetId = video?.assetId;
+
+    useEffect(() => {
+        if (playbackVideoId === undefined || playbackAssetId === undefined) return;
+        setVideoUri(null);
+        setAssetInfoMeta(null);
 
         // 元ファイルが存在する場合のみ再生用 URI を取得する
-        if (video.isFileAvailable === 1) {
+        if (playbackIsFileAvailable === 1) {
             (async () => {
                 try {
-                    if (video.storageMode === "copy") {
+                    if (playbackStorageMode === "copy") {
                         // アプリが持つコピーは写真ライブラリを一切見ない。権限が
                         // 拒否されていても、元の写真が消えていても再生できる。
-                        const managedUri = video.managedVideoPath
-                            ? await resolveManagedPath(video.managedVideoPath)
+                        const managedUri = playbackManagedVideoPath
+                            ? await resolveManagedPath(playbackManagedVideoPath)
                             : null;
                         if (managedUri) {
                             setVideoUri(managedUri);
                         } else {
                             // コピーが見つからない。写真ライブラリへ黙って
                             // フォールバックしない——別物を掴むことになる。
-                            await updateFileAvailability(video.id, false);
+                            await updateFileAvailability(playbackVideoId, false);
                             refreshRef.current();
                         }
                         return;
@@ -258,14 +272,14 @@ export default function VideoDetailScreen() {
                         );
                         return;
                     }
-                    const info = await getAssetInfoWithDownload(video.assetId);
+                    const info = await getAssetInfoWithDownload(playbackAssetId);
                     if (info?.uri || info?.localUri) {
                         // 高さ変更は LAYOUT_SPRING の layout transition が滑らかに遷移させる
                         // 再生には Photos フレームワークの uri (ph://) を優先利用する
                         setVideoUri(info.uri ?? info.localUri);
                         setAssetInfoMeta({ width: info.width, height: info.height, duration: info.duration });
                     } else {
-                        await updateFileAvailability(video.id, false);
+                        await updateFileAvailability(playbackVideoId, false);
                         refreshRef.current();
                     }
                 } catch {
@@ -274,7 +288,14 @@ export default function VideoDetailScreen() {
                 }
             })();
         }
-    }, [t, video]);
+    }, [
+        t,
+        playbackVideoId,
+        playbackIsFileAvailable,
+        playbackStorageMode,
+        playbackManagedVideoPath,
+        playbackAssetId,
+    ]);
 
     /** 動画レコードを削除する（確認ダイアログ付き） */
     const handleDelete = useCallback(() => {
