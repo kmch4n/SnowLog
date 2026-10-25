@@ -213,14 +213,24 @@ export default function VideoDetailScreen() {
         };
     }, [memoInput]);
 
+    // The video whose title and memo the inputs were last seeded from.
+    const seededVideoIdRef = useRef<string | null>(null);
+
     useEffect(() => {
         if (!video) return;
+        // technique タグは TechniqueSelector で管理するため除外する
+        setTagIds(video.tags.filter((t) => t.type !== "technique").map((t) => t.id));
+
+        // Seed the text inputs only when a different video loads. A refetch after
+        // a save (favourite, tags, the other field's autosave) must not overwrite
+        // what the user is typing or re-arm the initial-load guards, which would
+        // revert the input and drop its pending save.
+        if (seededVideoIdRef.current === video.id) return;
+        seededVideoIdRef.current = video.id;
         isInitialTitleLoad.current = true;
         setTitleInput(video.title ?? "");
         isInitialMemoLoad.current = true;
         setMemoInput(video.memo);
-        // technique タグは TechniqueSelector で管理するため除外する
-        setTagIds(video.tags.filter((t) => t.type !== "technique").map((t) => t.id));
     }, [video]);
 
     // Every save refetches the row and hands back a new `video` object. Only the
