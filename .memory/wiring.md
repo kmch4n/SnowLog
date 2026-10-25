@@ -1,6 +1,6 @@
 ---
 title: 非自明な配線とデータ契約
-updated: 2026-09-13
+updated: 2026-10-26
 status: active
 ---
 
@@ -20,7 +20,7 @@ status: active
 | 項目 | 内容 |
 | --- | --- |
 | アプリ | SnowLog — オフラインファーストの滑走動画ログ + 日記 |
-| バージョン | 1.2.0（App Store 公開中） |
+| バージョン | `package.json` が正（2026-10-26 時点で 1.4.0。App Store の最新リリースは v1.3.0） |
 | スタック | Expo SDK 55 / RN 0.83.6 / React 19.2 / Expo Router v4（NativeTabs, Liquid Glass）/ expo-sqlite + Drizzle / i18n-js v4 + expo-localization |
 | ターゲット | iOS が主。Android / Web は検証用スタブ。**EAS Dev Build 必須 — SDK 55 は Expo Go 非対応** |
 | 画面 | ホーム（一覧 + お気に入り）、統計、カレンダー（月/週）、検索、設定（滑走種別 / タグ / お気に入りスキー場 / カレンダー / 重複候補 + 不要ファイル削除の保守行）、インポートモーダル、動画詳細、日記 |
@@ -36,7 +36,7 @@ status: active
 - `locales/ja.json` / `locales/en.json`（リポジトリ直下） — iOS の権限説明文。`src/i18n/locales/` とは別物。
 - `pr/web/` — Astro 製ランディングページ。独立した `node_modules` を持つ別プロジェクト。
 - `pr/pv/` — Remotion 製の紹介映像。同じく独立プロジェクト。`public/` は生成物で git 管理外。
-- **Web シム**: ネイティブ依存モジュール（repositories / services / ネイティブ専用画面）には `.web.ts` / `.web.tsx` の相方が必要。相方が無いモジュールを Web から到達可能なパスで import しないこと。欠落は `tsc` では検出できない（[doc-drift.md](doc-drift.md) 参照）。
+- **Web シム**: ネイティブ依存モジュール（repositories / services / ネイティブ専用画面）には `.web.ts` / `.web.tsx` の相方が必要。相方が無いモジュールを Web から到達可能なパスで import しないこと。欠落は `tsc` では検出できず、`webShimParity` と `webEmptyModules` の 2 つのテストが強制する（下の「Web の配線」参照）。
 
 ---
 
@@ -51,6 +51,29 @@ status: active
 
 Stack（`GestureHandlerRootView` + `ThemeProvider` でラップ）は上記と並行して描画される。
 ロケールは `src/i18n/index.ts` のモジュール初期化時に一度だけ解決され、以後読み直されない。
+
+## Web の配線（2026-10-26。Issue #84 で判明）
+
+Web は `npm run web` で起動するプレビュー。動かすうえで踏んだ罠が 3 つある。
+
+1. **Expo Router は描画しないレイアウトも評価する。** `getRoutesCore.js` の `getLayoutNode()` が
+   `unstable_settings` を読むために全 `_layout` の `loadRoute()` を呼ぶので、Web でもネイティブの
+   `_layout.tsx` が import される（描画されるのは `_layout.web.tsx`）。その import 先がモジュール評価時に
+   native API を呼ぶと Web は起動前に落ちる。`metro.config.js` は Web で `expo-sqlite` と
+   `drizzle-orm/expo-sqlite*` を空モジュールに差し替えているので、`src/database/index.ts` の
+   `openDatabaseSync()` がまさにそれだった。→ `src/database/index.web.ts` を置いた。
+   `scripts/tests/webEmptyModules.test.cjs` が「空モジュール化されるパッケージを import するファイルには
+   `.web` の相方が要る」を強制する。**ネイティブの `_layout.tsx` は評価だけされて描画されないので、
+   その hooks や起動処理が Web で走ることはない。**
+2. **react-native-web の `Alert.alert` は空実装。** 何も表示されず、確認待ちの削除などが実行できない。
+   `_layout.web.tsx` が `installWebAlert()` で `components/WebAlertHost.tsx`（待ち行列は
+   `utils/webAlertQueue.ts`）に差し替える。ネイティブには影響しない。
+3. **Web のデータは `src/mocks/webMockStore.ts` の 1 つのインメモリストア。** `*.web.ts` リポジトリは
+   ネイティブと同じ行の形を返すこと。特に `videos.techniques` は JSON 文字列（フックが文字列として
+   `parseTechniques` する）。配列で返すと滑走種別が常に空になる。
+
+検証は `npm run test:web`（全ルートを headless Chrome で描画）。マウスでのジェスチャー
+（スワイプ削除・ドラッグ並べ替え）は Web では未対応（SnowLog.md §12.3）。
 
 ## その他の非自明な配線
 

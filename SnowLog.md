@@ -31,7 +31,7 @@
 |---|---|---|
 | iOS | 主対象 / 機能が最も充実 | フォトライブラリ連携、iCloud アセット取得、写真アプリ導線あり |
 | Android | 未対応 / 将来検討 | 一部の下地はあるが、配布・動作保証・UI 検証の対象外 |
-| Web | プレビュー用途 | SQLite / MediaLibrary 非対応のため、主にモック・スタブで画面確認を行う |
+| Web | プレビュー用途 | SQLite / MediaLibrary 非対応のため、インメモリのモックで画面確認を行う（§12.3） |
 
 補足:
 - Web は機能等価な本番実装ではなく、UI プレビュー用途の簡易実装である。
@@ -535,9 +535,17 @@ videos --< video_tags >-- tags
 
 ### 12.3 Web
 
-- SQLite / MediaLibrary / Sharing の制約上、本番相当の機能提供はしない。
-- `*.web.ts` / `*.web.tsx` ではモックやアラートベースの代替実装を用いる。
-- 目的は、主にレイアウト確認と簡易 UI プレビューである。
+- SQLite / MediaLibrary / Sharing の制約上、本番相当の機能提供はしない。目的はレイアウト確認と UI プレビュー。
+- データは `src/mocks/webMockStore.ts` のインメモリストアに置き、各リポジトリの `*.web.ts` がそこを読み書きする。
+  削除・お気に入り・タグ・種別・お気に入りスキー場・日記の操作は画面に反映されるが、再読み込みで初期値に戻る。
+- 動画の取り込み・再生・エクスポート・復元は提供しない（`*.web.tsx` / `*.web.ts` が iOS アプリへの案内を出す）。
+- react-native-web の `Alert.alert` は何もしないため、`_layout.web.tsx` が `components/WebAlertHost.tsx` に差し替えて
+  確認ダイアログを表示する。
+- Expo Router はネイティブの `_layout.tsx` も評価する。モジュールの評価時に native API を呼ぶファイルには
+  `.web` の相方が要る（`src/database/index.web.ts`。`scripts/tests/webEmptyModules.test.cjs` が強制する）。
+- `npm run test:web` が Web を書き出し、全ルートを headless Chrome で描画して確認する（CI でも実行）。
+- 既知の制限: マウス操作では react-native-gesture-handler のジェスチャー（ホームのスワイプ削除、
+  種別のドラッグ並べ替え）が反応しない。
 
 ---
 
