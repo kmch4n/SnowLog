@@ -9,6 +9,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test": "node --test \"scripts/tests/*.test.cjs\"",
+    "test:web": "expo export --platform web --output-dir dist && node scripts/webSmoke.cjs dist",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "postinstall": "node scripts/patchImageUtilsCache.js",
