@@ -41,12 +41,34 @@ function findPairs() {
     return pairs.sort((a, b) => a.native.localeCompare(b.native));
 }
 
+/** Resolves a relative specifier the way Metro would for a native build. */
+function resolveRelative(fromFile, specifier) {
+    const base = path.resolve(path.dirname(fromFile), specifier);
+    for (const candidate of [
+        `${base}.ts`,
+        `${base}.tsx`,
+        path.join(base, "index.ts"),
+        path.join(base, "index.tsx"),
+    ]) {
+        if (fs.existsSync(candidate)) return candidate;
+    }
+    return null;
+}
+
 /**
  * Exported value names, plus any export form this parser does not understand.
  * Unknown forms are reported rather than skipped: a parser that silently
  * ignores `export *` would pass vacuously.
+ *
+ * `export * from "./x"` is followed into the relative module and contributes
+ * that module's value exports (minus `default`, which `export *` never
+ * forwards). A bare-specifier `export *` cannot be read from source and stays
+ * unsupported.
  */
-function parseExports(source) {
+function parseExports(file, seen = new Set()) {
+    const absolute = path.resolve(repoRoot, file);
+    const source = fs.readFileSync(absolute, "utf8");
+    seen.add(absolute);
     const values = new Set();
     const unsupported = [];
 
@@ -81,7 +103,27 @@ function parseExports(source) {
         }
     }
 
-    for (const m of source.matchAll(/^export\s+\*/gm)) {
+    for (const m of source.matchAll(
+        /^export\s+\*(?:\s+as\s+([A-Za-z0-9_$]+))?\s+from\s+["']([^"']+)["']/gm
+    )) {
+        const [, namespace, specifier] = m;
+        if (namespace) {
+            values.add(namespace);
+            continue;
+        }
+        const target = specifier.startsWith(".")
+            ? resolveRelative(absolute, specifier)
+            : null;
+        if (!target) {
+            unsupported.push(m[0].trim());
+            continue;
+        }
+        if (seen.has(target)) continue;
+        const nested = parseExports(target, seen);
+        for (const name of nested.values) if (name !== "default") values.add(name);
+        unsupported.push(...nested.unsupported);
+    }
+    for (const m of source.matchAll(/^export\s+\*(?![^\n]*\bfrom\s+["'])/gm)) {
         unsupported.push(m[0].trim());
     }
 
@@ -112,11 +154,7 @@ test("the pair scan finds the shims that exist", () => {
 // native and shim both use that form and both silently lose the same name, so
 // the difference still nets to empty. Only this test catches it.
 test("the parser understands re-export and plain function forms", () => {
-    const shim = fs.readFileSync(
-        path.join(repoRoot, "src/services/mediaService.web.ts"),
-        "utf8"
-    );
-    const { values } = parseExports(shim);
+    const { values } = parseExports("src/services/mediaService.web.ts");
     assert.ok(
         values.has("isSyntheticAssetId"),
         "re-export form not parsed; every parity check below would under-report"
@@ -124,13 +162,22 @@ test("the parser understands re-export and plain function forms", () => {
     assert.ok(values.has("checkAssetExists"), "plain function form not parsed");
 });
 
+// Guards the `export *` branch the same way. Both database entry points re-export
+// the schema with it, so dropping the branch would empty both sides equally and
+// leave the parity test green while a shim silently lost every table.
+test("the parser follows a relative export-star into its target", () => {
+    const { values, unsupported } = parseExports("src/database/index.ts");
+    assert.deepEqual(unsupported, []);
+    assert.ok(values.has("db"), "local export lost while following export-star");
+    assert.ok(values.has("videos"), "schema table not reached through export-star");
+    assert.ok(values.has("diaryEntries"), "export-star stopped short of the last table");
+});
+
 test("no source uses an export form the parser cannot read", () => {
     const offenders = [];
     for (const pair of pairs) {
         for (const file of [pair.native, pair.web]) {
-            const { unsupported } = parseExports(
-                fs.readFileSync(path.join(repoRoot, file), "utf8")
-            );
+            const { unsupported } = parseExports(file);
             for (const form of unsupported) offenders.push(`${file}: ${form}`);
         }
     }
@@ -144,12 +191,8 @@ test("no source uses an export form the parser cannot read", () => {
 test("every .web shim exports at least what its native module does", () => {
     const gaps = [];
     for (const pair of pairs) {
-        const native = parseExports(
-            fs.readFileSync(path.join(repoRoot, pair.native), "utf8")
-        ).values;
-        const web = parseExports(
-            fs.readFileSync(path.join(repoRoot, pair.web), "utf8")
-        ).values;
+        const native = parseExports(pair.native).values;
+        const web = parseExports(pair.web).values;
         const missing = [...native].filter((name) => !web.has(name)).sort();
         if (missing.length > 0) gaps.push(`${pair.web} is missing ${missing.join(", ")}`);
     }
