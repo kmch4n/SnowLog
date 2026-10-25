@@ -13,6 +13,7 @@
 import type { TagType } from "../types";
 import { isSyntheticAssetId } from "../utils/assetId";
 import { buildManagedVideoPath, validateManagedVideoPath } from "../utils/managedVideoPath";
+import { normalizeRestoredThumbnailPath } from "../utils/thumbnailPath";
 import { isVideoStorageMode, type VideoStorageMode } from "../utils/videoStorageMode";
 
 /**
@@ -71,6 +72,7 @@ export interface ImportableVideo {
     id: string;
     assetId: string;
     filename: string;
+    /** Relative `thumbnails/<id>.jpg` named after this row, or `""` (missing). */
     thumbnailUri: string;
     duration: number;
     capturedAt: number;
@@ -246,7 +248,10 @@ function parseVideo(value: unknown, schemaVersion: number): ImportableVideo | nu
         id,
         assetId,
         filename,
-        thumbnailUri: stringOrEmpty(value.thumbnailUri),
+        // Deleting the video later deletes this path, so only the shapes the
+        // app itself writes survive. Anything else costs the thumbnail, not
+        // the row: the metadata is still worth restoring.
+        thumbnailUri: normalizeRestoredThumbnailPath(stringOrEmpty(value.thumbnailUri), id),
         duration: numberOrZero(value.duration),
         capturedAt,
         skiResortName: optionalString(value.skiResortName),
@@ -330,6 +335,7 @@ export function parseExportPayload(raw: unknown): ImportPlan {
     const videos: ImportableVideo[] = [];
     const seenVideoIds = new Set<string>();
     const claimedPaths = new Set<string>();
+    const claimedThumbnails = new Set<string>();
     for (const candidate of asArray(raw.videos)) {
         const video = parseVideo(candidate, schemaVersion);
         if (video == null) {
@@ -351,6 +357,17 @@ export function parseExportPayload(raw: unknown): ImportPlan {
                 continue;
             }
             claimedPaths.add(claim);
+        }
+
+        // The same rule for thumbnails, except that losing costs only the
+        // thumbnail: unlike the video file, it is not what the row is about.
+        if (video.thumbnailUri !== "") {
+            const claim = video.thumbnailUri.toLowerCase();
+            if (claimedThumbnails.has(claim)) {
+                video.thumbnailUri = "";
+            } else {
+                claimedThumbnails.add(claim);
+            }
         }
 
         seenVideoIds.add(video.id);

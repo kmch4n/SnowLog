@@ -524,3 +524,100 @@ test("two rows cannot claim one managed file", () => {
     assert.equal(plan.videos[0].managedVideoPath, "videos/v1.mov");
     assert.equal(plan.skipped.videos, 1);
 });
+
+// A restored thumbnailUri is later handed to deleteThumbnail when the video is
+// deleted, so whatever the file says here is a path the app will delete. Only
+// the shapes the app itself has ever written survive; anything else becomes
+// the missing sentinel, and the rest of the row still restores.
+
+function restoredThumbnail(thumbnailUri, overrides = {}) {
+    const plan = parseExportPayload(
+        makeBackup({ videos: [makeExportedVideo({ thumbnailUri, ...overrides })] })
+    );
+    assert.equal(plan.videos.length, 1, "the row itself must still restore");
+    assert.equal(plan.skipped.videos, 0);
+    return plan.videos[0].thumbnailUri;
+}
+
+test("a thumbnail in the form the app writes is kept", () => {
+    assert.equal(restoredThumbnail("thumbnails/v1.jpg"), "thumbnails/v1.jpg");
+});
+
+test("the missing-thumbnail sentinel and an absent field stay the sentinel", () => {
+    assert.equal(restoredThumbnail(""), "");
+    assert.equal(restoredThumbnail(undefined), "");
+    assert.equal(restoredThumbnail(42), "");
+});
+
+test("a legacy absolute thumbnail URI is rebased to the relative form", () => {
+    // Before v1.1.1 the app stored documentDirectory-absolute URIs, whose
+    // container UUID is meaningless on any other install.
+    assert.equal(
+        restoredThumbnail(
+            "file:///var/mobile/Containers/Data/Application/0A1B/Documents/thumbnails/v1.jpg"
+        ),
+        "thumbnails/v1.jpg"
+    );
+    // Same rule as toRelativeThumbnailPath: the LAST thumbnails/ segment wins.
+    assert.equal(
+        restoredThumbnail("file:///var/thumbnails/Documents/thumbnails/v1.jpg"),
+        "thumbnails/v1.jpg"
+    );
+});
+
+test("a thumbnail path that escapes the thumbnail directory becomes the sentinel", () => {
+    for (const hostile of [
+        "thumbnails/../SQLite/snowlog.db",
+        "thumbnails/../../Library/v1.jpg",
+        "thumbnails/./v1.jpg",
+        "thumbnails/sub/v1.jpg",
+        "thumbnails\\..\\SQLite\\snowlog.db",
+        "file:///var/Documents/thumbnails/../SQLite/snowlog.db",
+    ]) {
+        assert.equal(restoredThumbnail(hostile), "", hostile);
+    }
+});
+
+test("a thumbnail outside the thumbnail directory or on another scheme becomes the sentinel", () => {
+    for (const hostile of [
+        "SQLite/snowlog.db",
+        "videos/v1.mov",
+        "/thumbnails/v1.jpg",
+        "file:///var/mobile/Containers/Data/Application/0A1B/Documents/SQLite/snowlog.db",
+        "https://example.com/thumbnails/v1.jpg",
+        "ph://thumbnails/v1.jpg",
+        "THUMBNAILS/v1.jpg",
+    ]) {
+        assert.equal(restoredThumbnail(hostile), "", hostile);
+    }
+});
+
+test("a thumbnail must be named after the video that owns it", () => {
+    // Otherwise deleting this row would delete another video's thumbnail.
+    assert.equal(restoredThumbnail("thumbnails/v2.jpg"), "");
+    assert.equal(restoredThumbnail("thumbnails/v1.png"), "");
+    assert.equal(restoredThumbnail("thumbnails/v1.jpg.jpg"), "");
+    assert.equal(restoredThumbnail("thumbnails/v1"), "");
+});
+
+test("a video whose id is unsafe as a filename keeps no thumbnail", () => {
+    assert.equal(restoredThumbnail("thumbnails/../x.jpg", { id: "../x" }), "");
+    assert.equal(restoredThumbnail("thumbnails/a.b.jpg", { id: "a.b" }), "");
+});
+
+test("two rows cannot claim one thumbnail file, even differing only by case", () => {
+    // The filesystem underneath may be case-insensitive, so v1.jpg and V1.jpg
+    // can be the same file. The second row keeps its metadata, not the file.
+    const plan = parseExportPayload(
+        makeBackup({
+            videos: [
+                makeExportedVideo({ id: "v1", assetId: "asset-1", thumbnailUri: "thumbnails/v1.jpg" }),
+                makeExportedVideo({ id: "V1", assetId: "asset-2", thumbnailUri: "thumbnails/V1.jpg" }),
+            ],
+        })
+    );
+    assert.equal(plan.videos.length, 2);
+    assert.equal(plan.skipped.videos, 0);
+    assert.equal(plan.videos[0].thumbnailUri, "thumbnails/v1.jpg");
+    assert.equal(plan.videos[1].thumbnailUri, "");
+});
