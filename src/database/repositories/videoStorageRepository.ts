@@ -26,13 +26,18 @@ export async function readStorageBackfillRows(): Promise<StorageBackfillRow[]> {
  * マーカーを分けて書くと、更新は通ったのにマーカーだけ落ちた場合に次回起動で
  * 全行を書き直すことになる。冪等ではあるが、その間に利用者が変えた保存方式を
  * 巻き戻してしまう。
+ *
+ * コールバックは同期で書き、各文を `.run()` で実行すること。出荷ドライバ
+ * `drizzle-orm/expo-sqlite` のトランザクションは同期で、async コールバックは
+ * 最初の `await` で戻った時点で COMMIT される。残りの文はトランザクションの外で
+ * 走り、途中で失敗しても何も巻き戻らない。
  */
 export async function applyStorageBackfill(
     plan: StorageBackfillPlan,
     markerKey: string,
     markerValue: string
 ): Promise<void> {
-    await db.transaction(async (tx) => {
+    db.transaction((tx) => {
         for (const update of plan.updates) {
             const values: {
                 storageMode: string;
@@ -46,15 +51,15 @@ export async function applyStorageBackfill(
                 values.isFileAvailable = update.isFileAvailable;
             }
 
-            await tx.update(videos).set(values).where(eq(videos.id, update.id));
+            tx.update(videos).set(values).where(eq(videos.id, update.id)).run();
         }
 
-        await tx
-            .insert(appPreferences)
+        tx.insert(appPreferences)
             .values({ key: markerKey, value: markerValue })
             .onConflictDoUpdate({
                 target: appPreferences.key,
                 set: { value: markerValue },
-            });
+            })
+            .run();
     });
 }

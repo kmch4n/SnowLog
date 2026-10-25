@@ -7,8 +7,10 @@
 // videoStorageBackfill.test.cjs. What this file adds is the transaction: that
 // the marker and the rows commit together, and that a failure writes nothing.
 //
-// `begin`/`commit` do reach node:sqlite through the proxy (verified by the
-// rollback case below), so atomicity here is real and not a query-shape claim.
+// Both harnesses run the shipped `drizzle-orm/expo-sqlite` driver. Its
+// transactions are synchronous, so an async callback commits before its
+// statements run. The sqlite-proxy default awaits the callback and would pass
+// the rollback case below even with that bug (it did, until this file moved).
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
@@ -25,7 +27,7 @@ const harness = createRepositoryHarness(
         "src/database/repositories/videoStorageRepository.ts",
         "src/database/repositories/appPreferenceRepository.ts",
     ],
-    { stopAfterMigrations: MIGRATIONS_BEFORE_STORAGE_COLUMNS }
+    { stopAfterMigrations: MIGRATIONS_BEFORE_STORAGE_COLUMNS, driver: "expo-sqlite" }
 );
 
 test.after(() => harness.cleanup());
@@ -179,7 +181,7 @@ test("a failing update writes nothing and leaves the marker unset", async () => 
             "src/database/repositories/videoStorageRepository.ts",
             "src/database/repositories/appPreferenceRepository.ts",
         ],
-        { stopAfterMigrations: MIGRATIONS_BEFORE_STORAGE_COLUMNS }
+        { stopAfterMigrations: MIGRATIONS_BEFORE_STORAGE_COLUMNS, driver: "expo-sqlite" }
     );
     try {
         const db = failing.sqlite;
