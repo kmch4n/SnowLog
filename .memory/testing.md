@@ -1,6 +1,6 @@
 ---
 title: テストの実態と実行方法
-updated: 2026-09-13
+updated: 2026-10-26
 status: active
 ---
 
@@ -220,7 +220,8 @@ import しており、そこがモジュール読み込み時に `expo-sqlite` �
 1. 対象リポジトリを `tsc --rootDir src` でコンパイルする
 2. emit 内の bare `require()` を絶対パスへ書き換える
 3. `drizzle/*.sql` を全部 `node:sqlite` のインメモリ DB へ再生する
-4. emit された `database/index.js` だけを `drizzle-orm/sqlite-proxy` 版に差し替える
+4. emit された `database/index.js` だけを差し替える。既定は `drizzle-orm/sqlite-proxy` 版、
+   `{ driver: "expo-sqlite" }` を渡すと出荷ドライバ `drizzle-orm/expo-sqlite` 版（後述）
 
 `index.js` より上はすべて出荷コードそのもの。スキーマも手書きコピーではなく出荷マイグレーションなので腐らない。
 proxy のコールバックが全クエリを記録するので、**往復回数を assert できる**のがこの方式の要。
@@ -235,15 +236,43 @@ proxy のコールバックが全クエリを記録するので、**往復回数
 
 オプションを省いたときの挙動は変えていないので、既存のリポジトリテストには影響しない。
 
-### sqlite-proxy でもトランザクションは本物（2026-09-13 追加・実測）
+### トランザクションの検証は `driver: "expo-sqlite"` で行う（2026-10-26 改訂・実測）
 
-`drizzle-orm/sqlite-proxy` は `db.transaction()` を投げずに受け、**`begin` / `commit` / `rollback` を
-クエリコールバックへ実際に流す**。ハーネスはそれを `node:sqlite` に渡しているので、原子性は本物である。
+**旧版はここに「sqlite-proxy でもトランザクションは本物」と書いていたが、出荷ドライバについては誤り**だった。
 
-したがって「クエリの形を見て原子性を主張する」必要はない。`videoStorageMigration.test.cjs` は
-`BEFORE UPDATE ... RAISE(ABORT)` トリガで特定行の更新だけを落とし、**先に成功していた行も
-マーカーも巻き戻ること**を確かめている。なお unique index 衝突での注入は使えない——
-プランナが SQL を発行する前に衝突を解消してしまい、プランナが動いたことしか証明しない。
+- `drizzle-orm/sqlite-proxy` の `transaction()` はコールバックを **await する**。
+  そのため `async (tx) => { await tx... }` でも原子的に動き、テストは緑になる。
+- アプリが使う `drizzle-orm/expo-sqlite` は**同期**である（`node_modules/drizzle-orm/expo-sqlite/session.js` の
+  `transaction()`）。`begin` を流し、コールバックを呼び、戻った瞬間に `commit` を流す。
+  async コールバックは最初の `await` で Promise を返して戻るので、**COMMIT が先に走り、残りの文は
+  autocommit で実行される**。途中で投げても何も巻き戻らない（reject は try/catch にも捕まらない）。
+
+この食い違いのせいで、`applyStorageBackfill`（起動のたびに走る）と `commitImportedVideoWithTags` /
+`commitConvertedVideo` が async コールバックのまま出荷され、`videoStorageMigration.test.cjs` の
+「失敗したら何も書かない」ケースは proxy 上で緑のままだった。3 つとも同期コールバックに直した。
+
+対策は 3 つある。
+
+1. **原子性を主張するテストは `createRepositoryHarness(entryPoints, { driver: "expo-sqlite" })` で書く。**
+   `node:sqlite` の `DatabaseSync` を包んだ偽の expo-sqlite クライアント（`prepareSync` →
+   `executeSync` / `executeForRawResultSync`）の上で、出荷ドライバそのものを動かす。
+   既定（省略時）は従来どおり sqlite-proxy なので、往復回数を数える既存テストには影響しない。
+   `repositoryHarnessDriver.test.cjs` が、このモードで async コールバックが実際に原子的で**ない**ことを
+   カナリアとして確かめている。drizzle の更新でこれが落ちたら、ここと下のガードを見直すこと。
+2. **障害は後ろの文に注入する。** `BEFORE UPDATE` / `BEFORE DELETE ... RAISE(ABORT)` トリガで、
+   それより前の書き込みが成功した後に落とす（`videoStorageMigration.test.cjs` / `videoTransferJobRepository.test.cjs`）。
+   最初の文で落とすと、async 版でも何も書かれないので壊れた実装が通る。
+   なお unique index 衝突での注入は使えない——プランナが SQL を発行する前に衝突を解消してしまい、
+   プランナが動いたことしか証明しない。
+3. **`syncTransactions.test.cjs` が `src/` の `.transaction(` をすべて走査し、コールバックが
+   インラインの非 async・ブロック本体の関数であることを要求する。** tsc は async コールバックを型エラーにしない
+   （戻り値はジェネリック）ので、テストで止めるしかない。式本体のアロー（`(tx) => tx.insert(...)`）と
+   名前渡し（`db.transaction(work)`）も同じ理由で落とす。
+
+書き方: コールバック内の各文は `.run()` / `.all()` / `.get()` で実行する（`setTagsForVideo` が手本）。
+**`.run()` を書き忘れた文はビルダーのまま捨てられ、一度も実行されない。** 型エラーにも lint にもならず、
+上のガードでも検出できない。変異で確かめたところ、マーカー挿入の `.run()` を落とすと
+`videoStorageMigration.test.cjs` の正常系が落ちる——正常系の assert が書き込み結果まで見ていることが必要である。
 
 ### 踏んだ落とし穴（3 つとも実測）
 
@@ -257,11 +286,12 @@ proxy のコールバックが全クエリを記録するので、**往復回数
 - **`statement.setReturnArrays(true)` が要る。** sqlite-proxy は行を**位置配列**で受け取る。
   `Object.values()` で代用すると同名カラムが黙って潰れる。join では容易に起きる。
 
-### `expo-sqlite` に依存しない範囲
+### 原子性が未検証のトランザクション
 
-`db.transaction` は sqlite-proxy でも呼べるが、`setTagsForVideo` の**原子性まで保証されているかは未確認**。
-ここに assert を足すなら、まず BEGIN/COMMIT がクエリログに現れるかを見ること。
-現れないなら「トランザクションを検証したつもり」の空 assert になる。
+`setTagsForVideo`（`tagRepository`）と `reorderTechniqueOptions`（`techniqueOptionRepository`）は
+同期コールバックで正しく書かれているが、**途中で失敗したときの巻き戻しはまだテストしていない**。
+足すなら上の `driver: "expo-sqlite"` とトリガ注入の手順に従うこと。sqlite-proxy の上で書くと、
+async に退行しても緑のままになる。
 
 ## 主要な検証手段は依然として手動
 

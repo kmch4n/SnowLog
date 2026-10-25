@@ -5,9 +5,9 @@
  * 実際の書き込みは `videoStorageRepository.applyStorageBackfill` が 1 つの
  * トランザクションで行い、その呼び出しは `storageMigrationService` が握る。
  *
- * 分けてあるのは、テストのハーネスが `drizzle-orm/sqlite-proxy` 経由で
- * トランザクション境界を発行できないため（#86 §5）。判断のすべてをここに寄せて
- * おけば、トランザクションの有無に関係なく網羅的に検証できる。
+ * 分けてあるのは、判断のすべてを DB なしで網羅的に検証するため（#86 §5）。
+ * トランザクションの原子性は別に、出荷ドライバ `drizzle-orm/expo-sqlite` を動かす
+ * `videoStorageMigration.test.cjs` が確かめる。
  *
  * import は相対のみ。素の `tsc <file>` が通り、emit は `out/services/` へネスト
  * する（`.memory/testing.md`「コンパイル可否は import の形で決まる」）。
