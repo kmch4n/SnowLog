@@ -15,10 +15,25 @@
  * 3. Replay every migration in `drizzle/` into an in-memory `node:sqlite`
  *    database, so the schema under test is the shipped one rather than a
  *    hand-written copy that can drift.
- * 4. Overwrite the emitted `database/index.js` with a `drizzle-orm/sqlite-proxy`
- *    instance whose callback runs the SQL through `node:sqlite` and records it.
+ * 4. Overwrite the emitted `database/index.js` with a drizzle instance that runs
+ *    the SQL through `node:sqlite` and records it. Which driver depends on the
+ *    `driver` option (below).
  *
  * Everything above `index.js` is the real shipped code.
+ *
+ * Two drivers, and why the choice matters:
+ *
+ * - `"sqlite-proxy"` (the default) records every query with its method, which
+ *   is what the round-trip-count assertions in `tagRepository.test.cjs` rely on.
+ *   But its `transaction()` *awaits* the callback, so an `async (tx) => {...}`
+ *   callback really is atomic here.
+ * - `"expo-sqlite"` runs the driver the app ships, `drizzle-orm/expo-sqlite`,
+ *   over a fake expo-sqlite client backed by `node:sqlite`. That driver is
+ *   synchronous: it runs `begin`, calls the callback, and runs `commit` as soon
+ *   as the callback returns. An async callback returns at its first `await`, so
+ *   the rest of its statements run after COMMIT, in autocommit, and a throw
+ *   rolls nothing back. **Any test that claims atomicity must use this mode** —
+ *   under the proxy, a broken transaction passes.
  *
  * Three constraints worth knowing before extending this:
  *
@@ -44,6 +59,8 @@ const path = require("node:path");
 const { DatabaseSync } = require("node:sqlite");
 
 const repoRoot = path.resolve(__dirname, "..", "..", "..");
+
+let harnessCount = 0;
 
 function compile(entryPoints, outDir) {
     execFileSync(
@@ -117,10 +134,65 @@ function applyMigrations(sqlite, startIndex = 0, endIndex = Infinity) {
 }
 
 /**
+ * The subset of expo-sqlite's `SQLiteDatabase` that `drizzle-orm/expo-sqlite`
+ * calls, backed by `node:sqlite`. Only `prepareSync` is used: the session
+ * prepares one statement per query and runs it through `executeSync` (run, and
+ * `all` / `get` without field mapping) or `executeForRawResultSync` (positional
+ * rows, which is every select built with the query builder). The driver never
+ * finalizes its statements, so neither does this.
+ *
+ * Like the real client, `executeSync` steps the statement immediately, and
+ * `changes` / `lastInsertRowId` come from `sqlite3_changes()` /
+ * `sqlite3_last_insert_rowid()` after it ran.
+ */
+function createExpoSqliteClient(sqlite, record) {
+    const counters = sqlite.prepare(
+        "SELECT changes() AS changes, last_insert_rowid() AS lastInsertRowId"
+    );
+    function readCounters() {
+        const { changes, lastInsertRowId } = counters.get();
+        return { changes: Number(changes), lastInsertRowId: Number(lastInsertRowId) };
+    }
+
+    return {
+        prepareSync(sql) {
+            const statement = sqlite.prepare(sql);
+            const returnsRows = statement.columns().length > 0;
+            function execute(params, method, positional) {
+                record(sql, params, method);
+                let rows = [];
+                if (returnsRows) {
+                    statement.setReturnArrays(positional);
+                    rows = statement.all(...params);
+                } else {
+                    statement.run(...params);
+                }
+                return {
+                    ...readCounters(),
+                    getAllSync: () => rows,
+                    getFirstSync: () => rows[0] ?? null,
+                };
+            }
+            return {
+                executeSync: (params = []) => execute(params, "executeSync", false),
+                executeForRawResultSync: (params = []) =>
+                    execute(params, "executeForRawResultSync", true),
+            };
+        },
+    };
+}
+
+/**
  * @param {string[]} entryPoints repo-relative `.ts` paths to compile
- * @param {{ stopAfterMigrations?: number }} [options] apply only the first N
- *   migrations, leaving the rest for `applyRemainingMigrations()`. Omit it and
- *   every migration is applied up front, exactly as before.
+ * @param {{
+ *   stopAfterMigrations?: number,
+ *   driver?: "sqlite-proxy" | "expo-sqlite",
+ * }} [options]
+ *   `stopAfterMigrations`: apply only the first N migrations, leaving the rest
+ *   for `applyRemainingMigrations()`. Omit it and every migration is applied up
+ *   front, exactly as before.
+ *   `driver`: which drizzle driver the emitted `db` uses (see the file header).
+ *   Defaults to `"sqlite-proxy"`. Use `"expo-sqlite"` to test transactions.
  * @returns {{
  *   load: (relativePath: string) => any,
  *   sqlite: InstanceType<typeof DatabaseSync>,
@@ -132,6 +204,11 @@ function applyMigrations(sqlite, startIndex = 0, endIndex = Infinity) {
  * }}
  */
 function createRepositoryHarness(entryPoints, options = {}) {
+    const driver = options.driver ?? "sqlite-proxy";
+    if (driver !== "sqlite-proxy" && driver !== "expo-sqlite") {
+        throw new Error(`Unknown harness driver: ${driver}`);
+    }
+
     const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "snowlog-repo-test-"));
 
     compile(entryPoints, outDir);
@@ -158,28 +235,41 @@ function createRepositoryHarness(entryPoints, options = {}) {
         return { rows: method === "get" ? (rows[0] ?? []) : rows };
     }
 
+    // Each harness gets its own global, so a second harness created in the same
+    // file cannot redirect the first one's queries to its database.
+    harnessCount += 1;
+    const globalKey = `__snowlogHarnessClient${harnessCount}`;
+    global[globalKey] =
+        driver === "expo-sqlite"
+            ? createExpoSqliteClient(sqlite, (sql, params, method) =>
+                  queries.push({ sql, params, method })
+              )
+            : runQuery;
+
+    const driverModule =
+        driver === "expo-sqlite" ? "drizzle-orm/expo-sqlite/driver" : "drizzle-orm/sqlite-proxy";
     const databaseDir = path.join(outDir, "database");
     fs.writeFileSync(
         path.join(databaseDir, "index.js"),
         [
             `const { drizzle } = require(${JSON.stringify(
-                require.resolve("drizzle-orm/sqlite-proxy", { paths: [repoRoot] })
+                require.resolve(driverModule, { paths: [repoRoot] })
             )});`,
             `const schema = require(${JSON.stringify(
                 path.join(databaseDir, "schema.js")
             )});`,
-            `exports.db = drizzle(global.__snowlogRunQuery, { schema });`,
+            `exports.db = drizzle(global[${JSON.stringify(globalKey)}], { schema });`,
             `Object.assign(exports, schema);`,
             "",
         ].join("\n")
     );
-    global.__snowlogRunQuery = runQuery;
 
     let cleaned = false;
     function cleanup() {
         if (cleaned) return;
         cleaned = true;
         fs.rmSync(outDir, { recursive: true, force: true, maxRetries: 3 });
+        delete global[globalKey];
     }
     process.on("exit", cleanup);
 
