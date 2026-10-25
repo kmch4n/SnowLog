@@ -74,6 +74,21 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
     const [searchDraft, setSearchDraft] = useState(filter.searchText ?? "");
     const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // The newest filter, whether it came from the parent or was just emitted from
+    // here. Every change merges against this rather than the `filter` captured by
+    // a closure: the debounced search fires 400 ms later, and merging against the
+    // filter from when it was armed would undo a tag or date change made since.
+    const latestFilterRef = useRef(filter);
+
+    useEffect(() => {
+        latestFilterRef.current = filter;
+    }, [filter]);
+
+    function updateFilter(changes: Partial<FilterOptions>) {
+        const next = { ...latestFilterRef.current, ...changes };
+        latestFilterRef.current = next;
+        onChange(next);
+    }
 
     // Clear any pending debounce on unmount so the callback cannot fire
     // against a stale parent (navigation away mid-typing).
@@ -105,33 +120,33 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
         setSearchDraft(text);
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
-            onChange({ ...filter, searchText: text.length > 0 ? text : undefined });
+            updateFilter({ searchText: text.length > 0 ? text : undefined });
         }, DEBOUNCE_MS);
     }
 
     function clearSearch() {
         setSearchDraft("");
         if (debounceRef.current) clearTimeout(debounceRef.current);
-        onChange({ ...filter, searchText: undefined });
+        updateFilter({ searchText: undefined });
     }
 
     function toggleTag(tagId: number) {
-        const current = filter.tagIds ?? [];
+        const current = latestFilterRef.current.tagIds ?? [];
         const updated = current.includes(tagId)
             ? current.filter((id) => id !== tagId)
             : [...current, tagId];
-        onChange({ ...filter, tagIds: updated.length > 0 ? updated : undefined });
+        updateFilter({ tagIds: updated.length > 0 ? updated : undefined });
     }
 
     function handlePresetPress(key: PresetKey) {
         if (activePreset === key) {
             // Deactivate
             setActivePreset(null);
-            onChange({ ...filter, dateFrom: undefined, dateTo: undefined });
+            updateFilter({ dateFrom: undefined, dateTo: undefined });
         } else {
             setActivePreset(key);
             const range = computeDateRange(key);
-            onChange({ ...filter, dateFrom: range.dateFrom, dateTo: range.dateTo });
+            updateFilter({ dateFrom: range.dateFrom, dateTo: range.dateTo });
         }
     }
 
@@ -139,6 +154,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
         setActivePreset(null);
         setSearchDraft("");
         if (debounceRef.current) clearTimeout(debounceRef.current);
+        latestFilterRef.current = {};
         onChange({});
     }
 
@@ -180,9 +196,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
             <View style={styles.resortRow}>
                 <SkiResortSearch
                     value={filter.skiResortName ?? null}
-                    onSelect={(name) =>
-                        onChange({ ...filter, skiResortName: name ?? undefined })
-                    }
+                    onSelect={(name) => updateFilter({ skiResortName: name ?? undefined })}
                 />
             </View>
 
