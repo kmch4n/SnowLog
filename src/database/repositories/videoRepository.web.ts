@@ -1,89 +1,69 @@
 /**
  * Web mock repository used for UI previews when SQLite is unavailable.
+ *
+ * Reads and writes the shared in-memory store, and returns the same raw row
+ * shape as the native repository (techniques as a JSON string, no tags).
  */
-import type { FilterOptions, VideoWithTags } from "../../types";
-import type { VideoInsert } from "../schema";
+import { nowSeconds, webMockStore } from "@/mocks/webMockStore";
 
-const MOCK_VIDEOS: VideoWithTags[] = [
-    {
-        id: "mock-1",
-        assetId: "asset-1",
-        filename: "hakuba_carving_run.mov",
-        thumbnailUri: "",
-        duration: 45,
-        capturedAt: 1706774400,
-        skiResortName: "Hakuba Happo-One",
-        memo: "Focused on edge control and smoother transitions.",
-        title: null,
-        techniques: ["large-turns", "carving"],
-        isFileAvailable: 1,
-        isFavorite: 1,
-        storageMode: "reference",
-        managedVideoPath: null,
-        createdAt: 1706800000,
-        updatedAt: 1706800000,
-        tags: [
-            { id: 1, name: "Large Turns", type: "technique" },
-            { id: 3, name: "Carving", type: "technique" },
-        ],
-    },
-    {
-        id: "mock-2",
-        assetId: "asset-2",
-        filename: "zao_mogul_practice.mp4",
-        thumbnailUri: "",
-        duration: 28,
-        capturedAt: 1707638400,
-        skiResortName: "Zao Onsen",
-        memo: "Practiced rhythm and absorption on the mogul line.",
-        title: null,
-        techniques: ["short-turns", "moguls"],
-        isFileAvailable: 1,
-        isFavorite: 0,
-        storageMode: "reference",
-        managedVideoPath: null,
-        createdAt: 1707660000,
-        updatedAt: 1707660000,
-        tags: [
-            { id: 2, name: "Short Turns", type: "technique" },
-            { id: 4, name: "Moguls", type: "technique" },
-        ],
-    },
-    {
-        id: "mock-3",
-        assetId: "asset-3",
-        filename: "niseko_powder_run.mov",
-        thumbnailUri: "",
-        duration: 62,
-        capturedAt: 1708848000,
-        skiResortName: "Niseko Grand Hirafu",
-        memo: "Deep powder run with a stable forward stance.",
-        title: null,
-        techniques: ["powder"],
-        isFileAvailable: 1,
-        isFavorite: 0,
-        storageMode: "reference",
-        managedVideoPath: null,
-        createdAt: 1708870000,
-        updatedAt: 1708870000,
-        tags: [{ id: 5, name: "Powder", type: "technique" }],
-    },
-];
+import type { FilterOptions } from "../../types";
+import type { VideoInsert, VideoSelect } from "../schema";
 
-export async function insertVideo(_data: VideoInsert): Promise<void> {
-    return;
+function toRow(data: VideoInsert): VideoSelect {
+    return {
+        id: data.id,
+        assetId: data.assetId,
+        filename: data.filename,
+        thumbnailUri: data.thumbnailUri,
+        duration: data.duration ?? 0,
+        capturedAt: data.capturedAt,
+        skiResortName: data.skiResortName ?? null,
+        memo: data.memo ?? "",
+        title: data.title ?? null,
+        techniques: data.techniques ?? null,
+        isFileAvailable: data.isFileAvailable ?? 1,
+        isFavorite: data.isFavorite ?? 0,
+        storageMode: data.storageMode ?? "reference",
+        managedVideoPath: data.managedVideoPath ?? null,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+    };
 }
 
-export async function getVideoById(id: string): Promise<VideoWithTags | null> {
-    return MOCK_VIDEOS.find((video) => video.id === id) ?? null;
+function byNewest(a: VideoSelect, b: VideoSelect): number {
+    return b.capturedAt - a.capturedAt;
 }
 
-export async function getVideoByAssetId(_assetId: string): Promise<null> {
-    return null;
+function update(ids: string[], patch: Partial<VideoSelect>): void {
+    const updatedAt = nowSeconds();
+    for (const row of webMockStore.videos) {
+        if (ids.includes(row.id)) Object.assign(row, patch, { updatedAt });
+    }
 }
 
-export async function getVideosByFilter(options: FilterOptions = {}): Promise<VideoWithTags[]> {
-    let result = [...MOCK_VIDEOS];
+function isUnassigned(row: VideoSelect): boolean {
+    return row.skiResortName === null || row.skiResortName === "";
+}
+
+function dayKey(capturedAt: number): string {
+    const date = new Date(capturedAt * 1000);
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+export async function insertVideo(data: VideoInsert): Promise<void> {
+    webMockStore.videos.push(toRow(data));
+}
+
+export async function getVideoById(id: string): Promise<VideoSelect | null> {
+    return webMockStore.videos.find((video) => video.id === id) ?? null;
+}
+
+export async function getVideoByAssetId(assetId: string): Promise<VideoSelect | null> {
+    return webMockStore.videos.find((video) => video.assetId === assetId) ?? null;
+}
+
+export async function getVideosByFilter(options: FilterOptions = {}): Promise<VideoSelect[]> {
+    let result = [...webMockStore.videos];
 
     if (options.skiResortName) {
         result = result.filter((video) => video.skiResortName === options.skiResortName);
@@ -104,127 +84,125 @@ export async function getVideosByFilter(options: FilterOptions = {}): Promise<Vi
         );
     }
     if (options.tagIds && options.tagIds.length > 0) {
-        result = result.filter((video) =>
-            video.tags.some((tag) => options.tagIds!.includes(tag.id))
+        const tagged = new Set(
+            webMockStore.videoTags
+                .filter((link) => options.tagIds!.includes(link.tagId))
+                .map((link) => link.videoId)
         );
+        result = result.filter((video) => tagged.has(video.id));
     }
     if (options.favoritesOnly) {
         result = result.filter((video) => video.isFavorite === 1);
     }
 
-    return result.sort((a, b) => b.capturedAt - a.capturedAt);
+    return result.sort(byNewest);
 }
 
 export async function updateVideoMeta(
-    _id: string,
-    _data: {
+    id: string,
+    data: {
         memo?: string;
         skiResortName?: string | null;
         title?: string | null;
         techniques?: string | null;
     }
 ): Promise<void> {
-    return;
+    update([id], data);
 }
 
-export async function toggleFavorite(_id: string, _isFavorite: boolean): Promise<void> {
-    return;
+export async function toggleFavorite(id: string, isFavorite: boolean): Promise<void> {
+    update([id], { isFavorite: isFavorite ? 1 : 0 });
 }
 
-export async function updateFileAvailability(_id: string, _isAvailable: boolean): Promise<void> {
-    return;
+export async function updateFileAvailability(id: string, isAvailable: boolean): Promise<void> {
+    update([id], { isFileAvailable: isAvailable ? 1 : 0 });
 }
 
-export async function deleteVideo(_id: string): Promise<void> {
-    return;
+export async function deleteVideo(id: string): Promise<void> {
+    await deleteVideos([id]);
 }
 
-export async function getAllVideos(): Promise<VideoWithTags[]> {
-    return [...MOCK_VIDEOS].sort((a, b) => b.capturedAt - a.capturedAt);
+export async function getAllVideos(): Promise<VideoSelect[]> {
+    return [...webMockStore.videos].sort(byNewest);
 }
 
-export async function updateVideoCapturedAt(_id: string, _capturedAt: number): Promise<void> {
-    return;
+export async function updateVideoCapturedAt(id: string, capturedAt: number): Promise<void> {
+    update([id], { capturedAt });
 }
 
 export async function updateSkiResortForVideos(
-    _videoIds: string[],
-    _skiResortName: string
+    videoIds: string[],
+    skiResortName: string
 ): Promise<void> {
-    return;
+    update(videoIds, { skiResortName });
 }
 
 export async function updateSkiResortForUnassignedVideos(
-    _videoIds: string[],
-    _skiResortName: string
+    videoIds: string[],
+    skiResortName: string
 ): Promise<void> {
-    return;
+    const unassigned = webMockStore.videos
+        .filter((video) => videoIds.includes(video.id) && isUnassigned(video))
+        .map((video) => video.id);
+    update(unassigned, { skiResortName });
 }
 
 export async function getUnassignedVideoIdsForCapturedDays(
-    _capturedAtValues: number[],
-    _excludeVideoIds: string[] = []
+    capturedAtValues: number[],
+    excludeVideoIds: string[] = []
 ): Promise<string[]> {
-    return [];
+    const days = new Set(capturedAtValues.map(dayKey));
+    return webMockStore.videos
+        .filter((video) => !excludeVideoIds.includes(video.id))
+        .filter((video) => isUnassigned(video) && days.has(dayKey(video.capturedAt)))
+        .map((video) => video.id);
 }
 
 export async function getSkiResortNamesForCapturedDay(
     capturedAt: number,
     excludeVideoId?: string
 ): Promise<string[]> {
-    const target = new Date(capturedAt * 1000);
-    const names = MOCK_VIDEOS
+    const target = dayKey(capturedAt);
+    const names = webMockStore.videos
         .filter((video) => video.id !== excludeVideoId)
-        .filter((video) => {
-            const date = new Date(video.capturedAt * 1000);
-            return (
-                date.getFullYear() === target.getFullYear() &&
-                date.getMonth() === target.getMonth() &&
-                date.getDate() === target.getDate()
-            );
-        })
+        .filter((video) => dayKey(video.capturedAt) === target)
         .map((video) => video.skiResortName)
         .filter((name): name is string => name != null && name.trim().length > 0);
 
     return [...new Set(names)];
 }
 
-// 未インポートのアセットだけを返す native と同じく、ここでは常に空集合を返す。
-// このファイルの getVideoByAssetId もモックデータを見ずに null を返しており、
-// 「まだ取り込まれていない」で一貫させる。
-export async function getExistingAssetIds(_assetIds: string[]): Promise<Set<string>> {
-    return new Set();
+export async function getExistingAssetIds(assetIds: string[]): Promise<Set<string>> {
+    const known = new Set(webMockStore.videos.map((video) => video.assetId));
+    return new Set(assetIds.filter((assetId) => known.has(assetId)));
 }
 
-// native は生の行を返すが、このファイルの読み取りはすべて VideoWithTags で
-// 揃えてあるのでそれに合わせる。Web からは呼ばれない（_layout に .web がある）。
+// Web からは呼ばれない（撮影日修復は _layout.tsx にしかなく、Web は _layout.web.tsx を描画する）。
 export async function getVideosWithSuspiciousCapturedAt(
-    _minValidTimestamp: number
-): Promise<VideoWithTags[]> {
-    return [];
+    minValidTimestamp: number
+): Promise<VideoSelect[]> {
+    return webMockStore.videos.filter((video) => video.capturedAt <= minValidTimestamp);
 }
 
-export async function updateVideoThumbnailUri(
-    _id: string,
-    _thumbnailUri: string
-): Promise<void> {
-    return;
+export async function updateVideoThumbnailUri(id: string, thumbnailUri: string): Promise<void> {
+    update([id], { thumbnailUri });
 }
 
-export async function bulkSetFavorite(
-    _videoIds: string[],
-    _isFavorite: boolean
-): Promise<void> {
-    return;
+export async function bulkSetFavorite(videoIds: string[], isFavorite: boolean): Promise<void> {
+    update(videoIds, { isFavorite: isFavorite ? 1 : 0 });
 }
 
-export async function deleteVideos(_videoIds: string[]): Promise<void> {
-    return;
+/** ネイティブと同じく、紐付くタグのリンクも一緒に消える（ON DELETE CASCADE 相当） */
+export async function deleteVideos(videoIds: string[]): Promise<void> {
+    webMockStore.videos = webMockStore.videos.filter((video) => !videoIds.includes(video.id));
+    webMockStore.videoTags = webMockStore.videoTags.filter(
+        (link) => !videoIds.includes(link.videoId)
+    );
 }
 
 export async function getRecentSkiResortNames(limit = 3): Promise<string[]> {
     const names: string[] = [];
-    for (const video of [...MOCK_VIDEOS].sort((a, b) => b.capturedAt - a.capturedAt)) {
+    for (const video of [...webMockStore.videos].sort(byNewest)) {
         const name = video.skiResortName?.trim();
         if (!name || names.includes(name)) continue;
         names.push(name);
@@ -233,6 +211,7 @@ export async function getRecentSkiResortNames(limit = 3): Promise<string[]> {
     return names;
 }
 
+// Web ではバックアップ復元を提供しない（importJsonService.web.ts が先に断る）。
 export async function insertVideosForRestore(_rows: VideoInsert[]): Promise<string[]> {
     return [];
 }

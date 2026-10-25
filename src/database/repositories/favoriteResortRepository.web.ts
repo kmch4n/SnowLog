@@ -1,16 +1,18 @@
 /**
- * Web用スタブ
- * expo-sqlite は Web で動作しないため空実装を返す
+ * Web用モックリポジトリ
+ * expo-sqlite を使用せず、共有のインメモリストア（`@/mocks/webMockStore`）を読み書きする
  */
+import { webMockStore } from "@/mocks/webMockStore";
 
 export async function getFavoriteResorts(): Promise<string[]> {
-    return [];
+    return [...webMockStore.favoriteResorts];
 }
 
-export async function addFavoriteResort(_name: string): Promise<void> {
-    // Web では保存しない
+/** ネイティブと同じく重複は無視する */
+export async function addFavoriteResort(name: string): Promise<void> {
+    if (!webMockStore.favoriteResorts.includes(name)) webMockStore.favoriteResorts.push(name);
 }
 
-export async function removeFavoriteResort(_name: string): Promise<void> {
-    // Web では保存しない
+export async function removeFavoriteResort(name: string): Promise<void> {
+    webMockStore.favoriteResorts = webMockStore.favoriteResorts.filter((row) => row !== name);
 }

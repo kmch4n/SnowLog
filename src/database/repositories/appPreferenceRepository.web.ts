@@ -1,10 +1,12 @@
 /**
  * Web用モックリポジトリ
- * ブラウザでのUIプレビュー用にインメモリ Map で代用する
+ * ブラウザでのUIプレビュー用に、共有のインメモリストア（`@/mocks/webMockStore`）で代用する
  */
+import { webMockStore } from "@/mocks/webMockStore";
+
 import type { AppPreferenceSelect } from "../schema";
 
-const store = new Map<string, string>();
+const store = webMockStore.preferences;
 
 /** 全設定値を取得する */
 export async function getAllPreferences(): Promise<AppPreferenceSelect[]> {
