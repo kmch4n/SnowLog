@@ -10,6 +10,10 @@
  * 残る。ユーザーには動画として見えるのに再生できず、しかも掃除の対象にもならない。
  * 行を先に消しておけば、最悪の結果は参照されないファイルが 1 つ残ることで、
  * これは `orphanedFileCleanupService` が回収できる（#86 §6）。
+ *
+ * 順序そのものは `videoDeletionOrder.ts` が持ち、ここは実体を渡すだけ。
+ * このファイルはネイティブ依存を辿るためテストからコンパイルできないので、
+ * 順序の検証は `scripts/tests/videoDeletionOrder.test.cjs` が向こう側で行う。
  */
 import {
     deleteVideos,
@@ -18,35 +22,15 @@ import {
 
 import { deleteManagedPath } from "./managedVideoFileService";
 import { deleteThumbnail } from "./thumbnailService";
+import { runVideoDeletion } from "./videoDeletionOrder";
 
 export async function deleteVideosWithCleanup(videoIds: string[]): Promise<void> {
-    if (videoIds.length === 0) {
-        return;
-    }
-
-    const targets = await Promise.all(videoIds.map((id) => getVideoById(id)));
-    const owned = targets.filter(
-        (video): video is NonNullable<typeof video> => video !== null
-    );
-
-    // 所有ファイルの一覧は行を消す前に確定させる。消したあとでは引けない。
-    const filesToDelete: Promise<void>[] = [];
-    for (const video of owned) {
-        if (video.thumbnailUri) {
-            filesToDelete.push(deleteThumbnail(video.thumbnailUri));
-        }
-        // パスが無い copy 行（移行時に ID が安全でなかったもの）は、消すべき
-        // ファイルを特定できない。捏造したパスで消しに行くより孤児として残す。
-        if (video.managedVideoPath) {
-            filesToDelete.push(deleteManagedPath(video.managedVideoPath));
-        }
-    }
-
-    await deleteVideos(videoIds);
-
-    // ここから先の失敗は回収可能な孤児しか生まない。await はするが、結果は
-    // 呼び出し元に影響させない——行はもう消えており、やり直す対象が無い。
-    await Promise.allSettled(filesToDelete);
+    await runVideoDeletion(videoIds, {
+        getVideo: getVideoById,
+        deleteRows: deleteVideos,
+        deleteThumbnail,
+        deleteManagedPath,
+    });
 }
 
 /** 1 件だけ削除する。単体経路が独自に順序を決めないための入口 */
