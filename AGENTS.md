@@ -40,7 +40,7 @@ projects with their own `node_modules`.
 | `npm run start` / `ios` / `android` / `web` | Metro / per-platform run |
 | `npm run lint` | ESLint through Expo |
 | `npm run db:generate` / `db:studio` | Regenerate Drizzle migrations / inspect the schema |
-| `node --test "scripts/tests/*.test.cjs"` | Tests — there is no `test` script. Quote the glob. |
+| `npm test` / `npm run test:web` | Unit tests / Web build rendered in headless Chrome. CI runs both. |
 
 ## Coding Style & Naming
 
@@ -58,19 +58,20 @@ User-facing strings go through `useTranslation()` from `@/i18n/useTranslation`, 
 in `locales/ja.json` / `locales/en.json` at the repo root; the inline `infoPlist` block in
 `app.json` is the Japanese fallback only.
 
-Native-dependent modules need a `.web.ts` / `.web.tsx` companion. `tsc` cannot detect a missing
-export in a shim, so check the pair by hand — see `.memory/doc-drift.md`.
+Native-dependent modules need a `.web.ts` / `.web.tsx` companion. `tsc` cannot see a shim's
+exports; `webShimParity` and `webEmptyModules` tests enforce the pairs — see `.memory/wiring.md`.
 
 ## Testing
 
-Run with `node --test "scripts/tests/*.test.cjs"`. Automated coverage is thin and some tests match
-source text with regexes, so **a green assert proves nothing until you break the code and watch it
-fail.** How to compile a target depends on the shape of its imports. Both points, and the rest of
-the mechanics, are in `.memory/testing.md` — read it before adding a test.
+Run with `npm test`; CI (`.github/workflows/ci.yml`) also runs lint, `tsc`, and `npm run test:web`.
+Automated coverage is thin and some tests match source text with regexes, so **a green assert
+proves nothing until you break the code and watch it fail.** How to compile a target depends on
+the shape of its imports. Both points, and the rest of the mechanics, are in `.memory/testing.md`
+— read it before adding a test.
 
 Manual verification carries the load. Before finishing: run `npm run lint` and verify the affected
 flow on iOS. For database changes, regenerate migrations, start from a clean local database, and
-walk migrate → import → search → export. Re-check Web only when touching `*.web.tsx`.
+walk migrate → import → search → export. When touching `*.web.*`, also click through in a browser.
 
 ## Git
 

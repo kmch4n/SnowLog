@@ -6,44 +6,27 @@ status: active
 
 # テストの実態と実行方法
 
-## テストは存在するが `npm test` では走らない
-
-**`scripts/tests/` に `node:test` ベースのテストが 17 ファイル・149 ケースある**（2026-08-31 時点。実測値）。
-ほかに `scripts/tests/helpers/` があるが、これはテストではなく共有ハーネス（後述）。
-
-かつて `AGENTS.md` と `.claude/CLAUDE.md` は「自動テストは無い」と書いていたが、
-2026-07-15 に両方とも実態へ修正済み。**現在はどちらの記述も正しい**ので、乖離として扱わなくてよい。
-気づきにくさの原因は、いまはドキュメントではなく次の点にある。
-
-- `appPreferenceRepository.test.cjs`
-- `assetId.test.cjs`
-- `bulkImportProgressUtils.test.cjs`
-- `calendarUtils.test.cjs`
-- `dateUtils.test.cjs`
-- `duplicateDetectionService.test.cjs`
-- `exportPayload.test.cjs`
-- `geoUtils.test.cjs`
-- `importPayload.test.cjs`
-- `homeSwipeDelete.test.cjs`
-- `parseTechniques.test.cjs`
-- `photosErrors.test.cjs`
-- `tagRepository.test.cjs`
-- `versionUtils.test.cjs`
-- `webShimParity.test.cjs`
-- `videoDetailKeyboardAccessory.test.cjs`
-- `videoListEquality.test.cjs`
-
-`package.json` に `test` script が**定義されていない**ため、`npm test` では走らず存在に気づきにくい。
-
-## 実行方法
+## 実行方法と、どこで走るか
 
 ```bash
-node --test "scripts/tests/*.test.cjs"
+npm test            # node --test "scripts/tests/*.test.cjs"
+npm run test:web    # Web をビルドし、headless Chrome で全ルートを描画して確かめる
 ```
 
-glob をクォートで囲むこと。**`node --test scripts/tests/` のようなディレクトリ指定は Node 25 / Windows で `MODULE_NOT_FOUND` になり動かない**（2026-07-15 に確認）。
+`scripts/tests/` に `node:test` ベースのテストが 37 ファイル・344 ケースある（2026-10-26 時点）。
+`scripts/tests/helpers/` はテストではなく共有ハーネス（後述）。ファイル一覧はここに書かない（書くと腐る）。
 
-## 全 149 件 pass（2026-08-31 時点）
+- `npm test` は 2026-10-26 に追加した。それまで `test` script が無く、テストの存在に気づきにくかった。
+  直接叩く場合は glob をクォートで囲むこと。**`node --test scripts/tests/` のようなディレクトリ指定は
+  Node 25 / Windows で `MODULE_NOT_FOUND` になり動かない**（2026-07-15 に確認）。
+- **CI**（`.github/workflows/ci.yml`、2026-10-26 追加。Issue #82）が push / PR ごとに
+  lint・`tsc --noEmit`・`npm test`・`npm run test:web` を回す。EAS ビルドと iOS 実機確認は CI では代替できない。
+- `npm run test:web`（`scripts/webSmoke.cjs`）は `dist/` に Web を書き出し、各ルートの本文に固有の
+  ロケールキーの文言が出るかを見る。#84 はバンドルは通って実行時に落ちたので、ビルドだけでは捕まらない。
+  Chrome が要る（`CHROME_PATH` で指定可）。デスクトップのセッションでは Chrome が終了時に D-Bus 経由で
+  キーリングを ~25 秒待つので、スクリプトは `--password-store=basic` と `DBUS_SESSION_BUS_ADDRESS=/dev/null` を渡している。
+
+## 過去の失敗: main で落ち続けたテスト（2026-07-16 解消）
 
 かつて `homeSwipeDelete.test.cjs` の「iOS-style icon and compact system red surface」ケースが
 main で 1 件落ち続けていた。原因は**テストの陳腐化**（動作の退行ではない）。
