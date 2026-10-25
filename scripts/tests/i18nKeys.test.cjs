@@ -39,7 +39,6 @@ const localesDir = path.join(srcRoot, "i18n", "locales");
  */
 const UNREFERENCED_ALLOWLIST = new Set([
     "common.save",
-    "common.ok",
     "common.edit",
     "common.close",
     "common.error",
