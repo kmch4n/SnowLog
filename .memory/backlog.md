@@ -1,6 +1,6 @@
 ---
 title: バックログ
-updated: 2026-09-13
+updated: 2026-10-26
 status: active
 ---
 
@@ -8,7 +8,7 @@ status: active
 
 コードや git log からは読み取れない「これからやりたいこと」の置き場。
 
-**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-09-12 時点で open 15 件）、
+**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-10-26 時点で open 14 件 / 全 86 件）、
 やることは基本すべて Issue 化されている。ここに同じ内容を書くと二重管理になり、必ず片方が腐る。
 このファイルには **Issue になっていないものだけ** を置く。Issue 化できたらここから消す。
 
@@ -20,27 +20,28 @@ status: active
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
-作業前にこの対応表を見て、既存 Issue を確認する。**2026-09-12 時点の open 15 件すべて**を載せている。
+作業前にこの対応表を見て、既存 Issue を確認する。**2026-10-26 時点の open 14 件すべて**を載せている。
 古い表は新しく立った Issue を落としたまま残っていて役に立たなかったので、更新するときは
 `gh issue list --state open` から作り直すこと。追記していくと必ず漏れる。
 
 | テーマ | Issue |
 | --- | --- |
-| 動画の保存方式の選択。Task B と Task D の中核は実装済み。残るは Task A（計測基盤）・C（ネイティブ）・E・F・G と実機検証 | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
+| 動画の保存方式の選択。Task B・D の中核は実装済み。残るは Task A・C（ネイティブ）・E・F・G と実機検証。1.4.0 に migration 0009 が入る件の判断待ち | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
+| 限定アクセスで許可範囲外の動画を取り込むと「ファイル無し」に落ちて戻らない（実機未確認） | [#87](https://github.com/kmch4n/SnowLog/issues/87) |
+| 復元が設定値を上書きする件と、途中失敗後の再実行でタグが戻らない件（判断待ち） | [#88](https://github.com/kmch4n/SnowLog/issues/88) |
 | 復元した動画を新端末の写真ライブラリに再リンクする | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
-| Web が起動時にクラッシュする（`openDatabaseSync` 不在） | [#84](https://github.com/kmch4n/SnowLog/issues/84) |
-| 未参照の i18n キー 93 件 | [#83](https://github.com/kmch4n/SnowLog/issues/83) |
-| CI 不在 | [#82](https://github.com/kmch4n/SnowLog/issues/82) |
-| 改行コード方針が `.gitattributes` に無い | [#81](https://github.com/kmch4n/SnowLog/issues/81) |
-| `video-import.tsx` の分割 | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
-| アクセシビリティ（72 個中 66 個の touchable に role/label 無し） | [#79](https://github.com/kmch4n/SnowLog/issues/79) |
+| 参照されない `common.*` の i18n キー 4 件を残すか消すか | [#83](https://github.com/kmch4n/SnowLog/issues/83) |
+| `video-import.tsx` の分割（#86 Task E で行う） | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
+| アクセシビリティ（74 個中 66 個の touchable に role/label 無し） | [#79](https://github.com/kmch4n/SnowLog/issues/79) |
 | Expo SDK 55 の依存 26 件が期待バージョン未満 | [#78](https://github.com/kmch4n/SnowLog/issues/78) |
-| iCloud ダウンロードの制御 | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
+| iCloud ダウンロードの制御（#86 のサブ Issue） | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
 | カスタムタグ UI の見直し | [#69](https://github.com/kmch4n/SnowLog/issues/69) |
 | Reels 取り込みの検討 | [#54](https://github.com/kmch4n/SnowLog/issues/54) |
-| Large Title ヘッダー | [#47](https://github.com/kmch4n/SnowLog/issues/47) |
-| Liquid Glass の拡張 | [#46](https://github.com/kmch4n/SnowLog/issues/46) |
-| ホームの長押し選択をコンテキストメニューに | [#45](https://github.com/kmch4n/SnowLog/issues/45) |
+| Large Title ヘッダー（ブランドの青いヘッダーが消える点を含めて要判断） | [#47](https://github.com/kmch4n/SnowLog/issues/47) |
+| Liquid Glass の拡張（FilterBar はレイアウト変更が前提） | [#46](https://github.com/kmch4n/SnowLog/issues/46) |
+| ホームの長押し選択をコンテキストメニューに（expo-router の `Link.Menu` で依存追加なしに可能） | [#45](https://github.com/kmch4n/SnowLog/issues/45) |
+
+2026-10-26 に close: #84（Web が起動しない）、#82（CI 不在）、#81（`.gitattributes`）。
 
 ### バックアップ往復（#72）と `.web` シム（#74）は closed
 
@@ -54,8 +55,7 @@ status: active
   なおバックアップはメタデータのみなので、別端末では動画が戻らない。再リンクは #85。
 - **[#74](https://github.com/kmch4n/SnowLog/issues/74)** — export 欠落 9 件は埋め、
   `scripts/tests/webShimParity.test.cjs` で再発を止めた。受け入れ基準の
-  「Web で 4 操作をクリックして確認」だけは **#84 で Web が起動しないため永久に満たせない**ので、
-  そこを待たずに close した。Web を復活させるなら起点は #84。
+  「Web で 4 操作をクリックして確認」は #84 の修正後、2026-10-26 にブラウザで確認済み。
 
 ## 完了済み（2026-03-26 に挙がっていた 3 件）
 
