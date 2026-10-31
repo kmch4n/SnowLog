@@ -8,6 +8,7 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+    type ViewStyle,
 } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import DraggableFlatList, { type RenderItemParams } from "react-native-draggable-flatlist";
@@ -21,6 +22,16 @@ import {
 import { Colors } from "@/constants/colors";
 import type { TechniqueOptionSelect } from "@/database/schema";
 import { useTranslation } from "@/i18n/useTranslation";
+
+// Web 専用の調整。ネイティブでは空なので挙動は変わらない。
+// - RNGH はリストの ScrollView を NativeViewGestureHandler で包む。Web 版のこのハンドラは
+//   scrollEnabled を見ずに 10px 動いた時点で activate し、DraggableFlatList の Pan を失敗させる。
+//   すると持ち上げた行がポインタに追従しない。Web のスクロールはブラウザが担うので、止めても失うものはない。
+// - タッチでは touchstart 時点の touch-action でブラウザがスクロールを奪い pointercancel を出す。
+//   ハンドルだけ touch-action: none にして、ハンドルから始まったタッチをドラッグに回す。
+const WEB_LIST_GESTURE_PROPS = Platform.OS === "web" ? { enabled: false } : {};
+const WEB_DRAG_HANDLE_STYLE =
+    Platform.OS === "web" ? ({ touchAction: "none" } as ViewStyle) : null;
 
 /**
  * 滑走種別管理画面
@@ -93,7 +104,7 @@ export default function TechniquesSettingsScreen() {
                 <TouchableOpacity
                     onLongPress={drag}
                     delayLongPress={100}
-                    style={styles.dragHandle}
+                    style={[styles.dragHandle, WEB_DRAG_HANDLE_STYLE]}
                 >
                     <Text style={styles.dragHandleText}>☰</Text>
                 </TouchableOpacity>
@@ -120,6 +131,7 @@ export default function TechniquesSettingsScreen() {
                 keyExtractor={(item) => String(item.id)}
                 renderItem={renderItem}
                 onDragEnd={handleDragEnd}
+                {...WEB_LIST_GESTURE_PROPS}
                 ListEmptyComponent={
                     <Text style={styles.empty}>{t("settings.techniques.emptyWithHint")}</Text>
                 }
