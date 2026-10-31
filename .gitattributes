@@ -1,0 +1,14 @@
+# Line endings are defined here, not by each machine's core.autocrlf (#81).
+# text=auto stores text as LF in the repository and leaves the working-tree
+# form to the local setting, so a Windows checkout keeps its CRLF copies.
+* text=auto
+
+# Binary assets: never diff or convert.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.mp4 binary
+*.mov binary
+*.ttf binary
+*.wasm binary
