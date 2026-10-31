@@ -30,10 +30,20 @@ export function useVideoDetail(videoId: string) {
      * インスタンスで `videoId` が変わることがない（`_layout.tsx` に `getId` も無い）。
      * 動画間をスワイプで移動する UI を将来入れるとインスタンスが再利用されるので、
      * そのときに効く。
+     *
+     * 読み込み表示（`isLoading`）を出すのは最初の取得だけ。保存後の再取得で出すと、
+     * 詳細画面は読み込み中の表示に切り替わる作りなので、その一瞬にプレイヤーと入力欄が
+     * アンマウントされうる（入力中のフォーカスが外れ、再生が頭に戻る）。`useVideos` の
+     * `showLoading` と同じ考え方。
      */
     const fetchVideo = useCallback(
-        async (isCancelled: () => boolean = () => false) => {
-            setIsLoading(true);
+        async (
+            options: { isCancelled?: () => boolean; showLoading?: boolean } = {}
+        ) => {
+            const isCancelled = options.isCancelled ?? (() => false);
+            if (options.showLoading) {
+                setIsLoading(true);
+            }
             setError(null);
             try {
                 const raw = await getVideoById(videoId);
@@ -64,7 +74,7 @@ export function useVideoDetail(videoId: string) {
 
     useEffect(() => {
         let cancelled = false;
-        fetchVideo(() => cancelled);
+        fetchVideo({ isCancelled: () => cancelled, showLoading: true });
         return () => {
             cancelled = true;
         };
@@ -151,7 +161,7 @@ export function useVideoDetail(videoId: string) {
         video,
         isLoading,
         error,
-        refresh: fetchVideo,
+        refresh: () => fetchVideo(),
         updateTitle,
         updateTechniques,
         updateMemo,
