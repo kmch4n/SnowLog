@@ -13,6 +13,7 @@
  * - Web 専用。`.web.ts` からだけ import すること（ネイティブのバンドルに入れない）。
  */
 import { DEFAULT_TECHNIQUE_OPTIONS } from "@/constants/techniques";
+import { getCurrentSeason, toDateKey } from "@/utils/dateUtils";
 import type {
     DiaryEntrySelect,
     TagSelect,
@@ -20,7 +21,20 @@ import type {
     VideoSelect,
 } from "@/database/schema";
 
-const SEED_CREATED_AT = 1706800000;
+/**
+ * モックの撮影日は「現在のシーズン」の中に置く。ダッシュボードは現在のシーズンを
+ * 既定で開くので、固定の過去日付だと Web の統計が常に空になる。
+ */
+const SEASON_END_YEAR = getCurrentSeason().endYear;
+
+function seasonDate(month: number, day: number, hour: number, minute: number): number {
+    return Math.floor(new Date(SEASON_END_YEAR, month - 1, day, hour, minute).getTime() / 1000);
+}
+
+const HAKUBA_AT = seasonDate(1, 18, 9, 30);
+const ZAO_AT = seasonDate(2, 8, 10, 15);
+const NISEKO_AT = seasonDate(2, 22, 13, 40);
+const SEED_CREATED_AT = HAKUBA_AT + 3600;
 
 function video(
     row: Omit<
@@ -45,7 +59,7 @@ function seedVideos(): VideoSelect[] {
             assetId: "asset-1",
             filename: "hakuba_carving_run.mov",
             duration: 45,
-            capturedAt: 1706774400,
+            capturedAt: HAKUBA_AT,
             skiResortName: "白馬八方尾根スキー場",
             memo: "Focused on edge control and smoother transitions.",
             title: null,
@@ -58,26 +72,26 @@ function seedVideos(): VideoSelect[] {
             assetId: "asset-2",
             filename: "zao_mogul_practice.mp4",
             duration: 28,
-            capturedAt: 1707638400,
+            capturedAt: ZAO_AT,
             skiResortName: "山形蔵王温泉スキー場",
             memo: "Practiced rhythm and absorption on the mogul line.",
             title: null,
             techniques: JSON.stringify(["小回り", "コブ"]),
             isFavorite: 0,
-            createdAt: 1707660000,
+            createdAt: ZAO_AT + 3600,
         }),
         video({
             id: "mock-3",
             assetId: "asset-3",
             filename: "niseko_powder_run.mov",
             duration: 62,
-            capturedAt: 1708848000,
+            capturedAt: NISEKO_AT,
             skiResortName: "ニセコマウンテンリゾート グラン・ヒラフ",
             memo: "Deep powder run with a stable forward stance.",
             title: null,
             techniques: JSON.stringify(["パウダー"]),
             isFavorite: 0,
-            createdAt: 1708870000,
+            createdAt: NISEKO_AT + 3600,
         }),
     ];
 }
@@ -122,7 +136,7 @@ function seedDiaryEntries(): DiaryEntrySelect[] {
     return [
         {
             id: 1,
-            dateKey: "2024-02-01",
+            dateKey: toDateKey(HAKUBA_AT),
             skiResortName: "白馬八方尾根スキー場",
             weather: "sunny",
             snowCondition: "packed",
