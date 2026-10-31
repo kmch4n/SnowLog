@@ -326,10 +326,20 @@ export default function VideoDetailScreen() {
                     text: t("common.delete"),
                     style: "destructive",
                     onPress: async () => {
-                        // 削除する行へ保留中の編集を書き込まない
+                        try {
+                            await removeVideo();
+                        } catch {
+                            // 行は残っている。保留中の編集もまだ生きているので、そのまま保存される
+                            Alert.alert(
+                                t("home.swipeDelete.deleteFailedTitle"),
+                                t("home.swipeDelete.deleteFailedBody")
+                            );
+                            return;
+                        }
+                        // 消えた行への保存は捨てる。削除の前に取り消すと、削除が失敗したときに
+                        // 入力欄には残っているのに保存されない編集ができる
                         titleSave.cancel();
                         memoSave.cancel();
-                        await removeVideo();
                         router.back();
                     },
                 },
