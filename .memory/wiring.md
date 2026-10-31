@@ -54,7 +54,7 @@ Stack（`GestureHandlerRootView` + `ThemeProvider` でラップ）は上記と�
 
 ## Web の配線（2026-10-26。Issue #84 で判明）
 
-Web は `npm run web` で起動するプレビュー。動かすうえで踏んだ罠が 3 つある。
+Web は `npm run web` で起動するプレビュー。動かすうえで踏んだ罠が 5 つある。
 
 1. **Expo Router は描画しないレイアウトも評価する。** `getRoutesCore.js` の `getLayoutNode()` が
    `unstable_settings` を読むために全 `_layout` の `loadRoute()` を呼ぶので、Web でもネイティブの
@@ -72,8 +72,17 @@ Web は `npm run web` で起動するプレビュー。動かすうえで踏ん�
    ネイティブと同じ行の形を返すこと。特に `videos.techniques` は JSON 文字列（フックが文字列として
    `parseTechniques` する）。配列で返すと滑走種別が常に空になる。
 
-検証は `npm run test:web`（全ルートを headless Chrome で描画）。マウスでのジェスチャー
-（スワイプ削除・ドラッグ並べ替え）は Web では未対応（SnowLog.md §12.3）。
+4. **Web 版 react-native-gesture-handler は、ジェスチャーが動いても下の Touchable を取り消さない。**
+   react-native-web の `onPress` はブラウザの click で発火するので、マウスでカードをスワイプして離すと
+   詳細画面が開いていた。`utils/webDragClickGuard.ts` が「マウス・ペンで 10px 以上動いた後の click」を捨てる
+   （タッチはブラウザ自身が click を出さない）。
+5. **Web 版の NativeViewGestureHandler は `scrollEnabled` を見ずに 10px で activate する。** リストの
+   ScrollView を包むこのハンドラが DraggableFlatList の Pan を失敗させ、種別の並べ替えが追従しなかった。
+   `settings/techniques.tsx` が Web でだけ `enabled={false}` を渡し、ハンドルに `touch-action: none` を付ける。
+   **新しく RNGH のジェスチャーをリスト内に置くときは同じ罠を踏む。**
+
+検証は `npm run test:web`（全ルートを headless Chrome で描画）。ジェスチャーは自動検証が無いので、
+触ったらブラウザでマウスとタッチの両方を試すこと。
 
 ## その他の非自明な配線
 

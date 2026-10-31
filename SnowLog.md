@@ -544,8 +544,8 @@ videos --< video_tags >-- tags
 - Expo Router はネイティブの `_layout.tsx` も評価する。モジュールの評価時に native API を呼ぶファイルには
   `.web` の相方が要る（`src/database/index.web.ts`。`scripts/tests/webEmptyModules.test.cjs` が強制する）。
 - `npm run test:web` が Web を書き出し、全ルートを headless Chrome で描画して確認する（CI でも実行）。
-- 既知の制限: マウス操作では react-native-gesture-handler のジェスチャー（ホームのスワイプ削除、
-  種別のドラッグ並べ替え）が反応しない。
+- ジェスチャー（ホームのスワイプ削除、種別のドラッグ並べ替え）はマウスとタッチの両方で動く。
+  Web 版 react-native-gesture-handler の挙動差を 2 か所で吸収している（`.memory/wiring.md`「Web の配線」）。
 
 ---
 
