@@ -11,9 +11,12 @@ import { ErrorBoundaryScreen } from "@/components/ErrorBoundaryScreen";
 import { installWebAlert, WebAlertHost } from "@/components/WebAlertHost";
 import { Colors } from "@/constants/colors";
 import { useTranslation } from "@/i18n/useTranslation";
+import { installWebDragClickGuard } from "@/utils/webDragClickGuard";
 
 // react-native-web の Alert.alert は何もしないので、確認ダイアログを出せる実装に差し替える
 installWebAlert();
+// マウスでスワイプした後の click が下の Touchable の onPress を発火させないようにする
+installWebDragClickGuard();
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
