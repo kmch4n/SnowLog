@@ -1,7 +1,7 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 
-import { getTagsForVideo } from "../database/repositories/tagRepository";
+import { getTagsForVideos } from "../database/repositories/tagRepository";
 import {
     getDashboardStats,
     getOldestCapturedAt,
@@ -56,15 +56,16 @@ export function useDashboard() {
                 try {
                     const data = await getDashboardStats(season);
 
-                    // recentVideos にタグを付与
-                    const enrichedRecent = await Promise.all(
-                        data.recentVideos.map(async (video) => ({
-                            ...video,
-                            tags: video.tags.length > 0
-                                ? video.tags
-                                : await getTagsForVideo(video.id),
-                        }))
+                    // recentVideos にタグを付与。1 クエリでまとめて引く（Issue #66 と同じ理由）
+                    const tagsByVideoId = await getTagsForVideos(
+                        data.recentVideos.map((video) => video.id)
                     );
+                    const enrichedRecent = data.recentVideos.map((video) => ({
+                        ...video,
+                        tags: video.tags.length > 0
+                            ? video.tags
+                            : tagsByVideoId.get(video.id) ?? [],
+                    }));
 
                     if (!cancelled) {
                         setStats({ ...data, recentVideos: enrichedRecent });
