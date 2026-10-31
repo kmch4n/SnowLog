@@ -25,7 +25,9 @@ export function useDashboard() {
     useFocusEffect(
         useCallback(() => {
             (async () => {
-                const oldest = await getOldestCapturedAt();
+                // 失敗してもシーズン選択を現在のシーズンだけで出す。ここで投げると
+                // 未処理の Promise 拒否になり、統計側のエラー表示にも届かない。
+                const oldest = await getOldestCapturedAt().catch(() => null);
                 if (oldest === null) {
                     setAvailableSeasons([getCurrentSeason()]);
                     return;
