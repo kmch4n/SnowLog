@@ -197,6 +197,25 @@ test("a required field of the wrong type also skips the video", () => {
     }
 });
 
+// A video id becomes a filename (`thumbnails/<id>.jpg`, `videos/<id>.<ext>`), so
+// a restored id must be safe to use as one (#86 §5). Every id the app writes is
+// a UUID, so a genuine backup never trips this.
+test("a video whose id is unsafe as a filename is skipped and counted", () => {
+    for (const id of ["../escape", "a/b", "id with space", "x.jpg", "..", "a\\b"]) {
+        const plan = parseExportPayload(
+            makeBackup({ videos: [makeExportedVideo({ id, thumbnailUri: "" })] })
+        );
+        assert.deepEqual(plan.videos, [], `expected skip for id ${JSON.stringify(id)}`);
+        assert.equal(plan.skipped.videos, 1);
+    }
+
+    const uuid = "3f2b8c1e-9d4a-4b6f-8e2d-1a5c7b9e0f12";
+    const plan = parseExportPayload(
+        makeBackup({ videos: [makeExportedVideo({ id: uuid, thumbnailUri: "" })] })
+    );
+    assert.equal(plan.videos.length, 1, "a UUID id must survive");
+});
+
 test("a non-array techniques field becomes null rather than skipping the row", () => {
     const plan = parseExportPayload(
         makeBackup({ videos: [makeExportedVideo({ techniques: "大回り" })] })
@@ -600,9 +619,16 @@ test("a thumbnail must be named after the video that owns it", () => {
     assert.equal(restoredThumbnail("thumbnails/v1"), "");
 });
 
-test("a video whose id is unsafe as a filename keeps no thumbnail", () => {
-    assert.equal(restoredThumbnail("thumbnails/../x.jpg", { id: "../x" }), "");
-    assert.equal(restoredThumbnail("thumbnails/a.b.jpg", { id: "a.b" }), "");
+// parseVideo now drops a row with an unsafe id before its thumbnail is looked
+// at, so this keeps the thumbnail normaliser's own guard covered directly:
+// it is the second line of defence if that check is ever loosened.
+test("the thumbnail normaliser rejects an unsafe id on its own", () => {
+    const { normalizeRestoredThumbnailPath } = require(
+        path.join(outDir, "utils", "thumbnailPath.js")
+    );
+    assert.equal(normalizeRestoredThumbnailPath("thumbnails/../x.jpg", "../x"), "");
+    assert.equal(normalizeRestoredThumbnailPath("thumbnails/a.b.jpg", "a.b"), "");
+    assert.equal(normalizeRestoredThumbnailPath("thumbnails/v1.jpg", "v1"), "thumbnails/v1.jpg");
 });
 
 test("two rows cannot claim one thumbnail file, even differing only by case", () => {

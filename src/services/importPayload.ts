@@ -12,7 +12,11 @@
  */
 import type { TagType } from "../types";
 import { isSyntheticAssetId } from "../utils/assetId";
-import { buildManagedVideoPath, validateManagedVideoPath } from "../utils/managedVideoPath";
+import {
+    buildManagedVideoPath,
+    isSafeVideoId,
+    validateManagedVideoPath,
+} from "../utils/managedVideoPath";
 import { normalizeRestoredThumbnailPath } from "../utils/thumbnailPath";
 import { isVideoStorageMode, type VideoStorageMode } from "../utils/videoStorageMode";
 
@@ -236,6 +240,9 @@ function parseVideo(value: unknown, schemaVersion: number): ImportableVideo | nu
     if (id == null || assetId == null || filename == null || capturedAt == null) {
         return null;
     }
+    // The id becomes a filename (thumbnails/<id>.jpg, videos/<id>.<ext>). Every
+    // id the app writes is a UUID, so only a crafted backup fails this (#86 §5).
+    if (!isSafeVideoId(id)) return null;
 
     const storage = parseStorage(value, schemaVersion, id, assetId, filename);
     if (storage == null) return null;
