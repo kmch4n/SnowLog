@@ -245,6 +245,8 @@ export default function VideoDetailScreen() {
 
     useEffect(() => {
         if (playbackVideoId === undefined || playbackAssetId === undefined) return;
+        // 解決が長引く間に再生元が変わったら、古い結果を新しい再生元の上に書かない
+        let cancelled = false;
         setVideoUri(null);
         setAssetInfoMeta(null);
 
@@ -258,6 +260,7 @@ export default function VideoDetailScreen() {
                         const managedUri = playbackManagedVideoPath
                             ? await resolveManagedPath(playbackManagedVideoPath)
                             : null;
+                        if (cancelled) return;
                         if (managedUri) {
                             setVideoUri(managedUri);
                         } else {
@@ -270,6 +273,7 @@ export default function VideoDetailScreen() {
                     }
 
                     const granted = await requestMediaPermissions();
+                    if (cancelled) return;
                     if (!granted) {
                         // 権限拒否は一時的な状態であり、ファイル欠損ではない
                         Alert.alert(
@@ -283,6 +287,7 @@ export default function VideoDetailScreen() {
                         return;
                     }
                     const info = await getAssetInfoWithDownload(playbackAssetId);
+                    if (cancelled) return;
                     if (info?.uri || info?.localUri) {
                         // 高さ変更は LAYOUT_SPRING の layout transition が滑らかに遷移させる
                         // 再生には Photos フレームワークの uri (ph://) を優先利用する
@@ -298,6 +303,9 @@ export default function VideoDetailScreen() {
                 }
             })();
         }
+        return () => {
+            cancelled = true;
+        };
     }, [
         t,
         playbackVideoId,
