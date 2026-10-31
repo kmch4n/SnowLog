@@ -153,7 +153,13 @@ export default function VideoDetailScreen() {
             // updateTitle はこの描画時点の動画に束縛されている
             titleSave.schedule(async () => {
                 setTitleSaveStatus("saving");
-                await updateTitle(text.trim() || null);
+                try {
+                    await updateTitle(text.trim() || null);
+                } catch {
+                    // 「保存中」で固まらせない。入力欄の文字は残り、次の入力でまた保存を試みる
+                    setTitleSaveStatus("idle");
+                    return;
+                }
                 setTitleSaveStatus("saved");
                 titleStatusTimerRef.current = setTimeout(
                     () => setTitleSaveStatus("idle"),
@@ -174,7 +180,13 @@ export default function VideoDetailScreen() {
             setMemoSaveStatus("idle");
             memoSave.schedule(async () => {
                 setMemoSaveStatus("saving");
-                await updateMemo(text);
+                try {
+                    await updateMemo(text);
+                } catch {
+                    // 「保存中」で固まらせない。入力欄の文字は残り、次の入力でまた保存を試みる
+                    setMemoSaveStatus("idle");
+                    return;
+                }
                 setMemoSaveStatus("saved");
                 // 2秒後にステータスをリセット
                 memoStatusTimerRef.current = setTimeout(
