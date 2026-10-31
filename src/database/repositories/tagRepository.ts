@@ -131,9 +131,22 @@ export function setTagsForVideo(videoId: string, tagIds: number[]): void {
 
 /**
  * カスタムタグを削除する
- * SQLite の外部キー制約が既定で無効のため、video_tags を手動で削除してから tags を削除する
+ * video_tags を明示的に消してから tags を消す（外部キーの有効化以前からの書き方を保つ）。
+ *
+ * - custom 以外の ID なら何もしない。以前はリンクだけ先に消していたので、
+ *   スキーヤーや種別のタグ ID を渡すとタグは残ったまま全動画から外れた。
+ * - 2 文を同期トランザクションにまとめる。タグの削除が失敗したらリンクも戻る。
+ *   コールバックを async にすると最初の `await` で COMMIT される（`.memory/testing.md`）。
  */
 export async function deleteCustomTag(tagId: number): Promise<void> {
-    await db.delete(videoTags).where(eq(videoTags.tagId, tagId));
-    await db.delete(tags).where(and(eq(tags.id, tagId), eq(tags.type, "custom")));
+    db.transaction((tx) => {
+        const target = tx
+            .select({ id: tags.id })
+            .from(tags)
+            .where(and(eq(tags.id, tagId), eq(tags.type, "custom")))
+            .all();
+        if (target.length === 0) return;
+        tx.delete(videoTags).where(eq(videoTags.tagId, tagId)).run();
+        tx.delete(tags).where(eq(tags.id, tagId)).run();
+    });
 }
