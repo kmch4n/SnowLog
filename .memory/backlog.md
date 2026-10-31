@@ -1,6 +1,6 @@
 ---
 title: バックログ
-updated: 2026-10-26
+updated: 2026-10-31
 status: active
 ---
 
@@ -8,7 +8,7 @@ status: active
 
 コードや git log からは読み取れない「これからやりたいこと」の置き場。
 
-**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-10-26 時点で open 14 件 / 全 86 件）、
+**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-10-31 時点で open 14 件 / 全 86 件）、
 やることは基本すべて Issue 化されている。ここに同じ内容を書くと二重管理になり、必ず片方が腐る。
 このファイルには **Issue になっていないものだけ** を置く。Issue 化できたらここから消す。
 
@@ -20,7 +20,7 @@ status: active
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
-作業前にこの対応表を見て、既存 Issue を確認する。**2026-10-26 時点の open 14 件すべて**を載せている。
+作業前にこの対応表を見て、既存 Issue を確認する。**2026-10-31 時点の open 14 件すべて**を載せている。
 古い表は新しく立った Issue を落としたまま残っていて役に立たなかったので、更新するときは
 `gh issue list --state open` から作り直すこと。追記していくと必ず漏れる。
 
@@ -41,7 +41,7 @@ status: active
 | Liquid Glass の拡張（FilterBar はレイアウト変更が前提） | [#46](https://github.com/kmch4n/SnowLog/issues/46) |
 | ホームの長押し選択をコンテキストメニューに（expo-router の `Link.Menu` で依存追加なしに可能） | [#45](https://github.com/kmch4n/SnowLog/issues/45) |
 
-2026-10-26 に close: #84（Web が起動しない）、#82（CI 不在）、#81（`.gitattributes`）。
+2026-10-31 に close: #84（Web が起動しない）、#82（CI 不在）、#81（`.gitattributes`）。
 
 ### バックアップ往復（#72）と `.web` シム（#74）は closed
 
@@ -55,7 +55,7 @@ status: active
   なおバックアップはメタデータのみなので、別端末では動画が戻らない。再リンクは #85。
 - **[#74](https://github.com/kmch4n/SnowLog/issues/74)** — export 欠落 9 件は埋め、
   `scripts/tests/webShimParity.test.cjs` で再発を止めた。受け入れ基準の
-  「Web で 4 操作をクリックして確認」は #84 の修正後、2026-10-26 にブラウザで確認済み。
+  「Web で 4 操作をクリックして確認」は #84 の修正後、2026-10-31 にブラウザで確認済み。
 
 ## 完了済み（2026-03-26 に挙がっていた 3 件）
 
