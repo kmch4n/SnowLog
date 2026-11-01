@@ -139,6 +139,7 @@ export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapPro
                             activeOpacity={0.8}
                             disabled={onDayPress == null || cell.count === 0}
                             onPress={() => onDayPress?.({ dateKey: cell.dateKey, count: cell.count })}
+                            accessibilityRole="button"
                             style={[
                                 styles.cell,
                                 {

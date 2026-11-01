@@ -46,6 +46,7 @@ export function HorizontalBarChart({
                         disabled={onItemPress == null}
                         activeOpacity={0.7}
                         onPress={() => onItemPress?.(item)}
+                        accessibilityRole="button"
                     >
                         <View style={styles.labelWrap}>
                             <Text style={styles.label} numberOfLines={2}>

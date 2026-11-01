@@ -43,6 +43,8 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
                 <TouchableOpacity
                     style={[styles.toggleBtn, metric === "videoCount" && styles.toggleBtnActive]}
                     onPress={() => setMetric("videoCount")}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: metric === "videoCount" }}
                 >
                     <Text
                         style={[
@@ -56,6 +58,8 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
                 <TouchableOpacity
                     style={[styles.toggleBtn, metric === "skiDays" && styles.toggleBtnActive]}
                     onPress={() => setMetric("skiDays")}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: metric === "skiDays" }}
                 >
                     <Text
                         style={[
@@ -82,6 +86,7 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
                             disabled={onBarPress == null}
                             activeOpacity={0.7}
                             onPress={() => onBarPress?.(item)}
+                            accessibilityRole="button"
                         >
                             <View
                                 style={[
@@ -110,6 +115,7 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
                         disabled={onBarPress == null}
                         activeOpacity={0.7}
                         onPress={() => onBarPress?.(item)}
+                        accessibilityRole="button"
                     >
                         <Text style={styles.valueLabel}>
                             {item[metric] > 0 ? item[metric] : ""}

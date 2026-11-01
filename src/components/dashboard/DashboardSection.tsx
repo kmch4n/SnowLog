@@ -15,7 +15,10 @@ export function DashboardSection({ title, children, rightAction }: DashboardSect
             <View style={styles.header}>
                 <Text style={styles.title}>{title}</Text>
                 {rightAction && (
-                    <TouchableOpacity onPress={rightAction.onPress}>
+                    <TouchableOpacity
+                        onPress={rightAction.onPress}
+                        accessibilityRole="button"
+                    >
                         <Text style={styles.actionText}>{rightAction.label}</Text>
                     </TouchableOpacity>
                 )}
