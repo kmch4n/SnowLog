@@ -209,9 +209,13 @@ export async function applyImportPlan(plan: ImportPlan): Promise<ImportSummary> 
             inserted = insertVideoWithTagsForRestore(row, await restoreTagIds(video.tagRefs));
         } catch {
             // The tags could not be resolved or linked. One video's tags are not
-            // worth losing the video, or the rest of the restore.
-            tagFailures += 1;
+            // worth losing the video, or the rest of the restore. A failure to
+            // write the video itself throws again here and stops the restore, as
+            // it always has: that is a storage problem, not a tag problem.
             inserted = insertVideoWithTagsForRestore(row, []);
+            // tagFailures means "the video is in, its tags are not". A video that
+            // already existed was skipped, so it is not a tag failure.
+            if (inserted) tagFailures += 1;
         }
         if (!inserted) continue;
         videosInserted += 1;
