@@ -30,7 +30,7 @@ status: active
 | 限定アクセスで許可範囲外の動画を取り込むと「ファイル無し」に落ちて戻らない。実機での再現確認待ち、方針は Issue コメントで合意済み | [#87](https://github.com/kmch4n/SnowLog/issues/87) |
 | 復元した動画を新端末の写真ライブラリに再リンクする | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
 | `video-import.tsx` の分割（#86 Task E で行う） | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
-| アクセシビリティ（74 個中 66 個の touchable に role/label 無し） | [#79](https://github.com/kmch4n/SnowLog/issues/79) |
+| アクセシビリティのラベル（アイコンのみ・データ駆動の操作）。ロールの付与は 2026-11-02 に完了 | [#79](https://github.com/kmch4n/SnowLog/issues/79) |
 | Expo SDK 55 の依存 26 件が期待バージョン未満。1.4.0 リリース後、#86 Task A の前に行う | [#78](https://github.com/kmch4n/SnowLog/issues/78) |
 | iCloud ダウンロードの制御（#86 のサブ Issue） | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
 | カスタムタグ UI の見直し | [#69](https://github.com/kmch4n/SnowLog/issues/69) |
