@@ -30,7 +30,12 @@ export function TagChip({ tag, onRemove }: TagChipProps) {
         >
             <Text style={[styles.label, { color: tagColors.text }]}>{tag.name}</Text>
             {onRemove && (
-                <TouchableOpacity onPress={onRemove} hitSlop={8} style={styles.removeButton}>
+                <TouchableOpacity
+                    onPress={onRemove}
+                    hitSlop={8}
+                    style={styles.removeButton}
+                    accessibilityRole="button"
+                >
                     <Icon
                         name={IconNames.xmark}
                         size={14}

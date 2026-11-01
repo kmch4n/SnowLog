@@ -57,6 +57,8 @@ export function CalendarDayCell({
                 style={[styles.weekCell, isSelected && styles.weekCellSelected]}
                 onPress={() => onPress(day)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
             >
                 {/* 曜日 + 日番号 */}
                 <View style={styles.weekHeader}>
@@ -135,6 +137,8 @@ export function CalendarDayCell({
             style={styles.monthCell}
             onPress={() => onPress(day)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityState={{ selected: isSelected }}
         >
             {/* 日番号 */}
             <View

@@ -239,6 +239,7 @@ export function DiaryEditModal({
                         onPress={handleClose}
                         hitSlop={8}
                         style={styles.closeButton}
+                        accessibilityRole="button"
                     >
                         <Icon
                             name={IconNames.xmark}
@@ -311,6 +312,7 @@ export function DiaryEditModal({
                         style={styles.optionalToggle}
                         onPress={() => setShowOptional((v) => !v)}
                         activeOpacity={0.7}
+                        accessibilityRole="button"
                     >
                         <Text style={styles.optionalToggleText}>
                             {showOptional
@@ -408,6 +410,7 @@ export function DiaryEditModal({
                         <TouchableOpacity
                             style={styles.deleteButton}
                             onPress={handleDelete}
+                            accessibilityRole="button"
                         >
                             <Text style={styles.deleteButtonText}>
                                 {t("diary.deleteEntry")}

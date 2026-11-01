@@ -139,7 +139,11 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
                     returnKeyType="done"
                 />
                 {query.length > 0 && (
-                    <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
+                    <TouchableOpacity
+                        onPress={handleClear}
+                        style={styles.clearButton}
+                        accessibilityRole="button"
+                    >
                         <Icon
                             name={IconNames.xmark}
                             size={18}
@@ -166,6 +170,7 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
                                 key={name}
                                 style={styles.contextSuggestionChip}
                                 onPress={() => handleSuggestionSelect(name)}
+                                accessibilityRole="button"
                             >
                                 <Text style={styles.contextSuggestionChipText}>{name}</Text>
                             </TouchableOpacity>
@@ -188,6 +193,7 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
                             key={name}
                             style={styles.favoriteChip}
                             onPress={() => handleFavoriteSelect(name)}
+                            accessibilityRole="button"
                         >
                             <Icon
                                 name={IconNames.starFill}
@@ -217,6 +223,7 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
                                 <TouchableOpacity
                                     style={styles.suggestionItem}
                                     onPress={() => handleSelect(item)}
+                                    accessibilityRole="button"
                                 >
                                     <Text style={styles.suggestionName}>{item.name}</Text>
                                     <Text style={styles.suggestionPrefecture}>{item.prefecture}</Text>

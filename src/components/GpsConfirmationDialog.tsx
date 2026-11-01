@@ -50,6 +50,8 @@ export function GpsConfirmationDialog({
                         style={styles.groupRow}
                         onPress={() => onToggleGroup(group.resortName)}
                         disabled={isApplying}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: group.confirmed }}
                     >
                         <View style={[
                             styles.checkbox,
@@ -99,6 +101,7 @@ export function GpsConfirmationDialog({
                     style={styles.skipButton}
                     onPress={onSkip}
                     disabled={isApplying}
+                    accessibilityRole="button"
                 >
                     <Text style={styles.skipButtonText}>{t("import.gpsConfirm.skip")}</Text>
                 </TouchableOpacity>
@@ -109,6 +112,7 @@ export function GpsConfirmationDialog({
                     ]}
                     onPress={onConfirm}
                     disabled={!hasConfirmed || isApplying}
+                    accessibilityRole="button"
                 >
                     {isApplying ? (
                         <ActivityIndicator color={Colors.headerText} size="small" />

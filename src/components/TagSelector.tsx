@@ -76,7 +76,12 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
                     <Text style={styles.sectionLabel}>{t("components.tagSelector.skierHeader")}</Text>
                     <View style={styles.chips}>
                         {skierTags.map((tag) => (
-                            <TouchableOpacity key={tag.id} onPress={() => toggleTag(tag)}>
+                            <TouchableOpacity
+                                key={tag.id}
+                                onPress={() => toggleTag(tag)}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: isSelected(tag.id) }}
+                            >
                                 <TagChip
                                     tag={tag}
                                     onRemove={isSelected(tag.id) ? () => toggleTag(tag) : undefined}
@@ -98,14 +103,23 @@ export function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
                     onSubmitEditing={addCustomTag}
                     returnKeyType="done"
                 />
-                <TouchableOpacity style={styles.addButton} onPress={addCustomTag}>
+                <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={addCustomTag}
+                    accessibilityRole="button"
+                >
                     <Text style={styles.addButtonText}>{t("common.add")}</Text>
                 </TouchableOpacity>
             </View>
             {customTags.length > 0 && (
                 <View style={styles.chips}>
                     {customTags.map((tag) => (
-                        <TouchableOpacity key={tag.id} onPress={() => toggleTag(tag)}>
+                        <TouchableOpacity
+                            key={tag.id}
+                            onPress={() => toggleTag(tag)}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: isSelected(tag.id) }}
+                        >
                             <TagChip
                                 tag={tag}
                                 onRemove={isSelected(tag.id) ? () => toggleTag(tag) : undefined}

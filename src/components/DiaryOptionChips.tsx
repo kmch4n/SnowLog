@@ -66,6 +66,8 @@ export function DiaryOptionChips<T extends string | number>(
                         key={String(opt.value)}
                         onPress={() => handlePress(opt.value)}
                         style={[styles.chip, isSelected && styles.chipSelected]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: isSelected }}
                     >
                         <Text
                             style={[

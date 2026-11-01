@@ -97,6 +97,8 @@ export function VideoCardCompact({
             onPress={onPress}
             onLongPress={onLongPress}
             activeOpacity={0.8}
+            accessibilityRole={isSelectionMode ? "checkbox" : "button"}
+            accessibilityState={isSelectionMode ? { checked: isSelected } : undefined}
         >
             {/* Selection checkbox */}
             {isSelectionMode && (

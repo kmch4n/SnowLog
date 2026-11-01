@@ -179,7 +179,11 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                     autoCorrect={false}
                 />
                 {searchDraft.length > 0 && (
-                    <TouchableOpacity style={styles.searchClear} onPress={clearSearch}>
+                    <TouchableOpacity
+                        style={styles.searchClear}
+                        onPress={clearSearch}
+                        accessibilityRole="button"
+                    >
                         <Icon
                             name={IconNames.xmark}
                             size={18}
@@ -211,7 +215,12 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                     {allTags.map((tag) => {
                         const active = filter.tagIds?.includes(tag.id) ?? false;
                         return (
-                            <PressableScale key={tag.id} onPress={() => toggleTag(tag.id)}>
+                            <PressableScale
+                                key={tag.id}
+                                onPress={() => toggleTag(tag.id)}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: active }}
+                            >
                                 <View
                                     style={[
                                         styles.tagItem,
@@ -240,6 +249,8 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                             key={preset.key}
                             style={[styles.presetChip, active && styles.presetChipActive]}
                             onPress={() => handlePresetPress(preset.key)}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: active }}
                         >
                             <Text
                                 style={[styles.presetText, active && styles.presetTextActive]}
@@ -254,7 +265,11 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
 
             {/* Clear all filters */}
             {hasActiveFilter && (
-                <TouchableOpacity style={styles.clearButton} onPress={clearAll}>
+                <TouchableOpacity
+                    style={styles.clearButton}
+                    onPress={clearAll}
+                    accessibilityRole="button"
+                >
                     <Text style={styles.clearButtonText}>{t("search.clearAll")}</Text>
                 </TouchableOpacity>
             )}

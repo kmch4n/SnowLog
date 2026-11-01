@@ -36,6 +36,7 @@ export function DiaryCard({ diary, onPress }: DiaryCardProps) {
                 style={styles.addButton}
                 onPress={onPress}
                 activeOpacity={0.7}
+                accessibilityRole="button"
             >
                 <Text style={styles.addButtonText}>{t("diary.addButton")}</Text>
             </TouchableOpacity>
@@ -56,6 +57,7 @@ export function DiaryCard({ diary, onPress }: DiaryCardProps) {
             style={styles.card}
             onPress={onPress}
             activeOpacity={0.7}
+            accessibilityRole="button"
         >
             {hasTopBadges && (
                 <View style={styles.badgeRow}>

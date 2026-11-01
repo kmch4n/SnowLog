@@ -79,6 +79,7 @@ export function BulkImportProgress({
                 ]}
                 onPress={onRequestStop}
                 disabled={isStopRequested}
+                accessibilityRole="button"
             >
                 <Text style={styles.stopButtonText}>
                     {isStopRequested

@@ -49,6 +49,8 @@ export function TechniqueSelector({ selected, onChange }: TechniqueSelectorProps
                         key={opt.id}
                         onPress={() => toggle(opt.name)}
                         style={[styles.chip, isSelected && styles.chipSelected]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: isSelected }}
                     >
                         <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                             {opt.name}

@@ -48,6 +48,7 @@ export function BulkActionToolbar({
                         <PressableScale
                             style={styles.actionButton}
                             onPress={onToggleFavorite}
+                            accessibilityRole="button"
                         >
                             <Text style={styles.favoriteText} maxFontSizeMultiplier={1.4}>
                                 {t("bulkToolbar.favorite")}
@@ -57,6 +58,7 @@ export function BulkActionToolbar({
                         <PressableScale
                             style={styles.actionButton}
                             onPress={onDelete}
+                            accessibilityRole="button"
                         >
                             <Text style={styles.deleteText} maxFontSizeMultiplier={1.4}>
                                 {t("bulkToolbar.delete")}
@@ -66,6 +68,7 @@ export function BulkActionToolbar({
                         <PressableScale
                             style={styles.actionButton}
                             onPress={onCancel}
+                            accessibilityRole="button"
                         >
                             <Text style={styles.cancelText} maxFontSizeMultiplier={1.4}>
                                 {t("bulkToolbar.cancel")}
