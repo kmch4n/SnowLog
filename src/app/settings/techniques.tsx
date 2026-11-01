@@ -112,6 +112,7 @@ export default function TechniquesSettingsScreen() {
                 <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => handleDelete(item)}
+                    accessibilityRole="button"
                 >
                     <Text style={styles.deleteButtonText}>{t("common.delete")}</Text>
                 </TouchableOpacity>
@@ -153,6 +154,7 @@ export default function TechniquesSettingsScreen() {
                     style={[styles.addButton, !input.trim() && styles.addButtonDisabled]}
                     onPress={handleAdd}
                     disabled={!input.trim()}
+                    accessibilityRole="button"
                 >
                     <Text style={styles.addButtonText}>{t("common.add")}</Text>
                 </TouchableOpacity>

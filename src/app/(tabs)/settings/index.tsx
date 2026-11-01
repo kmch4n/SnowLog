@@ -228,6 +228,7 @@ export default function SettingsScreen() {
                         ]}
                         onPress={() => router.push(item.route as Href)}
                         activeOpacity={0.7}
+                        accessibilityRole="button"
                     >
                         <View style={styles.rowContent}>
                             <Text style={styles.rowLabel}>{item.label}</Text>
@@ -328,6 +329,7 @@ export default function SettingsScreen() {
                     onPress={confirmManualCleanup}
                     activeOpacity={0.7}
                     disabled={isCleaning}
+                    accessibilityRole="button"
                 >
                     <View style={styles.rowContent}>
                         <Text style={styles.rowLabel}>

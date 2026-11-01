@@ -160,6 +160,7 @@ function DuplicateGroupCard({
                                     style={styles.inlineActionButton}
                                     onPress={() => keepOnly(video.id)}
                                     disabled={isDeleting}
+                                    accessibilityRole="button"
                                 >
                                     <Text style={styles.inlineActionText}>{t("settings.duplicateCandidates.keepThis")}</Text>
                                 </TouchableOpacity>
@@ -167,6 +168,7 @@ function DuplicateGroupCard({
                                     style={styles.inlineActionButton}
                                     onPress={() => onOpenVideo(video.id)}
                                     disabled={isDeleting}
+                                    accessibilityRole="button"
                                 >
                                     <Text style={styles.inlineActionText}>{t("common.detail")}</Text>
                                 </TouchableOpacity>
@@ -188,6 +190,7 @@ function DuplicateGroupCard({
                     ]}
                     onPress={handleDeletePress}
                     disabled={selectedIds.size === 0 || isDeleting}
+                    accessibilityRole="button"
                 >
                     {isDeleting ? (
                         <ActivityIndicator size="small" color={Colors.headerText} />
@@ -295,7 +298,11 @@ export default function DuplicateCandidatesScreen() {
                     <Text style={styles.emptyText}>
                         {t("settings.duplicateCandidates.emptyBody")}
                     </Text>
-                    <TouchableOpacity style={styles.refreshButton} onPress={refresh}>
+                    <TouchableOpacity
+                        style={styles.refreshButton}
+                        onPress={refresh}
+                        accessibilityRole="button"
+                    >
                         <Text style={styles.refreshButtonText}>{t("settings.duplicateCandidates.rescan")}</Text>
                     </TouchableOpacity>
                 </View>

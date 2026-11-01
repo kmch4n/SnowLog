@@ -90,6 +90,7 @@ export default function FavoriteResortsScreen() {
                     style={[styles.addButton, !selectedResort && styles.addButtonDisabled]}
                     onPress={handleAdd}
                     disabled={!selectedResort}
+                    accessibilityRole="button"
                 >
                     <Text style={styles.addButtonText}>{t("common.add")}</Text>
                 </TouchableOpacity>
@@ -119,6 +120,7 @@ export default function FavoriteResortsScreen() {
                         <TouchableOpacity
                             style={styles.deleteButton}
                             onPress={() => handleDelete(item)}
+                            accessibilityRole="button"
                         >
                             <Text style={styles.deleteButtonText}>{t("common.delete")}</Text>
                         </TouchableOpacity>

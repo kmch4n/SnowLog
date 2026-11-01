@@ -37,6 +37,8 @@ export default function CalendarSettingsScreen() {
                                 ]}
                                 onPress={() => setWeekStartDay(opt.value)}
                                 activeOpacity={0.7}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: isActive }}
                             >
                                 <Text
                                     style={[
