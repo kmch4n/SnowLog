@@ -365,6 +365,8 @@ export default function HomeScreen() {
                         onPress={() => handleTabPress(i)}
                         activeOpacity={0.7}
                         disabled={isSelectionMode}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: activeTab === i }}
                     >
                         <Text style={[styles.segmentText, activeTab === i && styles.segmentTextActive]}>
                             {tabLabels[i]}
@@ -380,6 +382,7 @@ export default function HomeScreen() {
                     onPress={handleOpenSortPicker}
                     activeOpacity={0.7}
                     disabled={isSelectionMode}
+                    accessibilityRole="button"
                 >
                     <Text style={styles.sortChipText}>
                         {t("home.sort.current", { label: sortLabels[sortOrder] })}
@@ -442,6 +445,7 @@ export default function HomeScreen() {
                             style={styles.fabTouch}
                             onPress={handleImportPress}
                             activeOpacity={0.8}
+                            accessibilityRole="button"
                         >
                             <Text style={styles.fabText}>{t("home.importFab")}</Text>
                         </TouchableOpacity>

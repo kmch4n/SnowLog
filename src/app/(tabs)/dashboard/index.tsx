@@ -221,6 +221,8 @@ function SeasonSelector({ seasons, selected, onSelect }: SeasonSelectorProps) {
                         key={s.startYear}
                         style={[styles.seasonChip, isActive && styles.seasonChipActive]}
                         onPress={() => onSelect(s)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: isActive }}
                     >
                         <Text
                             style={[

@@ -179,7 +179,11 @@ export default function CalendarScreen() {
                     />
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={toggleViewMode} activeOpacity={0.7}>
+                <TouchableOpacity
+                    onPress={toggleViewMode}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                >
                     <Text style={styles.monthTitle}>
                         {isMonthView
                             ? formatMonthTitle(year, month, locale)
