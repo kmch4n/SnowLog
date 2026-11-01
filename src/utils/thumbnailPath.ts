@@ -64,3 +64,22 @@ export function normalizeRestoredThumbnailPath(stored: string, videoId: string):
     if (relative !== `${THUMBNAIL_DIRECTORY}${videoId}.jpg`) return MISSING_SENTINEL;
     return relative;
 }
+
+/**
+ * 復元する動画の ID が、既存の別の動画の ID と大文字小文字だけ違うか。
+ *
+ * iOS のファイルシステムは大文字小文字を区別しないので、`thumbnails/V1.jpg` と
+ * `thumbnails/v1.jpg` は同じファイルになる。復元した `V1` が既存の `v1` のサムネイルを
+ * 自分のものとして持つと、どちらかを消したときにもう一方の画像も消える（#88）。
+ * 同じ ID は同じ動画なので衝突ではない（その行は復元時に丸ごと飛ばされる）。
+ */
+export function thumbnailBelongsToAnotherVideo(
+    videoId: string,
+    existingVideoIds: ReadonlySet<string>
+): boolean {
+    const lower = videoId.toLowerCase();
+    for (const existing of existingVideoIds) {
+        if (existing !== videoId && existing.toLowerCase() === lower) return true;
+    }
+    return false;
+}

@@ -6,7 +6,10 @@ import { addFavoriteResort } from "../database/repositories/favoriteResortReposi
 import { insertPreferenceIfAbsent } from "../database/repositories/appPreferenceRepository";
 import { getOrCreateTag } from "../database/repositories/tagRepository";
 import { insertTechniqueOptionsForRestore } from "../database/repositories/techniqueOptionRepository";
-import { insertVideoWithTagsForRestore } from "../database/repositories/videoRepository";
+import {
+    getAllVideos,
+    insertVideoWithTagsForRestore,
+} from "../database/repositories/videoRepository";
 import type { DiaryEntryInsert, VideoInsert } from "../database/schema";
 
 import { ImportError, parseExportPayload } from "./importPayload";
@@ -14,6 +17,7 @@ import type { ImportPlan, ImportableTag } from "./importPayload";
 import { managedPathExists } from "./managedVideoFileService";
 import { checkAssetExists } from "./mediaService";
 import { THUMBNAIL_MISSING_SENTINEL, thumbnailFileExists } from "./thumbnailService";
+import { thumbnailBelongsToAnotherVideo } from "../utils/thumbnailPath";
 
 /**
  * Restore a backup written by `exportAllToJSON`.
@@ -172,8 +176,14 @@ export async function applyImportPlan(plan: ImportPlan): Promise<ImportSummary> 
     let videosInserted = 0;
     let unavailableVideos = 0;
     let tagFailures = 0;
+    const existingVideoIds = new Set((await getAllVideos()).map((existing) => existing.id));
     for (const video of plan.videos) {
-        const { isFileAvailable, thumbnailUri } = await resolveDeviceState(video);
+        const deviceState = await resolveDeviceState(video);
+        const { isFileAvailable } = deviceState;
+        // On a case-insensitive filesystem, V1's thumbnail file is v1's (#88).
+        const thumbnailUri = thumbnailBelongsToAnotherVideo(video.id, existingVideoIds)
+            ? THUMBNAIL_MISSING_SENTINEL
+            : deviceState.thumbnailUri;
         const row: VideoInsert = {
             id: video.id,
             assetId: video.assetId,
