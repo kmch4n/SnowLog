@@ -50,6 +50,7 @@ status: active
 - **設定は `home_sort_order` と `weekStartDay` だけ戻す。** マイグレーション記録
   （`thumbnail_migration_version` / `capturedAt_repair_version`）を書き戻すと、新規インストールで
   当該マイグレーションを飛ばす。詳細は [wiring.md](wiring.md) の `app_preferences` の節。
+  この 2 つも**既に値があれば上書きしない**（`insertPreferenceIfAbsent`。#88 で揃えた。以前は upsert で上書きしていた）。
 
 ### まだ変えてはいけない記述
 

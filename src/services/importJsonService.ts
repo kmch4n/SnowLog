@@ -3,7 +3,7 @@ import * as FileSystem from "expo-file-system/legacy";
 
 import { insertDiaryEntriesForRestore } from "../database/repositories/diaryEntryRepository";
 import { addFavoriteResort } from "../database/repositories/favoriteResortRepository";
-import { setPreference } from "../database/repositories/appPreferenceRepository";
+import { insertPreferenceIfAbsent } from "../database/repositories/appPreferenceRepository";
 import { getOrCreateTag, setTagsForVideo } from "../database/repositories/tagRepository";
 import { insertTechniqueOptionsForRestore } from "../database/repositories/techniqueOptionRepository";
 import { insertVideosForRestore } from "../database/repositories/videoRepository";
@@ -214,10 +214,13 @@ export async function applyImportPlan(plan: ImportPlan): Promise<ImportSummary> 
         plan.diaryEntries.map((entry): DiaryEntryInsert => ({ ...entry }))
     );
 
+    // Like every other table, a restore never overwrites what is already here:
+    // a setting changed after the backup was made stays as the user left it (#88).
     let preferences = 0;
     for (const preference of plan.preferences) {
-        await setPreference(preference.key, preference.value);
-        preferences += 1;
+        if (await insertPreferenceIfAbsent(preference.key, preference.value)) {
+            preferences += 1;
+        }
     }
 
     return {

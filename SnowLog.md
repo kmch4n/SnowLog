@@ -501,6 +501,7 @@ videos --< video_tags >-- tags
 - 復元時に動画ごとにアセットの実在を確認し、`isFileAvailable` を実測値で入れる。
   サムネイルはファイルが実在する場合のみパスを保ち、無ければ `THUMBNAIL_MISSING_SENTINEL` にする。
 - 設定は `home_sort_order` と `weekStartDay` のみ復元する（`RESTORABLE_PREFERENCE_KEYS`）。
+  他のデータと同じく、既に値がある場合は上書きしない。
 
 ### 11.4 現在の制限
 

@@ -118,3 +118,4 @@ Web は `npm run web` で起動するプレビュー。動かすうえで踏ん�
       `thumbnail_migration_version` / `capturedAt_repair_version` を書き戻すと、
       新規インストールで当該マイグレーションが「済み」と判定されて飛ぶ。
       **キーを増やしたときは、復元してよいものかをここで判断すること。**
+      復元は `insertPreferenceIfAbsent` で書くので、既に値がある端末では上書きしない（#88）。
