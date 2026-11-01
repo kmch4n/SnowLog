@@ -1,6 +1,6 @@
 ---
 title: バックログ
-updated: 2026-10-31
+updated: 2026-11-02
 status: active
 ---
 
@@ -8,7 +8,7 @@ status: active
 
 コードや git log からは読み取れない「これからやりたいこと」の置き場。
 
-**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-10-31 時点で open 14 件 / 全 86 件）、
+**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-11-02 時点で open 12 件 / 全 86 件）、
 やることは基本すべて Issue 化されている。ここに同じ内容を書くと二重管理になり、必ず片方が腐る。
 このファイルには **Issue になっていないものだけ** を置く。Issue 化できたらここから消す。
 
@@ -20,20 +20,18 @@ status: active
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
-作業前にこの対応表を見て、既存 Issue を確認する。**2026-10-31 時点の open 14 件すべて**を載せている。
+作業前にこの対応表を見て、既存 Issue を確認する。**2026-11-02 時点の open 12 件すべて**を載せている。
 古い表は新しく立った Issue を落としたまま残っていて役に立たなかったので、更新するときは
 `gh issue list --state open` から作り直すこと。追記していくと必ず漏れる。
 
 | テーマ | Issue |
 | --- | --- |
-| 動画の保存方式の選択。Task B・D の中核は実装済み。残るは Task A・C（ネイティブ）・E・F・G と実機検証。1.4.0 に migration 0009 が入る件の判断待ち | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
-| 限定アクセスで許可範囲外の動画を取り込むと「ファイル無し」に落ちて戻らない（実機未確認） | [#87](https://github.com/kmch4n/SnowLog/issues/87) |
-| 復元が設定値を上書きする件と、途中失敗後の再実行でタグが戻らない件（判断待ち） | [#88](https://github.com/kmch4n/SnowLog/issues/88) |
+| 動画の保存方式の選択。Task B・D の中核は実装済み。残るは Task A・C（ネイティブ）・E・F・G と実機検証。1.4.0 は main から出し 0009 を含める（§9 で決定） | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
+| 限定アクセスで許可範囲外の動画を取り込むと「ファイル無し」に落ちて戻らない。実機での再現確認待ち、方針は Issue コメントで合意済み | [#87](https://github.com/kmch4n/SnowLog/issues/87) |
 | 復元した動画を新端末の写真ライブラリに再リンクする | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
-| 参照されない `common.*` の i18n キー 4 件を残すか消すか | [#83](https://github.com/kmch4n/SnowLog/issues/83) |
 | `video-import.tsx` の分割（#86 Task E で行う） | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
 | アクセシビリティ（74 個中 66 個の touchable に role/label 無し） | [#79](https://github.com/kmch4n/SnowLog/issues/79) |
-| Expo SDK 55 の依存 26 件が期待バージョン未満 | [#78](https://github.com/kmch4n/SnowLog/issues/78) |
+| Expo SDK 55 の依存 26 件が期待バージョン未満。1.4.0 リリース後、#86 Task A の前に行う | [#78](https://github.com/kmch4n/SnowLog/issues/78) |
 | iCloud ダウンロードの制御（#86 のサブ Issue） | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
 | カスタムタグ UI の見直し | [#69](https://github.com/kmch4n/SnowLog/issues/69) |
 | Reels 取り込みの検討 | [#54](https://github.com/kmch4n/SnowLog/issues/54) |
@@ -42,6 +40,7 @@ status: active
 | ホームの長押し選択をコンテキストメニューに（expo-router の `Link.Menu` で依存追加なしに可能） | [#45](https://github.com/kmch4n/SnowLog/issues/45) |
 
 2026-10-31 に close: #84（Web が起動しない）、#82（CI 不在）、#81（`.gitattributes`）。
+2026-11-02 に close: #83（`common.*` は削除）、#88（復元の設定上書きとタグ取りこぼし）。
 
 ### バックアップ往復（#72）と `.web` シム（#74）は closed
 
