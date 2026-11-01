@@ -50,6 +50,7 @@ export default function VideoDetailScreen() {
                     onPress={handleExport}
                     style={{ marginRight: 16 }}
                     disabled={isExporting}
+                    accessibilityRole="button"
                 >
                     <Text style={{ color: Colors.headerText, fontSize: 14 }}>
                         {isExporting ? "..." : t("settings.export.headerButton")}

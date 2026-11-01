@@ -924,6 +924,7 @@ export default function VideoImportScreen() {
                     ]}
                     onPress={handleRequestBulkStop}
                     disabled={isBulkStopRequested}
+                    accessibilityRole="button"
                 >
                     <Text style={styles.preparingStopButtonText}>
                         {isBulkStopRequested
@@ -990,7 +991,11 @@ export default function VideoImportScreen() {
                 nestedScrollEnabled
             >
                 {/* 動画選択エリア */}
-                <TouchableOpacity style={styles.pickButton} onPress={handlePickVideo}>
+                <TouchableOpacity
+                    style={styles.pickButton}
+                    onPress={handlePickVideo}
+                    accessibilityRole="button"
+                >
                     {selectedAsset ? (
                         <View style={styles.previewContainer}>
                             <Image
@@ -1013,7 +1018,11 @@ export default function VideoImportScreen() {
                                     </Text>
                                 )}
                             </View>
-                            <TouchableOpacity style={styles.changeButton} onPress={handlePickVideo}>
+                            <TouchableOpacity
+                                style={styles.changeButton}
+                                onPress={handlePickVideo}
+                                accessibilityRole="button"
+                            >
                                 <Text style={styles.changeButtonText}>{t("import.changeButton")}</Text>
                             </TouchableOpacity>
                         </View>
@@ -1027,7 +1036,11 @@ export default function VideoImportScreen() {
 
                 {/* 一括インポートボタン（動画未選択時のみ表示） */}
                 {!selectedAsset && (
-                    <TouchableOpacity style={styles.bulkButton} onPress={handlePickBulk}>
+                    <TouchableOpacity
+                        style={styles.bulkButton}
+                        onPress={handlePickBulk}
+                        accessibilityRole="button"
+                    >
                         <Text style={styles.bulkButtonText}>
                             {t("import.bulkPickButtonWithLimit", { limit: BULK_SELECTION_LIMIT })}
                         </Text>
@@ -1078,6 +1091,7 @@ export default function VideoImportScreen() {
                                             setIsSkiResortFromGpsSuggestion(true);
                                             setGpsSuggestions([]);
                                         }}
+                                        accessibilityRole="button"
                                     >
                                         <Text style={styles.gpsBannerChipName}>{s.name}</Text>
                                         <Text style={styles.gpsBannerChipDist}>{s.distanceKm.toFixed(1)} km</Text>
@@ -1132,6 +1146,7 @@ export default function VideoImportScreen() {
                     ]}
                     onPress={handleSave}
                     disabled={!selectedAsset || isSaving || !resolvedAssetUri || isLoadingMeta}
+                    accessibilityRole="button"
                 >
                     {isSaving ? (
                         <ActivityIndicator color={Colors.headerText} />

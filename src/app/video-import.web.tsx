@@ -19,7 +19,11 @@ export default function VideoImportScreen() {
             <Text style={styles.description}>
                 {t("import.webUnsupportedBody")}
             </Text>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
+                accessibilityRole="button"
+            >
                 <Text style={styles.backButtonText}>{t("common.back")}</Text>
             </TouchableOpacity>
         </View>

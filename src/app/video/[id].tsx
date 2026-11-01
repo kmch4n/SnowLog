@@ -442,6 +442,8 @@ export default function VideoDetailScreen() {
                             onPress={toggleFavorite}
                             hitSlop={8}
                             style={styles.starButton}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: video.isFavorite === 1 }}
                         >
                             <Icon
                                 name={video.isFavorite === 1 ? IconNames.starFill : IconNames.starOutline}
@@ -482,6 +484,7 @@ export default function VideoDetailScreen() {
                                     }
                                 }}
                                 hitSlop={8}
+                                accessibilityRole="button"
                             >
                                 <Text style={styles.photosLink}>{t("videoDetail.openPhotos")}</Text>
                             </TouchableOpacity>
@@ -552,7 +555,11 @@ export default function VideoDetailScreen() {
 
                 {/* 削除ボタン */}
                 <Animated.View layout={LAYOUT_SPRING}>
-                    <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                    <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={handleDelete}
+                        accessibilityRole="button"
+                    >
                         <Text style={styles.deleteButtonText}>{t("videoDetail.deleteRecord")}</Text>
                     </TouchableOpacity>
                 </Animated.View>
