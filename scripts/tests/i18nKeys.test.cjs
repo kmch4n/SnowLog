@@ -34,15 +34,11 @@ const localesDir = path.join(srcRoot, "i18n", "locales");
 /**
  * Keys that are unreferenced on purpose. Each entry needs a reason.
  *
- * The `common.*` block may be a deliberately stocked shared vocabulary; whether
- * to keep or delete it is pending the maintainer's decision in #83.
+ * Empty since #83: the maintainer chose to delete the unused `common.*` keys
+ * rather than keep them as a stocked vocabulary. Re-add a key when a screen
+ * reads it; the "every referenced key exists" case catches a forgotten one.
  */
-const UNREFERENCED_ALLOWLIST = new Set([
-    "common.save",
-    "common.edit",
-    "common.close",
-    "common.error",
-]);
+const UNREFERENCED_ALLOWLIST = new Set([]);
 
 /**
  * Non-literal `t()` arguments the scan knows how to account for, as
