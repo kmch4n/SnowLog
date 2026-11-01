@@ -4,9 +4,9 @@ import * as FileSystem from "expo-file-system/legacy";
 import { insertDiaryEntriesForRestore } from "../database/repositories/diaryEntryRepository";
 import { addFavoriteResort } from "../database/repositories/favoriteResortRepository";
 import { insertPreferenceIfAbsent } from "../database/repositories/appPreferenceRepository";
-import { getOrCreateTag, setTagsForVideo } from "../database/repositories/tagRepository";
+import { getOrCreateTag } from "../database/repositories/tagRepository";
 import { insertTechniqueOptionsForRestore } from "../database/repositories/techniqueOptionRepository";
-import { insertVideosForRestore } from "../database/repositories/videoRepository";
+import { insertVideoWithTagsForRestore } from "../database/repositories/videoRepository";
 import type { DiaryEntryInsert, VideoInsert } from "../database/schema";
 
 import { ImportError, parseExportPayload } from "./importPayload";
@@ -162,12 +162,19 @@ export async function applyImportPlan(plan: ImportPlan): Promise<ImportSummary> 
         tags += 1;
     }
 
-    const rows: VideoInsert[] = [];
+    // Each video goes in together with its tag links, in one transaction (#88).
+    // Writing all videos first and the links in a later loop left videos with
+    // no tags if the restore stopped in between, and a re-run skips existing
+    // videos, so those tags never came back.
+    //
+    // A video that already exists is skipped whole: its current tags are what
+    // the user has now, and the backup must not replace them.
+    let videosInserted = 0;
     let unavailableVideos = 0;
+    let tagFailures = 0;
     for (const video of plan.videos) {
         const { isFileAvailable, thumbnailUri } = await resolveDeviceState(video);
-        if (isFileAvailable === 0) unavailableVideos += 1;
-        rows.push({
+        const row: VideoInsert = {
             id: video.id,
             assetId: video.assetId,
             filename: video.filename,
@@ -185,29 +192,20 @@ export async function applyImportPlan(plan: ImportPlan): Promise<ImportSummary> 
             managedVideoPath: video.managedVideoPath,
             createdAt: video.createdAt,
             updatedAt: video.updatedAt,
-        });
-    }
+        };
 
-    const insertedIds = new Set(await insertVideosForRestore(rows));
-
-    // Tags are restored ONLY for videos this run actually wrote.
-    //
-    // setTagsForVideo deletes a video's existing links before inserting, so
-    // touching a skipped video would replace the tags the user has now with
-    // whatever the backup happened to hold. And a video skipped because its
-    // assetId already exists under a different id is not in `videos` at all
-    // under the backup's id, so writing video_tags for it violates the foreign
-    // key and, since this function is not atomic, would abort the rest.
-    let tagFailures = 0;
-    for (const video of plan.videos) {
-        if (!insertedIds.has(video.id)) continue;
-        if (video.tagRefs.length === 0) continue;
+        let inserted: boolean;
         try {
-            setTagsForVideo(video.id, await restoreTagIds(video.tagRefs));
+            inserted = insertVideoWithTagsForRestore(row, await restoreTagIds(video.tagRefs));
         } catch {
-            // One video's tags are not worth losing the rest of the restore.
+            // The tags could not be resolved or linked. One video's tags are not
+            // worth losing the video, or the rest of the restore.
             tagFailures += 1;
+            inserted = insertVideoWithTagsForRestore(row, []);
         }
+        if (!inserted) continue;
+        videosInserted += 1;
+        if (isFileAvailable === 0) unavailableVideos += 1;
     }
 
     const diaryEntries = await insertDiaryEntriesForRestore(
@@ -224,8 +222,8 @@ export async function applyImportPlan(plan: ImportPlan): Promise<ImportSummary> 
     }
 
     return {
-        videos: insertedIds.size,
-        videosSkipped: plan.videos.length - insertedIds.size,
+        videos: videosInserted,
+        videosSkipped: plan.videos.length - videosInserted,
         tags,
         diaryEntries,
         techniqueOptions,

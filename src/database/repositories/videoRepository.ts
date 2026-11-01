@@ -290,22 +290,26 @@ export async function getExistingAssetIds(
 }
 
 /**
- * バックアップ復元用に動画を挿入し、**実際に書き込んだ id** を返す。
+ * バックアップ復元用に動画 1 件とそのタグのリンクを書き込む。書き込んだら true。
  *
- * 件数ではなく id を返すのが要点。`setTagsForVideo` は既存リンクを全削除して
- * から張り直すため、スキップした動画に対して呼ぶとユーザーがバックアップ後に
- * 付けたタグを消してしまう。さらに `assetId` は unique だが `id` とは独立で、
- * 同じ写真が別 UUID で既に入っている場合は挿入がスキップされるので、その id を
- * `video_tags` に挿すと外部キー違反で落ちる（`foreign_keys = ON`）。
- *
- * 1 行ずつ挿すのは `changes` で「入ったかどうか」を確実に取るため。
- * `ON CONFLICT DO NOTHING` でスキップされた行は `changes` に数えられない。
+ * - 動画とリンクを 1 つの同期トランザクションで書く（#88）。以前は動画を先に全部
+ *   挿してからタグを別ループで張っていたので、途中で止まると「タグの無い動画」が残り、
+ *   再実行しても既存の動画として飛ばされ、タグは二度と戻らなかった。
+ * - 既存の行（同じ id、同じ assetId、同じ管理パス）とぶつかったら何も書かずに false。
+ *   既存の動画のタグには触れない——ユーザーがバックアップ後に付け直したタグを消さない。
+ *   `assetId` が別 id で既にある場合、その id にリンクを挿すと外部キー違反になる点もこれで避ける。
+ * - コールバックは同期で書く。async にすると最初の `await` で COMMIT される（`.memory/testing.md`）。
  */
-export async function insertVideosForRestore(rows: VideoInsert[]): Promise<string[]> {
-    const insertedIds: string[] = [];
-    for (const row of rows) {
-        const result = await db.insert(videos).values(row).onConflictDoNothing();
-        if (result.changes === 1) insertedIds.push(row.id);
-    }
-    return insertedIds;
+export function insertVideoWithTagsForRestore(row: VideoInsert, tagIds: number[]): boolean {
+    return db.transaction((tx) => {
+        const result = tx.insert(videos).values(row).onConflictDoNothing().run();
+        if (result.changes !== 1) return false;
+        const uniqueTagIds = [...new Set(tagIds)];
+        if (uniqueTagIds.length > 0) {
+            tx.insert(videoTags)
+                .values(uniqueTagIds.map((tagId) => ({ videoId: row.id, tagId })))
+                .run();
+        }
+        return true;
+    });
 }
