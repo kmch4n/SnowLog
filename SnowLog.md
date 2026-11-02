@@ -1,7 +1,7 @@
 # SnowLog 技術仕様書
 
-最終更新: 2026-08-31
-対象バージョン: v1.3.0
+最終更新: 2026-11-02
+対象バージョン: v1.4.0
 基準: `main` ブランチの現行実装
 
 ---
@@ -76,11 +76,12 @@
 アプリ起動時には、単に画面を出すだけでなく以下の初期化処理を実行する。
 
 1. Drizzle migration を実行
-2. デフォルトの滑走種別候補を差分シード
-3. `capturedAt` が不正な動画レコードを修復
+2. 保存方式のバックフィル（`storageMigrationService.migrateVideoStorage`）。既存行の `storage_mode` / `managed_video_path` を 1 トランザクションで一度だけ埋める。**これが commit するまで以降の処理は走らない。** 失敗したら「動画ライブラリの準備に失敗しました」と再試行ボタンの画面を出して止まる
+3. デフォルトの滑走種別候補を差分シード
 4. サムネイル URI の相対パス移行（必要時のみ、後述）
-5. 参照されていないファイルの掃除（非ブロッキング。`InteractionManager.runAfterInteractions` で `capturedAt` 修復と並べて実行、後述）
-6. App Store 公開バージョンを参照した任意アップデート案内（後述）
+5. `capturedAt` が不正な動画レコードを修復
+6. 参照されていないファイルの掃除（非ブロッキング。`InteractionManager.runAfterInteractions` で `capturedAt` 修復と並べて実行、後述）
+7. App Store 公開バージョンを参照した任意アップデート案内（後述）
 
 i18n のロケールはこの流れには含まれない。`src/i18n/index.ts` のモジュール初期化時にデバイスロケールから一度だけ解決され、永続化設定は読まない（§14 参照）。
 
@@ -143,6 +144,8 @@ export const videos = sqliteTable("videos", {
     techniques: text("techniques"),
     isFileAvailable: int("is_file_available").notNull().default(1),
     isFavorite: int("is_favorite").notNull().default(0),
+    storageMode: text("storage_mode").notNull().default("reference"),
+    managedVideoPath: text("managed_video_path"),
     createdAt: int("created_at").notNull(),
     updatedAt: int("updated_at").notNull(),
 });
@@ -159,10 +162,12 @@ export const videos = sqliteTable("videos", {
 | `favorite_resorts` | お気に入りゲレンデ | 入力補完に利用 |
 | `app_preferences` | 汎用 key-value 設定 | 現在は `weekStartDay` など |
 | `diary_entries` | 日記エントリー | 1 日 1 レコード、`dateKey` 一意 |
+| `video_transfer_jobs` | 動画取得ジョブ（#86 の下地） | `assetId` 一意。1.4.0 ではテーブルとリポジトリだけで、取り込み・再生からはまだ使っていない |
 
 ### 6.3 重要な制約
 
 - `videos.assetId` はユニーク
+- `videos.managed_video_path` は `lower()` を挟んだユニークインデックス（migration `0008`）。大文字小文字を区別しないファイルシステムで、1 つのファイルを 2 行が所有しないようにする
 - `tags` は `(name, type)` の組み合わせでユニーク（migration `0007_simple_molecule_man.sql` で導入）
 - `diary_entries.dateKey` はユニーク
 - SQLite 接続は `foreign_keys = ON` および WAL モードで開く。タグ更新（`setTagsForVideo`）は単一トランザクション内で行うため、中間テーブルの整合性が保たれる。
@@ -229,10 +234,10 @@ videos --< video_tags >-- tags
 ### 7.3 動画詳細 (`video/[id]`)
 
 - `expo-video` を用いて動画再生を行う。
-- タイトル・メモは debounce 付きの自動保存。
+- タイトル・メモは debounce 付きの自動保存。保存待ちのまま画面を離れたときは、破棄せずにその場で保存する（`createDebouncedTask` の flush）。保存による再取得では再生も入力も初期化しない。
 - ゲレンデ名・滑走種別・タグは画面から編集できる。
 - お気に入りは即時トグル可能。
-- 削除時は動画レコード、サムネイル、managed 動画ファイルを整理する。
+- 削除は `videoDeletionService` を通す。先に動画レコードを消し、そのあとサムネイルと managed 動画ファイルを消す（ファイル削除に失敗しても、残るのは掃除が回収できる未参照ファイルだけになる）。
 - 元アセットが消えている場合は `isFileAvailable` を使って再生不可状態を表示する。
 - iOS では、条件を満たす場合のみ写真アプリへ戻る導線を表示する。
 
