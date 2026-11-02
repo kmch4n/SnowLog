@@ -37,10 +37,12 @@ fail() {
 step "1/4 リポジトリの状態を確認"
 branch="$(git rev-parse --abbrev-ref HEAD)"
 [ "$branch" = "main" ] || fail "main ブランチではありません（現在: $branch）"
-# EAS uploads the git tree, so uncommitted edits would silently be left out.
-if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-    git status --short --untracked-files=no
-    fail "コミットされていない変更があります。コミットか退避をしてから再実行してください"
+# EAS copies the working tree over its clone, so uncommitted edits and any
+# untracked file not covered by .gitignore would be uploaded silently. Build
+# only exactly what is on main.
+if [ -n "$(git status --porcelain)" ]; then
+    git status --short
+    fail "コミットされていない変更か未追跡のファイルがあります。コミットか退避をしてから再実行してください"
 fi
 git fetch --quiet origin main
 if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
@@ -80,6 +82,7 @@ cat <<EOF
   - App Store の審査には提出しません（TestFlight まで）
 
 EOF
+[ -t 0 ] || fail "対話できる端末から実行してください（ログインや確認の入力が必要です）"
 read -r -p "  続行しますか？ [y/N] " answer
 case "$answer" in
     y | Y | yes | YES) ;;
