@@ -11,7 +11,8 @@
 # Steps:
 #   1. Preflight: on main, clean, in sync with origin.
 #   2. Gates: lint, tsc, unit tests (the same gates CI runs).
-#   3. EAS login (skipped when already logged in).
+#   3. EAS login by device code (works from another computer), skipped when
+#      already logged in or when EXPO_TOKEN is set.
 #   4. Confirmation, then `eas build --profile production --auto-submit`.
 #      The build number is incremented remotely by EAS (eas.json:
 #      appVersionSource "remote", production.autoIncrement).
@@ -62,12 +63,25 @@ npm test
 echo "  すべて成功"
 
 step "3/4 Expo（EAS）へのログイン"
-if eas whoami >/dev/null 2>&1; then
+# The default `eas login` opens a browser that redirects back to a server on
+# this machine's localhost. When this runs on a remote host and the URL is
+# opened on another computer, the redirect lands on that computer's localhost
+# and the login never arrives. The device flow only polls, so the browser can
+# be anywhere. EXPO_TOKEN (an access token from expo.dev) skips login entirely.
+if [ -n "${EXPO_TOKEN:-}" ]; then
+    echo "  EXPO_TOKEN を使います"
+elif eas whoami >/dev/null 2>&1; then
     echo "  ログイン済み: $(eas whoami 2>/dev/null | head -n 1)"
 else
-    echo "  Expo アカウントでログインしてください"
-    eas login
+    cat <<'EOF'
+  表示される URL を、手元の PC やスマホのブラウザで開いて承認してください。
+  ブラウザに数字が出たら、このターミナルで同じ数字を選びます。
+  （承認するとこのターミナルが自動で先に進みます）
+
+EOF
+    eas login --device
 fi
+eas whoami >/dev/null 2>&1 || fail "Expo へのログインを確認できませんでした"
 
 step "4/4 iOS 本番ビルドと TestFlight への提出"
 cat <<EOF
