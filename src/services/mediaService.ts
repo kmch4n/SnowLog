@@ -1,5 +1,6 @@
 import * as MediaLibrary from "expo-media-library";
 
+import type { PhotosAccess } from "../utils/playbackSource";
 import { isPhotosLibraryError } from "../utils/photosErrors";
 
 // Re-exported so callers keep importing it from here; the implementation lives
@@ -18,6 +19,22 @@ export async function requestMediaPermissions(): Promise<boolean> {
         return status === "granted";
     } catch {
         return false;
+    }
+}
+
+/**
+ * 写真ライブラリへのアクセスを要求し、得られた範囲を返す
+ *
+ * `requestMediaPermissions` は「選択した写真のみ」（limited）でも true を返すので、
+ * 許可範囲外の動画が解決できないことと、本当に消えていることを区別できない（#87）。
+ */
+export async function requestPhotosAccess(): Promise<PhotosAccess> {
+    try {
+        const { status, accessPrivileges } = await MediaLibrary.requestPermissionsAsync();
+        if (status !== "granted") return "none";
+        return accessPrivileges === "limited" ? "limited" : "all";
+    } catch {
+        return "none";
     }
 }
 

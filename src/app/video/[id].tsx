@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { updateFileAvailability } from "@/database/repositories/videoRepository";
 import { resolveManagedPath } from "@/services/managedVideoFileService";
-import { getAssetInfoWithDownload, isSyntheticAssetId, requestMediaPermissions } from "@/services/mediaService";
+import { getAssetInfoWithDownload, isSyntheticAssetId, requestPhotosAccess } from "@/services/mediaService";
 import {
     Alert,
     InputAccessoryView,
@@ -34,6 +34,7 @@ import { useSkiResortSuggestions } from "@/hooks/useSkiResortSuggestions";
 import { useTranslation } from "@/i18n/useTranslation";
 import { formatDateTime, formatDuration, formatDurationDecimal } from "@/utils/dateUtils";
 import { createDebouncedTask } from "@/utils/debouncedTask";
+import { decidePlaybackSource, type PhotosAccess } from "@/utils/playbackSource";
 
 const MEMO_INPUT_ACCESSORY_ID = "video-detail-memo-accessory";
 const AUTOSAVE_DELAY_MS = 1000;
@@ -69,6 +70,8 @@ export default function VideoDetailScreen() {
     const [memoSaveStatus, setMemoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [tagIds, setTagIds] = useState<number[]>([]);
     const [videoUri, setVideoUri] = useState<string | null>(null);
+    // 写真へのアクセスが足りず再生元を解決できなかった（#87）。ファイル欠損とは別の表示にする
+    const [accessBlocked, setAccessBlocked] = useState(false);
     const [assetInfoMeta, setAssetInfoMeta] = useState<{
         width: number;
         height: number;
@@ -243,73 +246,88 @@ export default function VideoDetailScreen() {
     const playbackManagedVideoPath = video?.managedVideoPath;
     const playbackAssetId = video?.assetId;
 
+    // 解決結果の判定に使う「いま DB にある値」。effect の依存にすると、解決に成功して
+    // 0 → 1 に戻した瞬間に effect が走り直し、プレイヤーを一度消して解決をやり直すため ref で読む
+    const wasAvailableRef = useRef(playbackIsFileAvailable === 1);
+    wasAvailableRef.current = playbackIsFileAvailable === 1;
+
     useEffect(() => {
         if (playbackVideoId === undefined || playbackAssetId === undefined) return;
         // 解決が長引く間に再生元が変わったら、古い結果を新しい再生元の上に書かない
         let cancelled = false;
         setVideoUri(null);
         setAssetInfoMeta(null);
+        setAccessBlocked(false);
 
-        // 元ファイルが存在する場合のみ再生用 URI を取得する
-        if (playbackIsFileAvailable === 1) {
-            (async () => {
-                try {
-                    if (playbackStorageMode === "copy") {
-                        // アプリが持つコピーは写真ライブラリを一切見ない。権限が
-                        // 拒否されていても、元の写真が消えていても再生できる。
-                        const managedUri = playbackManagedVideoPath
-                            ? await resolveManagedPath(playbackManagedVideoPath)
-                            : null;
-                        if (cancelled) return;
-                        if (managedUri) {
-                            setVideoUri(managedUri);
-                        } else {
-                            // コピーが見つからない。写真ライブラリへ黙って
-                            // フォールバックしない——別物を掴むことになる。
+        // 「ファイル無し」（isFileAvailable = 0）の行でも解決を試みる。以前は 1 の行しか
+        // 試さなかったので、写真へのアクセスが限定されていた間に 0 になった動画は、
+        // フルアクセスに戻しても二度と再生できなかった（#87）。
+        (async () => {
+            try {
+                let uri: string | null = null;
+                let meta: { width: number; height: number; duration: number } | null = null;
+                // アプリが持つコピーは写真ライブラリを一切見ない。権限が
+                // 拒否されていても、元の写真が消えていても再生できる。
+                let access: PhotosAccess = "all";
+
+                if (playbackStorageMode === "copy") {
+                    // コピーが見つからなくても写真ライブラリへ黙って
+                    // フォールバックしない——別物を掴むことになる。
+                    uri = playbackManagedVideoPath
+                        ? await resolveManagedPath(playbackManagedVideoPath)
+                        : null;
+                } else {
+                    access = await requestPhotosAccess();
+                    if (cancelled) return;
+                    if (access !== "none") {
+                        const info = await getAssetInfoWithDownload(playbackAssetId);
+                        if (info?.uri || info?.localUri) {
+                            // 再生には Photos フレームワークの uri (ph://) を優先利用する
+                            uri = info.uri ?? info.localUri ?? null;
+                            meta = { width: info.width, height: info.height, duration: info.duration };
+                        }
+                    }
+                }
+                if (cancelled) return;
+
+                const decision = decidePlaybackSource({
+                    resolved: uri !== null,
+                    access,
+                    wasAvailable: wasAvailableRef.current,
+                });
+                switch (decision.kind) {
+                    case "play":
+                        // 高さ変更は LAYOUT_SPRING の layout transition が滑らかに遷移させる
+                        setVideoUri(uri);
+                        if (meta) setAssetInfoMeta(meta);
+                        if (decision.markAvailable) {
+                            await updateFileAvailability(playbackVideoId, true);
+                            refreshRef.current();
+                        }
+                        return;
+                    case "missing":
+                        if (decision.markMissing) {
                             await updateFileAvailability(playbackVideoId, false);
                             refreshRef.current();
                         }
                         return;
-                    }
-
-                    const granted = await requestMediaPermissions();
-                    if (cancelled) return;
-                    if (!granted) {
-                        // 権限拒否は一時的な状態であり、ファイル欠損ではない
-                        Alert.alert(
-                            t("permissions.photoLibraryPlaybackRequired.title"),
-                            t("permissions.photoLibraryPlaybackRequired.body"),
-                            [
-                                { text: t("common.cancel"), style: "cancel" },
-                                { text: t("common.openSettings"), onPress: () => Linking.openSettings() },
-                            ]
-                        );
+                    case "notAccessible":
+                        // 権限が足りないのは一時的な状態であり、ファイル欠損ではない。
+                        // 開くたびにモーダルを出さず、プレイヤーの位置に案内を出す
+                        setAccessBlocked(true);
                         return;
-                    }
-                    const info = await getAssetInfoWithDownload(playbackAssetId);
-                    if (cancelled) return;
-                    if (info?.uri || info?.localUri) {
-                        // 高さ変更は LAYOUT_SPRING の layout transition が滑らかに遷移させる
-                        // 再生には Photos フレームワークの uri (ph://) を優先利用する
-                        setVideoUri(info.uri ?? info.localUri);
-                        setAssetInfoMeta({ width: info.width, height: info.height, duration: info.duration });
-                    } else {
-                        await updateFileAvailability(playbackVideoId, false);
-                        refreshRef.current();
-                    }
-                } catch {
-                    // 一時的エラー（iCloud・ネットワーク等）の可能性があるため
-                    // DB の isFileAvailable は更新しない
                 }
-            })();
-        }
+            } catch {
+                // 一時的エラー（iCloud・ネットワーク等）の可能性があるため
+                // DB の isFileAvailable は更新しない
+            }
+        })();
         return () => {
             cancelled = true;
         };
     }, [
         t,
         playbackVideoId,
-        playbackIsFileAvailable,
         playbackStorageMode,
         playbackManagedVideoPath,
         playbackAssetId,
@@ -409,7 +427,25 @@ export default function VideoDetailScreen() {
             >
                 {/* 動画プレイヤーエリア（ラッパーを永続させ、高さ変化を layout transition で遷移させる） */}
                 <Animated.View layout={LAYOUT_SPRING}>
-                    {video.isFileAvailable === 1 && videoUri ? (
+                    {accessBlocked ? (
+                        <View style={styles.accessBlockedPanel}>
+                            <Text style={styles.unavailableText}>
+                                {t("permissions.photoLibraryPlaybackRequired.title")}
+                            </Text>
+                            <Text style={styles.accessBlockedBody}>
+                                {t("permissions.photoLibraryPlaybackRequired.body")}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => Linking.openSettings()}
+                                accessibilityRole="button"
+                                style={styles.accessBlockedButton}
+                            >
+                                <Text style={styles.accessBlockedButtonText}>
+                                    {t("common.openSettings")}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : video.isFileAvailable === 1 && videoUri ? (
                         <VideoPlayerView
                             uri={videoUri}
                             style={{ width: "100%", height: playerHeight, backgroundColor: "#000000" }}
@@ -631,6 +667,31 @@ const styles = StyleSheet.create({
     unavailableText: {
         color: Colors.headerText,
         fontSize: 14,
+    },
+    accessBlockedPanel: {
+        paddingVertical: 20,
+        paddingHorizontal: 24,
+        gap: 8,
+        backgroundColor: Colors.alpineBlueDark,
+        alignItems: "center",
+    },
+    accessBlockedBody: {
+        color: Colors.headerText,
+        fontSize: 13,
+        opacity: 0.8,
+        textAlign: "center",
+    },
+    accessBlockedButton: {
+        marginTop: 4,
+        paddingVertical: 6,
+        paddingHorizontal: 14,
+        borderRadius: 14,
+        backgroundColor: Colors.alpineBlue,
+    },
+    accessBlockedButtonText: {
+        color: Colors.headerText,
+        fontSize: 13,
+        fontWeight: "600",
     },
     divider: {
         height: 1,

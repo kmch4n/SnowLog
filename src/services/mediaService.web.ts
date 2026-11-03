@@ -14,6 +14,10 @@ export async function requestMediaPermissions(): Promise<boolean> {
     return false;
 }
 
+export async function requestPhotosAccess(): Promise<"none"> {
+    return "none";
+}
+
 export async function checkMediaPermissions(): Promise<boolean> {
     return false;
 }
