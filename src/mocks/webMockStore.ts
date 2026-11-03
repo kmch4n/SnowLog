@@ -22,18 +22,23 @@ import type {
 } from "@/database/schema";
 
 /**
- * モックの撮影日は「現在のシーズン」の中に置く。ダッシュボードは現在のシーズンを
- * 既定で開くので、固定の過去日付だと Web の統計が常に空になる。
+ * モックの撮影日は「現在のシーズン」の中の、今日までの日付に置く。ダッシュボードは
+ * 現在のシーズンを既定で開くので、固定の過去日付だと Web の統計が常に空になる。
+ * 未来の日付にもしない（カレンダーや「今月」の絞り込みで不自然になる）。
+ * シーズンが始まったばかりで遡りきれないときは、シーズン初日に寄せる。
  */
-const SEASON_END_YEAR = getCurrentSeason().endYear;
+const SEASON_START = getCurrentSeason().dateFrom;
 
-function seasonDate(month: number, day: number, hour: number, minute: number): number {
-    return Math.floor(new Date(SEASON_END_YEAR, month - 1, day, hour, minute).getTime() / 1000);
+function daysAgo(days: number, hour: number, minute: number): number {
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    date.setHours(hour, minute, 0, 0);
+    return Math.max(Math.floor(date.getTime() / 1000), SEASON_START + hour * 3600 + minute * 60);
 }
 
-const HAKUBA_AT = seasonDate(1, 18, 9, 30);
-const ZAO_AT = seasonDate(2, 8, 10, 15);
-const NISEKO_AT = seasonDate(2, 22, 13, 40);
+const HAKUBA_AT = daysAgo(16, 9, 30);
+const ZAO_AT = daysAgo(9, 10, 15);
+const NISEKO_AT = daysAgo(2, 13, 40);
 const SEED_CREATED_AT = HAKUBA_AT + 3600;
 
 function video(
