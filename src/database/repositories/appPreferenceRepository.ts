@@ -37,17 +37,3 @@ export async function setPreference(key: string, value: string): Promise<void> {
             set: { value },
         });
 }
-
-/**
- * 設定値が無いときだけ書き込む。書き込んだら true
- *
- * バックアップの復元が使う（#88）。復元は既存の値を上書きしない。バックアップ後に
- * 利用者が変えた設定を巻き戻さないためで、他のテーブルの復元と同じ規則。
- */
-export async function insertPreferenceIfAbsent(key: string, value: string): Promise<boolean> {
-    const result = await db
-        .insert(appPreferences)
-        .values({ key, value })
-        .onConflictDoNothing();
-    return result.changes === 1;
-}

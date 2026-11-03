@@ -288,28 +288,3 @@ export async function getExistingAssetIds(
         .where(inArray(videos.assetId, assetIds));
     return new Set(rows.map((r) => r.assetId));
 }
-
-/**
- * バックアップ復元用に動画 1 件とそのタグのリンクを書き込む。書き込んだら true。
- *
- * - 動画とリンクを 1 つの同期トランザクションで書く（#88）。以前は動画を先に全部
- *   挿してからタグを別ループで張っていたので、途中で止まると「タグの無い動画」が残り、
- *   再実行しても既存の動画として飛ばされ、タグは二度と戻らなかった。
- * - 既存の行（同じ id、同じ assetId、同じ管理パス）とぶつかったら何も書かずに false。
- *   既存の動画のタグには触れない——ユーザーがバックアップ後に付け直したタグを消さない。
- *   `assetId` が別 id で既にある場合、その id にリンクを挿すと外部キー違反になる点もこれで避ける。
- * - コールバックは同期で書く。async にすると最初の `await` で COMMIT される（`.memory/testing.md`）。
- */
-export function insertVideoWithTagsForRestore(row: VideoInsert, tagIds: number[]): boolean {
-    return db.transaction((tx) => {
-        const result = tx.insert(videos).values(row).onConflictDoNothing().run();
-        if (result.changes !== 1) return false;
-        const uniqueTagIds = [...new Set(tagIds)];
-        if (uniqueTagIds.length > 0) {
-            tx.insert(videoTags)
-                .values(uniqueTagIds.map((tagId) => ({ videoId: row.id, tagId })))
-                .run();
-        }
-        return true;
-    });
-}

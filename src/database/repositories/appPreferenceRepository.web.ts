@@ -27,10 +27,3 @@ export async function deletePreference(key: string): Promise<void> {
 export async function setPreference(key: string, value: string): Promise<void> {
     store.set(key, value);
 }
-
-/** 設定値が無いときだけ書き込む。書き込んだら true */
-export async function insertPreferenceIfAbsent(key: string, value: string): Promise<boolean> {
-    if (store.has(key)) return false;
-    store.set(key, value);
-    return true;
-}

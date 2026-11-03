@@ -67,8 +67,3 @@ export async function deleteDiaryEntry(dateKey: string): Promise<void> {
         (entry) => entry.dateKey !== dateKey
     );
 }
-
-// Web ではバックアップ復元を提供しない（importJsonService.web.ts が先に断る）。
-export async function insertDiaryEntriesForRestore(_rows: DiaryEntryInsert[]): Promise<number> {
-    return 0;
-}

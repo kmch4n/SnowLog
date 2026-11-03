@@ -34,10 +34,3 @@ export function reorderTechniqueOptions(orderedIds: number[]): void {
         if (option) option.sortOrder = index;
     });
 }
-
-// Web ではバックアップ復元を提供しない（importJsonService.web.ts が先に断る）。
-export async function insertTechniqueOptionsForRestore(
-    _rows: { name: string; sortOrder: number }[]
-): Promise<number> {
-    return 0;
-}

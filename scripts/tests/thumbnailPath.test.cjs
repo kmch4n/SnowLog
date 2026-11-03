@@ -31,10 +31,7 @@ execFileSync(
     { cwd: root, stdio: "inherit" }
 );
 
-const {
-    isSafeThumbnailPath,
-    thumbnailBelongsToAnotherVideo,
-} = require(path.join(outDir, "thumbnailPath.js"));
+const { isSafeThumbnailPath } = require(path.join(outDir, "thumbnailPath.js"));
 
 test("a thumbnail the app writes is safe to delete", () => {
     assert.equal(isSafeThumbnailPath("thumbnails/0f8e1c2a-3b4d-4e5f-8a9b-0c1d2e3f4a5b.jpg"), true);
@@ -74,15 +71,4 @@ test("only the jpg files the app writes are accepted", () => {
     assert.equal(isSafeThumbnailPath("thumbnails/v1"), false);
     assert.equal(isSafeThumbnailPath("thumbnails/v1.jpg.db"), false);
     assert.equal(isSafeThumbnailPath("thumbnails/v1.jpg/"), false);
-});
-
-// #88: on a case-insensitive filesystem thumbnails/V1.jpg and thumbnails/v1.jpg
-// are one file. A restored V1 must not adopt an existing v1's thumbnail, or
-// deleting either would delete the other's image.
-test("a restored id that differs from an existing one only by case owns no thumbnail", () => {
-    const existing = new Set(["v1", "Abc"]);
-    assert.equal(thumbnailBelongsToAnotherVideo("V1", existing), true);
-    assert.equal(thumbnailBelongsToAnotherVideo("abc", existing), true);
-    assert.equal(thumbnailBelongsToAnotherVideo("v1", existing), false, "the same id is the same video");
-    assert.equal(thumbnailBelongsToAnotherVideo("v2", existing), false);
 });

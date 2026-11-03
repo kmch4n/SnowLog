@@ -6,8 +6,7 @@ const test = require("node:test");
 
 const { createRepositoryHarness } = require("./helpers/repositoryHarness.cjs");
 
-// The shipped driver, because insertPreferenceIfAbsent reads `changes`, which
-// sqlite-proxy does not report.
+// The shipped driver, so the repository runs as it does in the app.
 const harness = createRepositoryHarness(
     ["src/database/repositories/appPreferenceRepository.ts"],
     { driver: "expo-sqlite" }
@@ -16,7 +15,6 @@ const {
     deletePreference,
     getAllPreferences,
     getPreference,
-    insertPreferenceIfAbsent,
     setPreference,
 } = harness.load("database/repositories/appPreferenceRepository.js");
 
@@ -103,8 +101,6 @@ test("deleting a key that is not there is a no-op, not an error", async () => {
     assert.deepEqual(keysInTable(), ["weekStartDay"]);
 });
 
-// exportService dumps whatever this returns straight into the backup JSON, so
-// anything left in the table ends up in a user's backup.
 test("getAllPreferences returns every stored row", async () => {
     await setPreference("weekStartDay", "monday");
     await setPreference("home_sort_order", "newest");
@@ -118,18 +114,4 @@ test("getAllPreferences returns every stored row", async () => {
             ["weekStartDay", "monday"],
         ]
     );
-});
-
-// Backup restore writes preferences with this, not setPreference (#88): a
-// restore never overwrites a choice the user made after the backup, which is
-// the rule every other restored table already follows.
-test("insertPreferenceIfAbsent writes a missing key and reports it", async () => {
-    assert.equal(await insertPreferenceIfAbsent("weekStartDay", "monday"), true);
-    assert.equal(await getPreference("weekStartDay"), "monday");
-});
-
-test("insertPreferenceIfAbsent leaves an existing value alone", async () => {
-    await setPreference("weekStartDay", "sunday");
-    assert.equal(await insertPreferenceIfAbsent("weekStartDay", "monday"), false);
-    assert.equal(await getPreference("weekStartDay"), "sunday");
 });

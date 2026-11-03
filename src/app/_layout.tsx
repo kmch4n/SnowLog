@@ -185,9 +185,9 @@ export default function RootLayout() {
         if (storagePhase !== "done") return;
         seedTechniqueOptions().catch(() => {});
         // bab0b45 removed the in-app language picker but left behind the row it
-        // wrote. Nothing reads it, yet exportService dumps every preference, so
-        // it would otherwise keep leaking into backups. Idempotent, so it can
-        // just run on every launch rather than carrying a version gate.
+        // wrote. Nothing reads it, so remove it rather than carry dead state.
+        // Idempotent, so it can just run on every launch rather than carrying a
+        // version gate.
         deletePreference(STALE_LOCALE_PREFERENCE_KEY).catch(() => {});
 
         let cancelled = false;

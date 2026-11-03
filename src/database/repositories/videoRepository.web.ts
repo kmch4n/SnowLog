@@ -210,8 +210,3 @@ export async function getRecentSkiResortNames(limit = 3): Promise<string[]> {
     }
     return names;
 }
-
-// Web ではバックアップ復元を提供しない（importJsonService.web.ts が先に断る）。
-export function insertVideoWithTagsForRestore(_row: VideoInsert, _tagIds: number[]): boolean {
-    return false;
-}
