@@ -48,7 +48,6 @@
       ],
       "expo-sqlite",
       "expo-video",
-      "expo-sharing",
       "expo-web-browser",
       "expo-image",
       [

@@ -2,63 +2,25 @@
  * Web用動画詳細画面
  * expo-video はブラウザ非対応のため、動画プレイヤーをグレーのプレースホルダーに置換する
  */
-import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
 import {
-    Alert,
     KeyboardAvoidingView,
     ScrollView,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View,
 } from "react-native";
 
 import { Colors } from "@/constants/colors";
 import { TagChip } from "@/components/TagChip";
-import { exportAllToJSON } from "@/services/exportService";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
 import { useTranslation } from "@/i18n/useTranslation";
 import { formatDate, formatDuration } from "@/utils/dateUtils";
 
 export default function VideoDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const navigation = useNavigation();
     const { t, locale } = useTranslation();
     const { video, isLoading, error } = useVideoDetail(id);
-
-    const [isExporting, setIsExporting] = useState(false);
-
-    const handleExport = useCallback(async () => {
-        setIsExporting(true);
-        try {
-            await exportAllToJSON();
-        } catch (e) {
-            Alert.alert(
-                t("settings.export.failed"),
-                e instanceof Error ? e.message : t("common.unknownError")
-            );
-        } finally {
-            setIsExporting(false);
-        }
-    }, [t]);
-
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            headerRight: () => (
-                <TouchableOpacity
-                    onPress={handleExport}
-                    style={{ marginRight: 16 }}
-                    disabled={isExporting}
-                    accessibilityRole="button"
-                >
-                    <Text style={{ color: Colors.headerText, fontSize: 14 }}>
-                        {isExporting ? "..." : t("settings.export.headerButton")}
-                    </Text>
-                </TouchableOpacity>
-            ),
-        });
-    }, [navigation, isExporting, handleExport, t]);
 
     if (isLoading) {
         return (

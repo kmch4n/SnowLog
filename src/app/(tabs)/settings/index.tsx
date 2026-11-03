@@ -6,10 +6,6 @@ import { Icon } from "@/components/ui/Icon";
 import { Colors } from "@/constants/colors";
 import { IconNames } from "@/constants/icons";
 import { useTranslation } from "@/i18n/useTranslation";
-import { ExportError } from "@/services/exportPayload";
-import { exportAllToJSON } from "@/services/exportService";
-import { ImportError } from "@/services/importPayload";
-import { applyImportPlan, pickAndParseBackup } from "@/services/importJsonService";
 import { hapticError, hapticSuccess, hapticWarning } from "@/services/hapticsService";
 import { cleanupOrphanedFiles } from "@/services/orphanedFileCleanupService";
 
@@ -30,8 +26,6 @@ export default function SettingsScreen() {
     const router = useRouter();
     const { t } = useTranslation();
     const [isCleaning, setIsCleaning] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
-    const [isImporting, setIsImporting] = useState(false);
 
     const items = useMemo<SettingsItem[]>(
         () => [
@@ -63,114 +57,6 @@ export default function SettingsScreen() {
         ],
         [t]
     );
-
-    async function runExport(): Promise<void> {
-        if (isExporting) return;
-        setIsExporting(true);
-        try {
-            await exportAllToJSON();
-            hapticSuccess();
-        } catch (error) {
-            hapticError();
-            Alert.alert(
-                t("settings.export.failed"),
-                error instanceof ExportError
-                    ? error.message
-                    : t("settings.export.failedBody")
-            );
-        } finally {
-            setIsExporting(false);
-        }
-    }
-
-    function reportImportFailure(error: unknown): void {
-        hapticError();
-        Alert.alert(
-            t("settings.import.failed"),
-            error instanceof ImportError
-                ? t(`settings.import.errors.${error.code}`)
-                : t("settings.import.errors.writeFailed")
-        );
-    }
-
-    async function writeImportPlan(plan: Parameters<typeof applyImportPlan>[0]): Promise<void> {
-        setIsImporting(true);
-        try {
-            const summary = await applyImportPlan(plan);
-            hapticSuccess();
-            const body =
-                summary.videosSkipped > 0
-                    ? t("settings.import.completedWithSkipped", {
-                        videos: summary.videos,
-                        diary: summary.diaryEntries,
-                        skipped: summary.videosSkipped,
-                    })
-                    : t("settings.import.completedBody", {
-                        videos: summary.videos,
-                        diary: summary.diaryEntries,
-                    });
-            const note =
-                summary.unavailableVideos > 0
-                    ? t("settings.import.unavailableNote", {
-                        count: summary.unavailableVideos,
-                    })
-                    : "";
-            Alert.alert(t("settings.import.completedTitle"), `${body}${note}`);
-        } catch (error) {
-            reportImportFailure(error);
-        } finally {
-            setIsImporting(false);
-        }
-    }
-
-    /**
-     * 取り込む前に件数を見せて確認を取る。書き込む量が大きく、
-     * ファイルを選び間違えたときにもここで気づける。
-     */
-    async function runImport(): Promise<void> {
-        if (isImporting) return;
-        setIsImporting(true);
-        let preview: Awaited<ReturnType<typeof pickAndParseBackup>>;
-        try {
-            preview = await pickAndParseBackup();
-        } catch (error) {
-            reportImportFailure(error);
-            setIsImporting(false);
-            return;
-        } finally {
-            setIsImporting(false);
-        }
-
-        // キャンセルは失敗ではないので何も出さない
-        if (preview == null) return;
-
-        if (preview.counts.videos === 0 && preview.counts.diaryEntries === 0) {
-            Alert.alert(
-                t("settings.import.nothingTitle"),
-                t("settings.import.nothingBody")
-            );
-            return;
-        }
-
-        hapticWarning();
-        Alert.alert(
-            t("settings.import.confirmTitle"),
-            t("settings.import.confirmBody", {
-                videos: preview.counts.videos,
-                diary: preview.counts.diaryEntries,
-                tags: preview.counts.tags,
-            }),
-            [
-                { text: t("common.cancel"), style: "cancel" },
-                {
-                    text: t("settings.import.action"),
-                    onPress: () => {
-                        writeImportPlan(preview.plan).catch(() => {});
-                    },
-                },
-            ]
-        );
-    }
 
     async function runManualCleanup(): Promise<void> {
         if (isCleaning) return;
@@ -246,78 +132,6 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                 ))}
             </View>
-            <View style={[styles.section, styles.dataSection]}>
-                <TouchableOpacity
-                    style={[
-                        styles.row,
-                        styles.rowFirst,
-                        isExporting && styles.rowDisabled,
-                    ]}
-                    onPress={() => {
-                        runExport().catch(() => {});
-                    }}
-                    activeOpacity={0.7}
-                    disabled={isExporting}
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: isExporting, busy: isExporting }}
-                    accessibilityLabel={t("settings.menu.export")}
-                >
-                    <View style={styles.rowContent}>
-                        <Text style={styles.rowLabel}>
-                            {isExporting
-                                ? t("settings.export.exporting")
-                                : t("settings.menu.export")}
-                        </Text>
-                        <Text style={styles.rowDescription}>
-                            {t("settings.descriptions.export")}
-                        </Text>
-                    </View>
-                    <Icon
-                        name={IconNames.share}
-                        size={22}
-                        color={Colors.textTertiary}
-                        weight="semibold"
-                        fallback="↑"
-                        accessibilityLabel={t("settings.menu.export")}
-                        style={styles.chevron}
-                    />
-                </TouchableOpacity>
-            <TouchableOpacity
-                    style={[
-                        styles.row,
-                        styles.rowLast,
-                        isImporting && styles.rowDisabled,
-                    ]}
-                    onPress={() => {
-                        runImport().catch(() => {});
-                    }}
-                    activeOpacity={0.7}
-                    disabled={isImporting}
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: isImporting, busy: isImporting }}
-                    accessibilityLabel={t("settings.menu.import")}
-                >
-                    <View style={styles.rowContent}>
-                        <Text style={styles.rowLabel}>
-                            {isImporting
-                                ? t("settings.import.importing")
-                                : t("settings.menu.import")}
-                        </Text>
-                        <Text style={styles.rowDescription}>
-                            {t("settings.descriptions.import")}
-                        </Text>
-                    </View>
-                    <Icon
-                        name={IconNames.restore}
-                        size={22}
-                        color={Colors.textTertiary}
-                        weight="semibold"
-                        fallback="↓"
-                        accessibilityLabel={t("settings.menu.import")}
-                        style={styles.chevron}
-                    />
-                </TouchableOpacity>
-            </View>
             <View style={[styles.section, styles.maintenanceSection]}>
                 <TouchableOpacity
                     style={[
@@ -352,6 +166,8 @@ export default function SettingsScreen() {
                     />
                 </TouchableOpacity>
             </View>
+            {/* バックアップは iOS の iCloud バックアップに任せる（#90）。アプリに専用の操作は無い */}
+            <Text style={styles.backupNote}>{t("settings.backupNote")}</Text>
         </View>
     );
 }
@@ -368,11 +184,15 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.border,
     },
-    dataSection: {
-        marginTop: 16,
-    },
     maintenanceSection: {
         marginTop: 16,
+    },
+    backupNote: {
+        marginTop: 12,
+        marginHorizontal: 4,
+        fontSize: 12,
+        lineHeight: 18,
+        color: Colors.textSecondary,
     },
     row: {
         flexDirection: "row",

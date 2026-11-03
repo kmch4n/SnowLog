@@ -233,9 +233,11 @@ function isLive(key) {
 }
 
 test("the scanner is not vacuous", () => {
-    assert.ok(leaves.size > 300, `only ${leaves.size} leaf keys in ja.ts`);
+    // Floors, not exact counts: they only catch a scan that found almost nothing.
+    // Lowered from 300 when the JSON backup strings went (#90).
+    assert.ok(leaves.size > 250, `only ${leaves.size} leaf keys in ja.ts`);
     assert.ok(
-        keyLikeLiterals().length > 300,
+        keyLikeLiterals().length > 250,
         `only ${keyLikeLiterals().length} key-like literals found in src/`
     );
 
@@ -252,7 +254,6 @@ test("the scanner is not vacuous", () => {
         "import.bulk.steps.",
         "search.datePresets.",
         "settings.duplicateCandidates.reasons.",
-        "settings.import.errors.",
     ]);
     assert.deepEqual([...scan.resolvedPropPrefixes].sort(), [
         "diary.fatigue.",
