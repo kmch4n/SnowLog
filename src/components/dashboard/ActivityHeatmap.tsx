@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 
 import { Colors } from "../../constants/colors";
 import { useTranslation } from "../../i18n/useTranslation";
@@ -36,7 +36,7 @@ export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapPro
     const { width: screenWidth } = useWindowDimensions();
     const availableWidth = screenWidth - 32 - 32 - LABEL_WIDTH; // padding + card padding + labels
 
-    // シーズン開始日（11月1日）から終了日（5月31日）までの全日付を生成
+    // シーズン開始日（10月1日）から終了日（9月30日）までの全日付を生成
     const startDate = new Date(season.dateFrom * 1000);
     // 週の開始を月曜日に揃える
     const startDay = startDate.getDay(); // 0=日, 1=月, ...
@@ -97,63 +97,73 @@ export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapPro
         }
     }
 
+    // シーズンは 53 週ある。最小セル幅でも画面に収まらないときは横にスクロールさせる
+    // （セルを潰すとタップできなくなる）。収まる幅なら今までどおりスクロールしない。
     return (
         <View>
-            {/* 月ラベル */}
-            <View style={[styles.monthRow, { paddingLeft: LABEL_WIDTH }]}>
-                {monthLabels.map((ml) => (
-                    <Text
-                        key={`${ml.label}-${ml.x}`}
-                        style={[styles.monthLabel, { position: "absolute", left: LABEL_WIDTH + ml.x }]}
-                    >
-                        {ml.label}
-                    </Text>
-                ))}
-            </View>
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                scrollEnabled={svgWidth > availableWidth}
+            >
+                <View>
+                    {/* 月ラベル */}
+                    <View style={[styles.monthRow, { paddingLeft: LABEL_WIDTH }]}>
+                        {monthLabels.map((ml) => (
+                            <Text
+                                key={`${ml.label}-${ml.x}`}
+                                style={[styles.monthLabel, { position: "absolute", left: LABEL_WIDTH + ml.x }]}
+                            >
+                                {ml.label}
+                            </Text>
+                        ))}
+                    </View>
 
-            <View style={styles.gridRow}>
-                {/* 曜日ラベル */}
-                <View style={styles.dayLabels}>
-                    {DAY_LABELS[locale].map((label, i) => (
-                        <View
-                            key={label}
-                            style={[styles.dayLabelCell, { height: cellSize + CELL_GAP }]}
-                        >
-                            {i % 2 === 0 && (
-                                <Text style={styles.dayLabelText}>{label}</Text>
-                            )}
+                    <View style={styles.gridRow}>
+                        {/* 曜日ラベル */}
+                        <View style={styles.dayLabels}>
+                            {DAY_LABELS[locale].map((label, i) => (
+                                <View
+                                    key={label}
+                                    style={[styles.dayLabelCell, { height: cellSize + CELL_GAP }]}
+                                >
+                                    {i % 2 === 0 && (
+                                        <Text style={styles.dayLabelText}>{label}</Text>
+                                    )}
+                                </View>
+                            ))}
                         </View>
-                    ))}
-                </View>
 
-                {/* ヒートマップ */}
-                <View
-                    style={[
-                        styles.heatmapCanvas,
-                        { width: svgWidth, height: svgHeight },
-                    ]}
-                >
-                    {cells.map((cell) => (
-                        <TouchableOpacity
-                            key={`${cell.x}-${cell.y}`}
-                            activeOpacity={0.8}
-                            disabled={onDayPress == null || cell.count === 0}
-                            onPress={() => onDayPress?.({ dateKey: cell.dateKey, count: cell.count })}
-                            accessibilityRole="button"
+                        {/* ヒートマップ */}
+                        <View
                             style={[
-                                styles.cell,
-                                {
-                                    left: cell.x,
-                                    top: cell.y,
-                                    width: cellSize,
-                                    height: cellSize,
-                                    backgroundColor: getColor(cell.count),
-                                },
+                                styles.heatmapCanvas,
+                                { width: svgWidth, height: svgHeight },
                             ]}
-                        />
-                    ))}
+                        >
+                            {cells.map((cell) => (
+                                <TouchableOpacity
+                                    key={`${cell.x}-${cell.y}`}
+                                    activeOpacity={0.8}
+                                    disabled={onDayPress == null || cell.count === 0}
+                                    onPress={() => onDayPress?.({ dateKey: cell.dateKey, count: cell.count })}
+                                    accessibilityRole="button"
+                                    style={[
+                                        styles.cell,
+                                        {
+                                            left: cell.x,
+                                            top: cell.y,
+                                            width: cellSize,
+                                            height: cellSize,
+                                            backgroundColor: getColor(cell.count),
+                                        },
+                                    ]}
+                                />
+                            ))}
+                        </View>
+                    </View>
                 </View>
-            </View>
+            </ScrollView>
 
             {/* 凡例 */}
             <View style={styles.legendRow}>

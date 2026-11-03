@@ -22,7 +22,7 @@ function formatMonthLabel(yearMonth: string, locale: "ja" | "en"): string {
     return new Date(2000, month - 1, 1).toLocaleString("en-US", { month: "short" });
 }
 
-/** 月別縦棒グラフ（11月〜5月） */
+/** 月別縦棒グラフ（シーズンの 12 か月。10月〜翌年9月） */
 export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
     const { t, locale } = useTranslation();
     const [metric, setMetric] = useState<Metric>("videoCount");
@@ -158,13 +158,15 @@ const styles = StyleSheet.create({
         alignItems: "flex-end",
         marginBottom: BAR_BOTTOM_MARGIN - 4,
     },
+    // 12 か月を幅に収めるため、列は固定幅ではなく等分にする（以前は 7 か月 × 40px）
     barWrapper: {
-        width: 40,
+        flex: 1,
         alignItems: "center",
         justifyContent: "flex-end",
     },
     bar: {
-        width: 24,
+        width: "60%",
+        maxWidth: 24,
         borderRadius: 4,
     },
     labelsRow: {
@@ -172,7 +174,7 @@ const styles = StyleSheet.create({
         marginTop: -16,
     },
     labelCell: {
-        width: 40,
+        flex: 1,
         alignItems: "center",
     },
     valueLabel: {
