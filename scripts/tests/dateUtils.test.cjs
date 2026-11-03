@@ -54,6 +54,9 @@ const {
     startOfMonth,
     endOfMonth,
     buildSeason,
+    getCurrentSeason,
+    seasonMonths,
+    seasonStartYearOf,
     formatDurationHM,
 } = require(path.join(outDir, "utils", "dateUtils.js"));
 
@@ -151,14 +154,48 @@ test("endOfMonth handles leap years and 31-day months", () => {
     assert.equal(toDateKey(endOfMonth(2026, 12)), "2026-12-31");
 });
 
-test("buildSeason spans November through the following May", () => {
+// A season is 1 October to 30 September. Twelve months, so every capture date
+// belongs to exactly one season. The old November–May window left June–October
+// captures out of every dashboard view (#89).
+test("buildSeason spans 1 October to 30 September", () => {
     const season = buildSeason(2025);
 
     assert.equal(season.label, "2025-26");
     assert.equal(season.startYear, 2025);
     assert.equal(season.endYear, 2026);
-    assert.equal(toDateKey(season.dateFrom), "2025-11-01");
-    assert.equal(toDateKey(season.dateTo), "2026-05-31");
+    assert.equal(toDateKey(season.dateFrom), "2025-10-01");
+    assert.equal(toDateKey(season.dateTo), "2026-09-30");
+});
+
+test("consecutive seasons leave no gap and do not overlap", () => {
+    for (const year of [2023, 2024, 2025]) {
+        assert.equal(buildSeason(year).dateTo + 1, buildSeason(year + 1).dateFrom);
+    }
+});
+
+test("the season turns over on 1 October", () => {
+    assert.equal(seasonStartYearOf(new Date(2026, 8, 30, 23, 59)), 2025);
+    assert.equal(seasonStartYearOf(new Date(2026, 9, 1, 0, 0)), 2026);
+    assert.equal(seasonStartYearOf(new Date(2027, 0, 15)), 2026);
+    assert.equal(getCurrentSeason(new Date(2026, 10, 3)).label, "2026-27");
+    assert.equal(getCurrentSeason(new Date(2026, 7, 20)).label, "2025-26");
+});
+
+test("every month of the year falls inside the season it starts", () => {
+    for (let month = 0; month < 12; month++) {
+        const date = new Date(2026, month, 15, 12);
+        const season = buildSeason(seasonStartYearOf(date));
+        const ts = Math.floor(date.getTime() / 1000);
+        assert.ok(ts >= season.dateFrom && ts <= season.dateTo, `month ${month + 1}`);
+    }
+});
+
+test("seasonMonths lists the twelve months from October", () => {
+    const months = seasonMonths(buildSeason(2025));
+    assert.equal(months.length, 12);
+    assert.deepEqual(months[0], { year: 2025, month: 10 });
+    assert.deepEqual(months[3], { year: 2026, month: 1 });
+    assert.deepEqual(months[11], { year: 2026, month: 9 });
 });
 
 // --- Intl-backed formatting ---

@@ -17,7 +17,7 @@ import type {
     TechniqueDistribution,
 } from "../types/dashboard";
 import type { VideoWithTags } from "../types";
-import { toDateKey } from "./dateUtils";
+import { seasonMonths, toDateKey } from "./dateUtils";
 import { parseTechniques } from "./parseTechniques";
 import { normalizeVideoStorageMode } from "./videoStorageMode";
 
@@ -106,13 +106,11 @@ export function buildDashboardStats(
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count);
 
-    // 月別トレンド（11月〜5月の7ヶ月分）
+    // 月別トレンド（シーズンの 12 か月分。10月〜翌年9月）
     const monthMap = new Map<string, { videoIds: Set<string>; dateKeys: Set<string> }>();
     // 空の月も含めて初期化
-    const seasonMonths = [11, 12, 1, 2, 3, 4, 5];
-    for (const mo of seasonMonths) {
-        const yr = mo >= 11 ? season.startYear : season.endYear;
-        const key = `${yr}-${String(mo).padStart(2, "0")}`;
+    for (const { year, month } of seasonMonths(season)) {
+        const key = `${year}-${String(month).padStart(2, "0")}`;
         monthMap.set(key, { videoIds: new Set(), dateKeys: new Set() });
     }
     for (const v of seasonVideos) {

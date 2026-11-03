@@ -13,7 +13,7 @@ import { Colors } from "../constants/colors";
 import { IconNames } from "../constants/icons";
 import { getAllTags } from "../database/repositories/tagRepository";
 import { useTranslation } from "../i18n/useTranslation";
-import { endOfMonth, startOfMonth } from "../utils/dateUtils";
+import { endOfMonth, getCurrentSeason, startOfMonth } from "../utils/dateUtils";
 import type { FilterOptions, Tag } from "../types";
 import { SkiResortSearch } from "./SkiResortSearch";
 import { TagChip } from "./TagChip";
@@ -48,16 +48,9 @@ function computeDateRange(key: PresetKey): { dateFrom: number; dateTo: number } 
             return { dateFrom: startOfMonth(prevYear, prevMonth), dateTo: endOfMonth(prevYear, prevMonth) };
         }
         case "thisSeason": {
-            // Japanese ski season: November - May
-            // Nov-Dec → current year Nov to next year May
-            // Jan-May → previous year Nov to current year May
-            // Jun-Oct → previous year Nov to current year May (last season)
-            const seasonStartYear = month >= 11 ? year : year - 1;
-            const seasonEndYear = month >= 11 ? year + 1 : year;
-            return {
-                dateFrom: startOfMonth(seasonStartYear, 11),
-                dateTo: endOfMonth(seasonEndYear, 5),
-            };
+            // 統計と同じシーズン（10月〜翌年9月。dateUtils の SEASON_START_MONTH）
+            const season = getCurrentSeason(now);
+            return { dateFrom: season.dateFrom, dateTo: season.dateTo };
         }
     }
 }

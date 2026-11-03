@@ -157,27 +157,46 @@ export function endOfMonth(year: number, month: number): number {
 // --- ダッシュボード用ユーティリティ ---
 
 /**
- * シーズンオブジェクトを構築する（11月〜翌年5月）
- * @param startYear シーズン開始年（例: 2025 → 2025年11月〜2026年5月）
+ * シーズンが始まる月（1-based）。10 月 1 日から翌年 9 月 30 日までを 1 シーズンとする。
+ *
+ * 12 か月なので、どの撮影日もちょうど 1 つのシーズンに入る。以前の 11 月〜5 月では
+ * 6〜10 月に撮った動画がどの統計にも出なかった（#89）。シーズンの判定はすべてここを通すこと。
+ */
+export const SEASON_START_MONTH = 10;
+
+/**
+ * シーズンオブジェクトを構築する（10月〜翌年9月）
+ * @param startYear シーズン開始年（例: 2025 → 2025年10月〜2026年9月）
  */
 export function buildSeason(startYear: number): Season {
     return {
         label: `${startYear}-${String(startYear + 1).slice(2)}`,
         startYear,
         endYear: startYear + 1,
-        dateFrom: startOfMonth(startYear, 11),
-        dateTo: endOfMonth(startYear + 1, 5),
+        dateFrom: startOfMonth(startYear, SEASON_START_MONTH),
+        dateTo: endOfMonth(startYear + 1, SEASON_START_MONTH - 1),
     };
 }
 
+/** 日付が属するシーズンの開始年（10月以降は今年、9月以前は前年） */
+export function seasonStartYearOf(date: Date): number {
+    const year = date.getFullYear();
+    return date.getMonth() + 1 >= SEASON_START_MONTH ? year : year - 1;
+}
+
 /** 現在の日時に基づいて現在のシーズンを返す */
-export function getCurrentSeason(): Season {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    // 11月以降は今年開始のシーズン、10月以前は前年開始のシーズン
-    const startYear = month >= 11 ? year : year - 1;
-    return buildSeason(startYear);
+export function getCurrentSeason(now: Date = new Date()): Season {
+    return buildSeason(seasonStartYearOf(now));
+}
+
+/** シーズンに含まれる 12 か月を、開始月から順に返す */
+export function seasonMonths(season: Season): { year: number; month: number }[] {
+    const months: { year: number; month: number }[] = [];
+    for (let i = 0; i < 12; i++) {
+        const month = ((SEASON_START_MONTH - 1 + i) % 12) + 1;
+        months.push({ year: month >= SEASON_START_MONTH ? season.startYear : season.endYear, month });
+    }
+    return months;
 }
 
 /**

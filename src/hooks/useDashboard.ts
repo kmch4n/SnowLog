@@ -7,7 +7,7 @@ import {
     getOldestCapturedAt,
 } from "../database/repositories/dashboardRepository";
 import { t } from "../i18n";
-import { buildSeason, getCurrentSeason } from "../utils/dateUtils";
+import { buildSeason, getCurrentSeason, seasonStartYearOf } from "../utils/dateUtils";
 import type { DashboardStats, Season } from "../types/dashboard";
 
 /**
@@ -32,11 +32,8 @@ export function useDashboard() {
                     setAvailableSeasons([getCurrentSeason()]);
                     return;
                 }
-                const oldDate = new Date(oldest * 1000);
-                const oldMonth = oldDate.getMonth() + 1;
-                const oldYear = oldDate.getFullYear();
                 // 最も古い動画が属するシーズンの開始年
-                const firstSeasonStart = oldMonth >= 11 ? oldYear : oldYear - 1;
+                const firstSeasonStart = seasonStartYearOf(new Date(oldest * 1000));
                 const current = getCurrentSeason();
                 const seasons: Season[] = [];
                 for (let y = current.startYear; y >= firstSeasonStart; y--) {

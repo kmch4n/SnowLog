@@ -30,7 +30,7 @@ execFileSync(
 const { buildDashboardStats } = require(path.join(outDir, "utils", "dashboardStats.js"));
 const { buildSeason, toDateKey } = require(path.join(outDir, "utils", "dateUtils.js"));
 
-const season = buildSeason(2025); // Nov 2025 – May 2026
+const season = buildSeason(2025); // 1 Oct 2025 – 30 Sep 2026
 
 function at(year, month, day, hour = 10) {
     return Math.floor(new Date(year, month - 1, day, hour).getTime() / 1000);
@@ -87,11 +87,12 @@ test("techniques are counted from the JSON column; malformed JSON counts nothing
     ]);
 });
 
-test("the monthly trend always has the season's seven months, empty ones included", () => {
+test("the monthly trend always has the season's twelve months, empty ones included", () => {
     const { monthlyTrend } = buildDashboardStats(season, rows, []);
     assert.deepEqual(
         monthlyTrend.map((m) => [m.yearMonth, m.videoCount, m.skiDays]),
         [
+            ["2025-10", 0, 0],
             ["2025-11", 0, 0],
             ["2025-12", 1, 1],
             ["2026-01", 2, 1],
@@ -99,9 +100,21 @@ test("the monthly trend always has the season's seven months, empty ones include
             ["2026-03", 0, 0],
             ["2026-04", 0, 0],
             ["2026-05", 0, 0],
+            ["2026-06", 0, 0],
+            ["2026-07", 0, 0],
+            ["2026-08", 0, 0],
+            ["2026-09", 0, 0],
         ]
     );
-    assert.equal(monthlyTrend[2].label, "1月");
+    assert.equal(monthlyTrend[3].label, "1月");
+});
+
+// The old November–May window had no bucket for these months, so a summer
+// capture was counted in the summary but vanished from the trend (#89).
+test("a summer capture lands in its own month of the trend", () => {
+    const { monthlyTrend, summary } = buildDashboardStats(season, [row("s", at(2026, 8, 12))], []);
+    assert.equal(summary.totalVideoCount, 1);
+    assert.equal(monthlyTrend.find((m) => m.yearMonth === "2026-08").videoCount, 1);
 });
 
 test("heatmap days are per local date and sorted", () => {
