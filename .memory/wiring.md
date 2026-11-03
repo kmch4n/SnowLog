@@ -111,11 +111,6 @@ Web は `npm run web` で起動するプレビュー。動かすうえで踏ん�
 - `app_preferences` は key-value ストア。**現在実際に使われているキー**: `capturedAt_repair_version` / `thumbnail_migration_version` / `home_sort_order` / `weekStartDay` / `dismissed_update_prompt_version`。
     - `weekStartDay` だけが camelCase。**歴史的な事故によるもので、データマイグレーションなしに snake_case へ変えてはいけない。**
     - 言語ピッカー削除（`bab0b45`）が残した `app_locale` 行は、起動時に `seedTechniqueOptions` の隣で削除される。キー名は `app_locale` であって `locale` ではない。
-    - **`exportService` は全設定を verbatim でダンプする**ので、ここにキーを増やすとバックアップ JSON にもそのまま載る。
-    - **エクスポートは全部出すが、インポートは 2 つしか戻さない。** 復元対象は
-      `home_sort_order` と `weekStartDay` だけで、許可リストは
-      `src/services/importPayload.ts` の `RESTORABLE_PREFERENCE_KEYS`。
-      `thumbnail_migration_version` / `capturedAt_repair_version` を書き戻すと、
-      新規インストールで当該マイグレーションが「済み」と判定されて飛ぶ。
-      **キーを増やしたときは、復元してよいものかをここで判断すること。**
-      復元は `insertPreferenceIfAbsent` で書くので、既に値がある端末では上書きしない（#88）。
+    - 1.3.0 には JSON バックアップがあり、設定を書き出していた（復元は `home_sort_order` と `weekStartDay` だけ）。
+      1.4.0 で廃止したので（#90）、キーを増やしてもバックアップの互換を気にする必要は無い。
+      データは iOS の iCloud バックアップに DB ごと入る。

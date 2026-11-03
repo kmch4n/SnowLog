@@ -42,16 +42,13 @@ status: active
 2026-10-31 に close: #84（Web が起動しない）、#82（CI 不在）、#81（`.gitattributes`）。
 2026-11-02 に close: #83（`common.*` は削除）、#88（復元の設定上書きとタグ取りこぼし）。
 
-### バックアップ往復（#72）と `.web` シム（#74）は closed
+### バックアップ往復（#72、のち廃止）と `.web` シム（#74）は closed
 
 2026-08-31 に両方 close した。**ただしどちらも「完全に確認が済んだ」という意味ではない**ので、
 再提案・再調査の前にここを読むこと。
 
-- **[#72](https://github.com/kmch4n/SnowLog/issues/72)** — エクスポートとインポートの実装・テストは入った。
-  **実機での実行実績はまだ無い。** `expo-document-picker` がネイティブモジュールなので dev client の
-  再ビルドが要る。実機検証のチェックリストは Issue のコメントに残してある。
-  未検証である旨は [doc-drift.md](doc-drift.md) 項目 1 にも書いてあり、**そちらはまだ消していない。**
-  なおバックアップはメタデータのみなので、別端末では動画が戻らない。再リンクは #85。
+- **[#72](https://github.com/kmch4n/SnowLog/issues/72)** — JSON のエクスポートとインポートは、実機で一度も動かさないまま
+  1.4.0 で廃止した（#90）。バックアップは iOS の iCloud バックアップに任せる。[doc-drift.md](doc-drift.md) 項目 1 を参照。
 - **[#74](https://github.com/kmch4n/SnowLog/issues/74)** — export 欠落 9 件は埋め、
   `scripts/tests/webShimParity.test.cjs` で再発を止めた。受け入れ基準の
   「Web で 4 操作をクリックして確認」は #84 の修正後、2026-10-31 にブラウザで確認済み。

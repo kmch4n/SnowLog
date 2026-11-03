@@ -13,7 +13,7 @@ npm test            # node --test "scripts/tests/*.test.cjs"
 npm run test:web    # Web をビルドし、headless Chrome で全ルートを描画して確かめる
 ```
 
-`scripts/tests/` に `node:test` ベースのテストが 37 ファイル・344 ケースある（2026-10-26 時点）。
+`scripts/tests/` に `node:test` ベースのテストが 38 ファイル・307 ケースある（2026-11-03 時点。JSON バックアップのテストを #90 で削除した）。
 `scripts/tests/helpers/` はテストではなく共有ハーネス（後述）。ファイル一覧はここに書かない（書くと腐る）。
 
 - `npm test` は 2026-10-26 に追加した。それまで `test` script が無く、テストの存在に気づきにくかった。
@@ -47,7 +47,7 @@ main で 1 件落ち続けていた。原因は**テストの陳腐化**（動�
 
 | 方式 | ファイル | 性質 |
 | --- | --- | --- |
-| **振る舞いを検証**（14 本） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` / `exportPayload` / `importPayload` / `duplicateDetectionService` / `tagRepository` / `appPreferenceRepository` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる。末尾 2 本は実 SQLite を使う（後述） |
+| **振る舞いを検証**（代表例） | `versionUtils` / `bulkImportProgressUtils` / `videoListEquality` / `parseTechniques` / `calendarUtils` / `dateUtils` / `geoUtils` / `photosErrors` / `assetId` / `duplicateDetectionService` / `tagRepository` / `appPreferenceRepository` | `tsc` で対象 `.ts` を temp dir にコンパイル → `require` → 実際に関数を呼んで `assert`。信頼できる。末尾 2 本は実 SQLite を使う（後述） |
 | **ソース読み取り**（3 本） | `homeSwipeDelete` / `videoDetailKeyboardAccessory` / `webShimParity` | `readFileSync` してソース文字列を見る。前 2 本は実装の書き方を固定するスナップショット。`webShimParity` だけ性質が違う（後述） |
 
 正規表現方式の 2 本だけが次の弱点を持つ。
@@ -287,7 +287,7 @@ async に退行しても緑のままになる。
 ## 主要な検証手段は依然として手動
 
 自動テストは補助的で、iOS 実機/シミュレータでの手動確認が主。
-スキーマ・インポート・エクスポート・ダッシュボードに触ったら、`migrate → import → search → export` の全フローを通す。
+スキーマ・インポート・ダッシュボードに触ったら、`migrate → import → search` の全フローを通す。
 `*.web.tsx` に触ったときだけ Web も確認する。
 PR 前には `npm run lint` も実行する。
 
