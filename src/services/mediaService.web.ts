@@ -10,16 +10,8 @@
 // ネイティブ非依存の純粋関数なので、ネイティブと同じ実装をそのまま共有する
 export { isSyntheticAssetId } from "../utils/assetId";
 
-export async function requestMediaPermissions(): Promise<boolean> {
-    return false;
-}
-
 export async function requestPhotosAccess(): Promise<"none"> {
     return "none";
-}
-
-export async function checkMediaPermissions(): Promise<boolean> {
-    return false;
 }
 
 export async function getVideoAssets(): Promise<{ assets: never[]; hasNextPage: boolean; endCursor: string; totalCount: number }> {

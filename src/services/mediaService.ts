@@ -12,21 +12,11 @@ export { isSyntheticAssetId } from "../utils/assetId";
  * フォトライブラリへのアクセス・動画取得を担う
  */
 
-/** フォトライブラリの権限を要求する */
-export async function requestMediaPermissions(): Promise<boolean> {
-    try {
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        return status === "granted";
-    } catch {
-        return false;
-    }
-}
-
 /**
  * 写真ライブラリへのアクセスを要求し、得られた範囲を返す
  *
- * `requestMediaPermissions` は「選択した写真のみ」（limited）でも true を返すので、
- * 許可範囲外の動画が解決できないことと、本当に消えていることを区別できない（#87）。
+ * 「許可されたか」だけでは「選択した写真のみ」（limited）を区別できず、許可範囲外の
+ * 動画が解決できないことと、本当に消えていることを取り違える（#87）。
  */
 export async function requestPhotosAccess(): Promise<PhotosAccess> {
     try {
@@ -36,12 +26,6 @@ export async function requestPhotosAccess(): Promise<PhotosAccess> {
     } catch {
         return "none";
     }
-}
-
-/** 現在の権限状態を確認する */
-export async function checkMediaPermissions(): Promise<boolean> {
-    const { status } = await MediaLibrary.getPermissionsAsync();
-    return status === "granted";
 }
 
 /**
