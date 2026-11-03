@@ -27,7 +27,7 @@ status: active
 | テーマ | Issue |
 | --- | --- |
 | 動画の保存方式の選択。Task B・D の中核は実装済み。残るは Task A・C（ネイティブ）・E・F・G と実機検証。1.4.0 は main から出し 0009 を含める（§9 で決定） | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
-| 限定アクセスで許可範囲外の動画を取り込むと「ファイル無し」に落ちて戻らない。実機での再現確認待ち、方針は Issue コメントで合意済み | [#87](https://github.com/kmch4n/SnowLog/issues/87) |
+| 「選択した写真のみ」の範囲外の動画を取り込むときの警告（#87 の残り。ブロックか警告か、文言が要判断） | [#91](https://github.com/kmch4n/SnowLog/issues/91) |
 | 復元した動画を新端末の写真ライブラリに再リンクする | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
 | `video-import.tsx` の分割（#86 Task E で行う） | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
 | アクセシビリティのラベル（アイコンのみ・データ駆動の操作）。ロールの付与は 2026-11-02 に完了 | [#79](https://github.com/kmch4n/SnowLog/issues/79) |
@@ -41,7 +41,7 @@ status: active
 
 2026-10-31 に close: #84（Web が起動しない）、#82（CI 不在）、#81（`.gitattributes`）。
 2026-11-02 に close: #83（`common.*` は削除）、#88（復元の設定上書きとタグ取りこぼし）。
-2026-11-03 に close: #89（シーズンを 10/1 区切りに）、#90（JSON バックアップを廃止し iCloud バックアップに一本化）。
+2026-11-03 に close: #87（限定アクセスでの「ファイル無し」誤判定）、#89（シーズンを 10/1 区切りに）、#90（JSON バックアップを廃止し iCloud バックアップに一本化）。
 
 ### バックアップ往復（#72、のち廃止）と `.web` シム（#74）は closed
 
