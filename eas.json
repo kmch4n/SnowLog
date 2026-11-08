@@ -17,6 +17,12 @@
         "EXPO_IMAGE_UTILS_NO_SHARP": "1"
       }
     },
+    "simulator": {
+      "extends": "preview",
+      "ios": {
+        "simulator": true
+      }
+    },
     "production": {
       "distribution": "store",
       "autoIncrement": true,
