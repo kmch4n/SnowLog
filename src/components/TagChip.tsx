@@ -35,6 +35,7 @@ export function TagChip({ tag, onRemove }: TagChipProps) {
                     hitSlop={8}
                     style={styles.removeButton}
                     accessibilityRole="button"
+                    accessibilityLabel={t("a11y.removeTag", { name: tag.name })}
                 >
                     <Icon
                         name={IconNames.xmark}

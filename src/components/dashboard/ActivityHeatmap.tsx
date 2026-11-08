@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensio
 import { Colors } from "../../constants/colors";
 import { useTranslation } from "../../i18n/useTranslation";
 import type { HeatmapDay, Season } from "../../types/dashboard";
+import { describeDateKey } from "../../utils/dateUtils";
 
 interface ActivityHeatmapProps {
     days: HeatmapDay[];
@@ -148,6 +149,10 @@ export function ActivityHeatmap({ days, season, onDayPress }: ActivityHeatmapPro
                                     disabled={onDayPress == null || cell.count === 0}
                                     onPress={() => onDayPress?.({ dateKey: cell.dateKey, count: cell.count })}
                                     accessibilityRole="button"
+                                    accessibilityLabel={[
+                                        describeDateKey(cell.dateKey, locale),
+                                        t("a11y.videoCount", { count: cell.count }),
+                                    ].join(t("a11y.listSeparator"))}
                                     style={[
                                         styles.cell,
                                         {

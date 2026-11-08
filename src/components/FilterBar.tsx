@@ -176,6 +176,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                         style={styles.searchClear}
                         onPress={clearSearch}
                         accessibilityRole="button"
+                        accessibilityLabel={t("a11y.clearSearchText")}
                     >
                         <Icon
                             name={IconNames.xmark}

@@ -143,6 +143,7 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
                         onPress={handleClear}
                         style={styles.clearButton}
                         accessibilityRole="button"
+                        accessibilityLabel={t("a11y.clearResort")}
                     >
                         <Icon
                             name={IconNames.xmark}

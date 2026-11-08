@@ -445,6 +445,13 @@ export const ja = {
         iconRemove: "削除",
         iconNavigate: "詳細を表示",
         iconDelete: "削除する",
+        listSeparator: "、",
+        videoCount: "動画{{count}}本",
+        hasDiary: "日記あり",
+        monthValue: "{{month}}、{{metric}} {{value}}",
+        removeTag: "{{name}}を外す",
+        clearSearchText: "検索語をクリア",
+        clearResort: "スキー場の入力をクリア",
     },
 };
 

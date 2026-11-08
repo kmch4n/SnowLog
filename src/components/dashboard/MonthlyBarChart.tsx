@@ -28,6 +28,8 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
     const [metric, setMetric] = useState<Metric>("videoCount");
 
     const maxValue = Math.max(...data.map((d) => d[metric]), 1);
+    const metricLabel =
+        metric === "videoCount" ? t("dashboard.videosLabel") : t("dashboard.summary.skiDays");
     const barMaxHeight = CHART_HEIGHT - BAR_BOTTOM_MARGIN - 16;
 
     if (data.length === 0) {
@@ -87,6 +89,8 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
                             activeOpacity={0.7}
                             onPress={() => onBarPress?.(item)}
                             accessibilityRole="button"
+                            // 下の月ラベルと同じ操作。読み上げはラベル側に任せ、重複させない
+                            aria-hidden
                         >
                             <View
                                 style={[
@@ -116,6 +120,11 @@ export function MonthlyBarChart({ data, onBarPress }: MonthlyBarChartProps) {
                         activeOpacity={0.7}
                         onPress={() => onBarPress?.(item)}
                         accessibilityRole="button"
+                        accessibilityLabel={t("a11y.monthValue", {
+                            month: formatMonthLabel(item.yearMonth, locale),
+                            metric: metricLabel,
+                            value: item[metric],
+                        })}
                     >
                         <Text style={styles.valueLabel}>
                             {item[metric] > 0 ? item[metric] : ""}

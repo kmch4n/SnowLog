@@ -447,5 +447,12 @@ export const en: Translations = {
         iconRemove: "Remove",
         iconNavigate: "Open details",
         iconDelete: "Delete",
+        listSeparator: ", ",
+        videoCount: "{{count}} videos",
+        hasDiary: "Diary entry",
+        monthValue: "{{month}}, {{metric}} {{value}}",
+        removeTag: "Remove {{name}}",
+        clearSearchText: "Clear search text",
+        clearResort: "Clear ski resort",
     },
 };

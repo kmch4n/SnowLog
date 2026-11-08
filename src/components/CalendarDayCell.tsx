@@ -7,6 +7,7 @@ import {
 } from "@/services/thumbnailService";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { CalendarViewMode, DayInfo } from "@/types";
+import { describeDateKey } from "@/utils/dateUtils";
 
 interface CalendarDayCellProps {
     day: number | null;
@@ -39,7 +40,7 @@ export function CalendarDayCell({
     isSunday,
     dayLabel,
 }: CalendarDayCellProps) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
 
     if (day === null) {
         return <View style={viewMode === "month" ? styles.monthCell : styles.weekCell} />;
@@ -51,6 +52,17 @@ export function CalendarDayCell({
             ? Colors.saturdayText
             : Colors.textPrimary;
 
+    // 日付・本数・日記の有無を読み上げる。スキー場のドットとサムネイルは文字を持たない
+    const accessibilityLabel = [
+        describeDateKey(dateKey, locale),
+        dayInfo && dayInfo.videoCount > 0
+            ? t("a11y.videoCount", { count: dayInfo.videoCount })
+            : null,
+        dayInfo?.hasDiary ? t("a11y.hasDiary") : null,
+    ]
+        .filter((part): part is string => part != null)
+        .join(t("a11y.listSeparator"));
+
     if (viewMode === "week") {
         return (
             <TouchableOpacity
@@ -58,6 +70,7 @@ export function CalendarDayCell({
                 onPress={() => onPress(day)}
                 activeOpacity={0.7}
                 accessibilityRole="button"
+                accessibilityLabel={accessibilityLabel}
                 accessibilityState={{ selected: isSelected }}
             >
                 {/* 曜日 + 日番号 */}
@@ -138,6 +151,7 @@ export function CalendarDayCell({
             onPress={() => onPress(day)}
             activeOpacity={0.7}
             accessibilityRole="button"
+            accessibilityLabel={accessibilityLabel}
             accessibilityState={{ selected: isSelected }}
         >
             {/* 日番号 */}
