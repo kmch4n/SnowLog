@@ -11,7 +11,7 @@
 
 <p align="center">
     <a href="https://apps.apple.com/jp/app/snowlog-snow-video-review-app/id6761445679"><img src="https://img.shields.io/badge/App%20Store-無料でダウンロード-0A84FF" alt="App Store" /></a>
-    <img src="https://img.shields.io/badge/version-1.3.0-brightgreen" alt="Version" />
+    <img src="https://img.shields.io/badge/version-1.4.0-brightgreen" alt="Version" />
     <img src="https://img.shields.io/badge/iOS-16%2B-black" alt="iOS 16+" />
     <img src="https://img.shields.io/badge/言語-日本語%20%2F%20English-lightgrey" alt="日本語 / English" />
 </p>
