@@ -113,6 +113,8 @@ export function GpsConfirmationDialog({
                     onPress={onConfirm}
                     disabled={!hasConfirmed || isApplying}
                     accessibilityRole="button"
+                    accessibilityLabel={t("import.gpsConfirm.apply")}
+                    accessibilityState={{ busy: isApplying }}
                 >
                     {isApplying ? (
                         <ActivityIndicator color={Colors.headerText} size="small" />

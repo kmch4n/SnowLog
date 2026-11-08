@@ -191,6 +191,8 @@ function DuplicateGroupCard({
                     onPress={handleDeletePress}
                     disabled={selectedIds.size === 0 || isDeleting}
                     accessibilityRole="button"
+                    accessibilityLabel={t("settings.duplicateCandidates.deleteSelected")}
+                    accessibilityState={{ busy: isDeleting }}
                 >
                     {isDeleting ? (
                         <ActivityIndicator size="small" color={Colors.headerText} />

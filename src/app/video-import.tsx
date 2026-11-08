@@ -1147,6 +1147,8 @@ export default function VideoImportScreen() {
                     onPress={handleSave}
                     disabled={!selectedAsset || isSaving || !resolvedAssetUri || isLoadingMeta}
                     accessibilityRole="button"
+                    accessibilityLabel={t("import.save")}
+                    accessibilityState={{ busy: isSaving }}
                 >
                     {isSaving ? (
                         <ActivityIndicator color={Colors.headerText} />
