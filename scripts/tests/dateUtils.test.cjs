@@ -58,6 +58,7 @@ const {
     seasonMonths,
     seasonStartYearOf,
     formatDurationHM,
+    describeDateKey,
 } = require(path.join(outDir, "utils", "dateUtils.js"));
 
 // --- Pure string math: no timezone, no Intl ---
@@ -238,4 +239,16 @@ test("date formatters read the timestamp as seconds, not milliseconds", () => {
 
     assert.match(formatDate(ts), /2025/);
     assert.doesNotMatch(formatDate(ts), /1970/);
+});
+
+test("describeDateKey reads a date key as the local calendar date", () => {
+    assert.equal(describeDateKey("2025-01-01", "ja"), "2025年1月1日");
+    assert.equal(describeDateKey("2025-01-01", "en"), "January 1, 2025");
+    // The last day of a month must not roll into the next (a UTC parse would, west of UTC).
+    assert.equal(describeDateKey("2026-10-31", "ja"), "2026年10月31日");
+});
+
+test("describeDateKey returns anything that is not YYYY-MM-DD unchanged", () => {
+    assert.equal(describeDateKey("2025-1-1", "ja"), "2025-1-1");
+    assert.equal(describeDateKey("", "en"), "");
 });

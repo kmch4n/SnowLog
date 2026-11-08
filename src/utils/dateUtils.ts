@@ -40,6 +40,21 @@ export function formatDate(
 }
 
 /**
+ * 日付キー（"YYYY-MM-DD"、端末のローカル日付）を読み上げ用の長い日付に変換する
+ * 例: "2025-01-01" → "2025年1月1日" / "January 1, 2025"。形が違えばそのまま返す。
+ */
+export function describeDateKey(dateKey: string, locale: SupportedLocale = "ja"): string {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
+    if (!match) return dateKey;
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return date.toLocaleDateString(toIntlLocale(locale), {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+}
+
+/**
  * Unix timestamp（秒）を短い日付形式に変換する
  * 例: 1735689600 → "2025/01/01"
  */
