@@ -1,6 +1,6 @@
 ---
 title: バックログ
-updated: 2026-11-02
+updated: 2026-11-09
 status: active
 ---
 
@@ -8,7 +8,7 @@ status: active
 
 コードや git log からは読み取れない「これからやりたいこと」の置き場。
 
-**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-11-02 時点で open 12 件 / 全 86 件）、
+**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-11-09 時点で open 9 件 / 全 91 件）、
 やることは基本すべて Issue 化されている。ここに同じ内容を書くと二重管理になり、必ず片方が腐る。
 このファイルには **Issue になっていないものだけ** を置く。Issue 化できたらここから消す。
 
@@ -20,18 +20,15 @@ status: active
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
-作業前にこの対応表を見て、既存 Issue を確認する。**2026-11-02 時点の open 12 件すべて**を載せている。
+作業前にこの対応表を見て、既存 Issue を確認する。**2026-11-09 時点の open 9 件すべて**を載せている。
 古い表は新しく立った Issue を落としたまま残っていて役に立たなかったので、更新するときは
 `gh issue list --state open` から作り直すこと。追記していくと必ず漏れる。
 
 | テーマ | Issue |
 | --- | --- |
-| 動画の保存方式の選択。Task B・D の中核は実装済み。残るは Task A・C（ネイティブ）・E・F・G と実機検証。1.4.0 は main から出し 0009 を含める（§9 で決定） | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
-| 「選択した写真のみ」の範囲外の動画を取り込むときの警告（#87 の残り。ブロックか警告か、文言が要判断） | [#91](https://github.com/kmch4n/SnowLog/issues/91) |
+| 動画の保存方式の選択。Task B・D の中核は実装済み（1.4.0 に入った）。ローカルモジュール `modules/snowlog-media` と I1 用の EAS custom build（`.eas/build/ios-test.yml`、プロファイル `ios-test`）を 2026-11-09 に追加。残るは Task A の実機計測・C・E・F・G | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
 | 復元した動画を新端末の写真ライブラリに再リンクする | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
 | `video-import.tsx` の分割（#86 Task E で行う） | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
-| アクセシビリティのラベル（アイコンのみ・データ駆動の操作）。ロールの付与は 2026-11-02 に完了 | [#79](https://github.com/kmch4n/SnowLog/issues/79) |
-| Expo SDK 55 の依存 26 件が期待バージョン未満。1.4.0 リリース後、#86 Task A の前に行う | [#78](https://github.com/kmch4n/SnowLog/issues/78) |
 | iCloud ダウンロードの制御（#86 のサブ Issue） | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
 | カスタムタグ UI の見直し | [#69](https://github.com/kmch4n/SnowLog/issues/69) |
 | Reels 取り込みの検討 | [#54](https://github.com/kmch4n/SnowLog/issues/54) |
@@ -42,6 +39,7 @@ status: active
 2026-10-31 に close: #84（Web が起動しない）、#82（CI 不在）、#81（`.gitattributes`）。
 2026-11-02 に close: #83（`common.*` は削除）、#88（復元の設定上書きとタグ取りこぼし）。
 2026-11-03 に close: #87（限定アクセスでの「ファイル無し」誤判定）、#89（シーズンを 10/1 区切りに）、#90（JSON バックアップを廃止し iCloud バックアップに一本化）。
+2026-11-09 に close: #78（依存更新。1.4.0 の後に入れた）、#79（ラベル。VoiceOver での確認は対象外と決めた）、#91（範囲外の動画はインポートしない）。#78・#91 は実機未確認で、次の TestFlight で確かめる。
 
 ### バックアップ往復（#72、のち廃止）と `.web` シム（#74）は closed
 
