@@ -284,6 +284,10 @@ export const ja = {
             title: "動画を読み込めませんでした",
             body: "動画ファイルの取得に失敗しました。クラウドまたは端末ストレージから再度お試しください。",
         },
+        outsideSelection: {
+            title: "この動画はインポートできません",
+            body: "SnowLog にアクセスを許可した写真に含まれていない動画です。設定で写真へのアクセスを変更してから、もう一度選んでください。",
+        },
         pickFailed: "動画の選択に失敗しました",
         iCloudFailed: {
             title: "iCloud 動画を取得できませんでした",
@@ -308,6 +312,8 @@ export const ja = {
             summarySuccess: "{{count}}本インポートしました",
             summarySkipped: "スキップ: {{count}}本",
             summaryError: "エラー: {{count}}本",
+            summaryNotAccessible:
+                "アクセス範囲外: {{count}}本（設定で写真へのアクセスを変更するとインポートできます）",
             progressLabel: "{{current}} / {{total}}",
             progressTitle: "一括インポート中",
             currentFile: "処理中: {{filename}}",

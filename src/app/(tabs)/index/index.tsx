@@ -148,6 +148,11 @@ export default function HomeScreen() {
                 if (summary.errorCount > 0) {
                     parts.push(t("import.bulk.summaryError", { count: summary.errorCount }));
                 }
+                if (summary.notAccessibleCount > 0) {
+                    parts.push(
+                        t("import.bulk.summaryNotAccessible", { count: summary.notAccessibleCount })
+                    );
+                }
 
                 Alert.alert(t("import.bulk.summaryTitle"), parts.join("\n"));
             });

@@ -286,6 +286,10 @@ export const en: Translations = {
             title: "Could not load the video",
             body: "Failed to fetch the file. Please retry from the cloud or local storage.",
         },
+        outsideSelection: {
+            title: "Could not import this video",
+            body: "This video isn't among the photos SnowLog can access. Change Photos access in Settings, then select it again.",
+        },
         pickFailed: "Failed to pick a video",
         iCloudFailed: {
             title: "Could not download from iCloud",
@@ -310,6 +314,8 @@ export const en: Translations = {
             summarySuccess: "{{count}} video(s) imported",
             summarySkipped: "Skipped: {{count}}",
             summaryError: "Errors: {{count}}",
+            summaryNotAccessible:
+                "Not accessible: {{count}} (change Photos access in Settings to import them)",
             progressLabel: "{{current}} / {{total}}",
             progressTitle: "Bulk import in progress",
             currentFile: "Processing: {{filename}}",

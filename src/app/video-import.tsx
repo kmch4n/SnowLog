@@ -7,6 +7,7 @@ import {
     Alert,
     Image,
     KeyboardAvoidingView,
+    Linking,
     Platform,
     ScrollView,
     StyleSheet,
@@ -38,8 +39,13 @@ import {
 } from "@/services/hapticsService";
 import { setPendingBulkImportSummary } from "@/services/bulkImportSummaryService";
 import { importVideo, type ImportableAsset } from "@/services/importService";
-import { getAssetInfoWithDownload } from "@/services/mediaService";
+import {
+    getAssetInfoWithDownload,
+    lookupAssetWithDownload,
+    requestPhotosAccess,
+} from "@/services/mediaService";
 import { SYNTHETIC_ASSET_ID_PREFIX } from "@/utils/assetId";
+import { isOutsideLimitedSelection, type PhotosAccess } from "@/utils/playbackSource";
 import { isPhotosLibraryError } from "@/utils/photosErrors";
 import { useSkiResortSuggestions } from "@/hooks/useSkiResortSuggestions";
 import { randomUUID } from "expo-crypto";
@@ -76,6 +82,9 @@ function inferExtension(filename?: string | null, uri?: string | null): string {
     const match = target.match(/\.([a-zA-Z0-9]+)(?:$|\?)/);
     return match ? match[1].toLowerCase() : "mov";
 }
+
+/** 一括取り込みで、写真へのアクセス範囲外の動画を飛ばすための印（#91） */
+class OutsideLimitedSelectionError extends Error {}
 
 async function stageAssetFile(sourceUri: string, filename?: string | null): Promise<string> {
     if (!isSupportedImportUri(sourceUri) || !IMPORT_CACHE_DIR) {
@@ -137,6 +146,7 @@ export default function VideoImportScreen() {
     const bulkStartedAtRef = useRef<number | null>(null);
     const bulkCurrentItemStartedAtRef = useRef<number | null>(null);
     const bulkCompletedElapsedMsRef = useRef(0);
+    const bulkNotAccessibleCountRef = useRef(0);
     // 表示用。ETA 用の bulkStartedAtRef とは別に、画面が「インポート中」へ
     // 切り替わった瞬間を起点にする。
     const importingStartedAtRef = useRef<number | null>(null);
@@ -158,6 +168,7 @@ export default function VideoImportScreen() {
         bulkStartedAtRef.current = null;
         bulkCurrentItemStartedAtRef.current = null;
         bulkCompletedElapsedMsRef.current = 0;
+        bulkNotAccessibleCountRef.current = 0;
         importingStartedAtRef.current = null;
         setImportingElapsedMs(0);
         setShowPreparingUI(false);
@@ -345,6 +356,7 @@ export default function VideoImportScreen() {
             );
             return;
         }
+        const photosAccess = await requestPhotosAccess();
 
         let pickerResult: ImagePicker.ImagePickerResult;
         try {
@@ -409,10 +421,17 @@ export default function VideoImportScreen() {
         // MediaLibrary のメタデータから GPS 座標・撮影日時を取得
         // iCloud 専用アセットの場合は自動ダウンロードでリトライする
         let assetInfo: Awaited<ReturnType<typeof getAssetInfoWithDownload>> | null = null;
+        let isOutsideSelection = false;
         if (asset.assetId) {
             setIsLoadingMeta(true);
             try {
-                assetInfo = await getAssetInfoWithDownload(asset.assetId);
+                const lookup = await lookupAssetWithDownload(asset.assetId);
+                isOutsideSelection = isOutsideLimitedSelection({
+                    assetId: asset.assetId,
+                    access: photosAccess,
+                    lookup: lookup.status,
+                });
+                assetInfo = lookup.status === "found" ? lookup.info : null;
                 if (assetInfo?.creationTime && Number.isFinite(assetInfo.creationTime)) {
                     setAssetCreationTime(assetInfo.creationTime);
                 }
@@ -426,6 +445,26 @@ export default function VideoImportScreen() {
             } finally {
                 setIsLoadingMeta(false);
             }
+        }
+
+        // 範囲外の動画は、参照だけの再生できない行になるので取り込まない（#91）
+        if (isOutsideSelection) {
+            Alert.alert(
+                t("import.outsideSelection.title"),
+                t("import.outsideSelection.body"),
+                [
+                    { text: t("common.cancel"), style: "cancel" },
+                    {
+                        text: t("common.openSettings"),
+                        onPress: () => {
+                            void Linking.openSettings();
+                        },
+                    },
+                ]
+            );
+            setSelectedAsset(null);
+            setResolvedAssetUri(null);
+            return;
         }
 
         let stagedUri: string | null = null;
@@ -589,13 +628,19 @@ export default function VideoImportScreen() {
     /** Store the summary, then return to Home where the alert is shown. */
     const showBulkSummary = useCallback(
         (successCount: number, skippedCount: number, errorCount: number) => {
-            if (errorCount > 0) {
+            const notAccessibleCount = bulkNotAccessibleCountRef.current;
+            if (errorCount > 0 || notAccessibleCount > 0) {
                 hapticWarning();
             } else {
                 hapticSuccess();
             }
 
-            setPendingBulkImportSummary({ successCount, skippedCount, errorCount });
+            setPendingBulkImportSummary({
+                successCount,
+                skippedCount,
+                errorCount,
+                notAccessibleCount,
+            });
             bulkCompletionExitRef.current = true;
             resetBulkImportState();
             router.back();
@@ -605,7 +650,7 @@ export default function VideoImportScreen() {
 
     /** 一括インポートのコアロジック */
     const processBulkImport = useCallback(
-        async (assets: ImagePicker.ImagePickerAsset[]) => {
+        async (assets: ImagePicker.ImagePickerAsset[], photosAccess: PhotosAccess) => {
             // 重複チェック
             const assetIds = assets
                 .map((a) => a.assetId)
@@ -632,6 +677,7 @@ export default function VideoImportScreen() {
             setBulkEtaMs(null);
 
             let errorCount = 0;
+            bulkNotAccessibleCountRef.current = 0;
             bulkStartedAtRef.current = Date.now();
             bulkCompletedElapsedMsRef.current = 0;
 
@@ -649,12 +695,18 @@ export default function VideoImportScreen() {
                     // メタデータ取得（GPS + localUri）
                     let assetInfo: Awaited<ReturnType<typeof getAssetInfoWithDownload>> | null = null;
                     if (asset.assetId) {
-                        try {
-                            setBulkStep("downloading");
-                            assetInfo = await getAssetInfoWithDownload(asset.assetId);
-                        } catch {
-                            assetInfo = null;
+                        setBulkStep("downloading");
+                        const lookup = await lookupAssetWithDownload(asset.assetId);
+                        if (
+                            isOutsideLimitedSelection({
+                                assetId: asset.assetId,
+                                access: photosAccess,
+                                lookup: lookup.status,
+                            })
+                        ) {
+                            throw new OutsideLimitedSelectionError();
                         }
+                        assetInfo = lookup.status === "found" ? lookup.info : null;
                     }
 
                     // ファイルをステージング
@@ -720,9 +772,15 @@ export default function VideoImportScreen() {
                         }
                     }
                 } catch (e) {
-                    item.status = "error";
-                    item.error = e instanceof Error ? e.message : t("common.unknownError");
-                    errorCount++;
+                    if (e instanceof OutsideLimitedSelectionError) {
+                        // 行もファイルも作っていない。エラーではなく、まとめて案内する
+                        item.status = "notAccessible";
+                        bulkNotAccessibleCountRef.current++;
+                    } else {
+                        item.status = "error";
+                        item.error = e instanceof Error ? e.message : t("common.unknownError");
+                        errorCount++;
+                    }
                 }
 
                 if (bulkStartedAtRef.current != null) {
@@ -770,6 +828,7 @@ export default function VideoImportScreen() {
             Alert.alert(t("permissions.photoLibraryRequired.title"), t("permissions.photoLibraryRequired.body"));
             return;
         }
+        const photosAccess = await requestPhotosAccess();
 
         // Enter "preparing" BEFORE launching the picker. On iOS, PHPicker
         // dismisses immediately on tap-to-confirm, but expo-image-picker then
@@ -852,7 +911,7 @@ export default function VideoImportScreen() {
         setBulkEtaMs(null);
 
         try {
-            await processBulkImport(pickerResult.assets);
+            await processBulkImport(pickerResult.assets, photosAccess);
         } catch (error) {
             resetBulkImportState();
             hapticError();

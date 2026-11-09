@@ -80,7 +80,8 @@ export interface ImportMetadata {
 export interface BulkImportItem {
     assetId: string;
     filename: string;
-    status: "pending" | "importing" | "success" | "skipped" | "error";
+    /** notAccessible: 「選択した写真のみ」の範囲外で取り込まなかった（#91） */
+    status: "pending" | "importing" | "success" | "skipped" | "error" | "notAccessible";
     error?: string;
     videoId?: string;
     capturedAt?: number;

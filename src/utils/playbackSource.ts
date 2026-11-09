@@ -27,6 +27,22 @@ export type PlaybackSourceDecision =
     /** 権限が足りないだけ。何も書かず、写真へのアクセスを案内する */
     | { kind: "notAccessible" };
 
+/**
+ * 取り込み時: 選んだ動画が「選択した写真のみ」の範囲外か（#91）
+ *
+ * 範囲外の動画もシステムのピッカーには並び、選ぶとファイルが渡される。しかし写真ライブラリの
+ * ID では引けないので、取り込んでも参照だけの行になって再生できず、撮影日もその時点になる。
+ * 範囲外と言えるのは、アクセスが限定で、ID があり、検索が「見つからない」と答えたときだけ。
+ * 検索の失敗（例外）は範囲外と決めつけない。フルアクセスで見つからない場合は従来どおり取り込む。
+ */
+export function isOutsideLimitedSelection(input: {
+    assetId: string | null | undefined;
+    access: PhotosAccess;
+    lookup: "found" | "notFound" | "failed";
+}): boolean {
+    return Boolean(input.assetId) && input.access === "limited" && input.lookup === "notFound";
+}
+
 export function decidePlaybackSource(input: {
     resolved: boolean;
     access: PhotosAccess;

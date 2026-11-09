@@ -29,7 +29,9 @@ execFileSync(
     { cwd: root, stdio: "inherit" }
 );
 
-const { decidePlaybackSource } = require(path.join(outDir, "playbackSource.js"));
+const { decidePlaybackSource, isOutsideLimitedSelection } = require(
+    path.join(outDir, "playbackSource.js")
+);
 
 test("unresolved under Limited access is not written off as missing", () => {
     for (const wasAvailable of [true, false]) {
@@ -71,4 +73,43 @@ test("unresolved with full access is a genuinely missing file", () => {
         decidePlaybackSource({ resolved: false, access: "all", wasAvailable: true }),
         { kind: "missing", markMissing: true }
     );
+});
+
+// Import time (#91): a pick that the library cannot find under Limited access is
+// refused, because the row would be an unplayable reference.
+
+test("a pick not found under Limited access is outside the selection", () => {
+    assert.equal(
+        isOutsideLimitedSelection({ assetId: "A/L0/001", access: "limited", lookup: "notFound" }),
+        true
+    );
+});
+
+test("only Limited access refuses a pick; Full and no access keep today's import", () => {
+    for (const access of ["all", "none"]) {
+        assert.equal(
+            isOutsideLimitedSelection({ assetId: "A/L0/001", access, lookup: "notFound" }),
+            false,
+            access
+        );
+    }
+});
+
+test("a lookup that failed or found the asset is not treated as outside", () => {
+    for (const lookup of ["found", "failed"]) {
+        assert.equal(
+            isOutsideLimitedSelection({ assetId: "A/L0/001", access: "limited", lookup }),
+            false,
+            lookup
+        );
+    }
+});
+
+test("a pick without a library identifier is never outside (it becomes an app copy)", () => {
+    for (const assetId of [null, undefined, ""]) {
+        assert.equal(
+            isOutsideLimitedSelection({ assetId, access: "limited", lookup: "notFound" }),
+            false
+        );
+    }
 });
