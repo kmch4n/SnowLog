@@ -22,6 +22,10 @@ export async function getAssetInfo(_assetId: string): Promise<null> {
     return null;
 }
 
+export async function lookupAssetWithDownload(_assetId: string): Promise<{ status: "failed" }> {
+    return { status: "failed" };
+}
+
 export async function getAssetInfoWithDownload(_assetId: string): Promise<null> {
     return null;
 }

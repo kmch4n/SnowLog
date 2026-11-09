@@ -64,29 +64,54 @@ export async function getAssetInfo(
 }
 
 /**
- * iCloud 動画にも対応するアセット情報取得（自動ダウンロードリトライ付き）
+ * 写真ライブラリでアセットを探した結果
+ *
+ * ネイティブはアセットが見つからないと例外ではなく null を返す（「選択した写真のみ」の範囲外も
+ * これになる）。取得そのものの失敗（例外）とは分けて扱う。
+ */
+export type AssetLookup =
+    | { status: "found"; info: MediaLibrary.AssetInfo }
+    | { status: "notFound" }
+    | { status: "failed" };
+
+function toLookup(info: MediaLibrary.AssetInfo | null): AssetLookup {
+    return info ? { status: "found", info } : { status: "notFound" };
+}
+
+/**
+ * iCloud 動画にも対応するアセット検索（自動ダウンロードリトライ付き）
  * まず shouldDownloadFromNetwork: false で試み、Photos 由来のエラーなら
  * true でリトライする。ユーザー操作起点の箇所（インポート・詳細画面）で使用する。
  */
-export async function getAssetInfoWithDownload(
-    assetId: string
-): Promise<MediaLibrary.AssetInfo | null> {
+export async function lookupAssetWithDownload(assetId: string): Promise<AssetLookup> {
     try {
-        return await MediaLibrary.getAssetInfoAsync(assetId, {
-            shouldDownloadFromNetwork: false,
-        });
+        return toLookup(
+            await MediaLibrary.getAssetInfoAsync(assetId, {
+                shouldDownloadFromNetwork: false,
+            })
+        );
     } catch (error) {
         if (!isPhotosLibraryError(error)) {
-            return null;
+            return { status: "failed" };
         }
     }
     try {
-        return await MediaLibrary.getAssetInfoAsync(assetId, {
-            shouldDownloadFromNetwork: true,
-        });
+        return toLookup(
+            await MediaLibrary.getAssetInfoAsync(assetId, {
+                shouldDownloadFromNetwork: true,
+            })
+        );
     } catch {
-        return null;
+        return { status: "failed" };
     }
+}
+
+/** `lookupAssetWithDownload` の情報だけを返す版。見つからない・失敗はどちらも null */
+export async function getAssetInfoWithDownload(
+    assetId: string
+): Promise<MediaLibrary.AssetInfo | null> {
+    const lookup = await lookupAssetWithDownload(assetId);
+    return lookup.status === "found" ? lookup.info : null;
 }
 
 /**
