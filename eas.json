@@ -23,6 +23,14 @@
         "simulator": true
       }
     },
+    "ios-test": {
+      "extends": "preview",
+      "withoutCredentials": true,
+      "ios": {
+        "simulator": true,
+        "config": "ios-test.yml"
+      }
+    },
     "production": {
       "distribution": "store",
       "autoIncrement": true,
