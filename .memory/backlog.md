@@ -8,7 +8,7 @@ status: active
 
 コードや git log からは読み取れない「これからやりたいこと」の置き場。
 
-**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-11-09 時点で open 9 件 / 全 91 件）、
+**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-11-09 時点で open 10 件 / 全 93 件）、
 やることは基本すべて Issue 化されている。ここに同じ内容を書くと二重管理になり、必ず片方が腐る。
 このファイルには **Issue になっていないものだけ** を置く。Issue 化できたらここから消す。
 
@@ -20,18 +20,19 @@ status: active
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
-作業前にこの対応表を見て、既存 Issue を確認する。**2026-11-09 時点の open 9 件すべて**を載せている。
+作業前にこの対応表を見て、既存 Issue を確認する。**2026-11-09 時点の open 10 件すべて**を載せている。
 古い表は新しく立った Issue を落としたまま残っていて役に立たなかったので、更新するときは
 `gh issue list --state open` から作り直すこと。追記していくと必ず漏れる。
 
 | テーマ | Issue |
 | --- | --- |
 | 動画の保存方式の選択。Task B・D の中核は実装済み（1.4.0 に入った）。ローカルモジュール `modules/snowlog-media` と I1 用の EAS custom build（`.eas/build/ios-test.yml`、プロファイル `ios-test`）を 2026-11-09 に追加。残るは Task A の実機計測・C・E・F・G | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
-| 復元した動画を新端末の写真ライブラリに再リンクする | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
-| `video-import.tsx` の分割（#86 Task E で行う） | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
+| iCloud バックアップから新しい iPhone に復元したあと、写真の参照（`assetId`）を付け直す。2026-11-09 に JSON 復元の前提から書き直した。まず実機で ID が残るかを測る | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
+| `video-import.tsx` の分割（1,447 行。#86 Task E で行う） | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
+| `video/[id].tsx` の分割（811 行。自動保存と再生元の解決をフックへ。#86 Task F の前が望ましい） | [#92](https://github.com/kmch4n/SnowLog/issues/92) |
 | iCloud ダウンロードの制御（#86 のサブ Issue） | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
 | カスタムタグ UI の見直し | [#69](https://github.com/kmch4n/SnowLog/issues/69) |
-| Reels 取り込みの検討 | [#54](https://github.com/kmch4n/SnowLog/issues/54) |
+| 動画の撮影日を手で直せるようにする（#54 から分離。他アプリから保存した動画は撮影日が保存日になる） | [#93](https://github.com/kmch4n/SnowLog/issues/93) |
 | Large Title ヘッダー（ブランドの青いヘッダーが消える点を含めて要判断） | [#47](https://github.com/kmch4n/SnowLog/issues/47) |
 | Liquid Glass の拡張（FilterBar はレイアウト変更が前提） | [#46](https://github.com/kmch4n/SnowLog/issues/46) |
 | ホームの長押し選択をコンテキストメニューに（expo-router の `Link.Menu` で依存追加なしに可能） | [#45](https://github.com/kmch4n/SnowLog/issues/45) |
@@ -39,7 +40,7 @@ status: active
 2026-10-31 に close: #84（Web が起動しない）、#82（CI 不在）、#81（`.gitattributes`）。
 2026-11-02 に close: #83（`common.*` は削除）、#88（復元の設定上書きとタグ取りこぼし）。
 2026-11-03 に close: #87（限定アクセスでの「ファイル無し」誤判定）、#89（シーズンを 10/1 区切りに）、#90（JSON バックアップを廃止し iCloud バックアップに一本化）。
-2026-11-09 に close: #78（依存更新。1.4.0 の後に入れた）、#79（ラベル。VoiceOver での確認は対象外と決めた）、#91（範囲外の動画はインポートしない）。#78・#91 は実機未確認で、次の TestFlight で確かめる。
+2026-11-09 に close: #78（依存更新。1.4.0 の後に入れた）、#79（ラベル。VoiceOver での確認は対象外と決めた）、#91（範囲外の動画はインポートしない）、#54（Instagram との直接連携は不可。写真に保存してから取り込む方法は今のまま使える）。#78・#91 は実機未確認で、次の TestFlight で確かめる。
 
 ### バックアップ往復（#72、のち廃止）と `.web` シム（#74）は closed
 
