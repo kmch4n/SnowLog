@@ -291,6 +291,34 @@ async に退行しても緑のままになる。
 `*.web.tsx` に触ったときだけ Web も確認する。
 PR 前には `npm run lint` も実行する。
 
+## Mac なしでネイティブを確かめる: EAS の 2 つのプロファイル（2026-11-09 追加）
+
+どちらも署名の資格情報も実機の登録も要らない。EAS は **コミット済みのツリー**をビルドするので、
+先にコミットするか、一時的な変更なら `EAS_NO_VCS=1` を付けて作業ツリーを送る。無料プランは iOS ビルドが
+月 15 回まで（1 回 45 分まで）なので、むやみに回さない。
+
+| プロファイル | 何を証明するか | 実行 |
+| --- | --- | --- |
+| `simulator` | 全ネイティブモジュール込みでアプリがコンパイルできる（依存更新・ネイティブ追加の確認） | `npx eas-cli build -p ios --profile simulator --non-interactive --wait` |
+| `ios-test` | `modules/snowlog-media` の `SnowLogMediaCore` の XCTest がシミュレータで通る（#86 §10.1 の I1） | `npx eas-cli build -p ios --profile ios-test --non-interactive --wait` |
+
+`ios-test` の仕組みは `.eas/build/ios-test.yml` にある。要点は次のとおり。
+
+- Expo の autolinking は、`includeTests` を付けない限り test spec を `pod install` に渡さない。付けると
+  全 Expo pod の test spec が有効になって壊れる。そこで `use_expo_modules!` より前に
+  `pod "SnowLogMediaCore", ..., testspecs: ["Tests"]` を差し込む（先に宣言済みの pod は autolinking が触らない）。
+- scheme は CocoaPods が作る `SnowLogMediaCore-Unit-Tests`。シミュレータは `eas/start_ios_simulator` が起動したもの
+  （2026-11-09 時点で iPhone 17）。
+- テストが落ちると「Run XCTest」ステップが落ち、ビルドが ERRORED になる。わざと落とす対照ビルドで確認済み
+  （build `3d72602f`: `Executed 1 test, with 1 failure` → `** TEST FAILED **`）。
+- 結果の `.xcresult` は zip にして build artifact に上がる。ログは `eas build:view <id> --json` の `logFiles`。
+  brotli 圧縮なので `curl --compressed` で取る。
+- テスト対象を `SnowLogMediaCore` に置くのは、ExpoModulesCore と React に依存しない pod なら、アプリをホストにせずに
+  テストできるから。PhotoKit を扱うロジックと偽の PhotoKit アダプター（#86 Task C）はこちらに置く。
+
+`ios-test` が示せるのは、偽のアダプターが通る経路でアプリが何を要求するかまで。実際の通信量は示せない
+（#86 §10.1 の I2・I3 と、実機での計測が別に要る）。
+
 ## `pr/pv`（PV）は別のテスト面
 
 2026-07-29 に `pr/pv/`（Remotion 製の紹介映像）が入った。`pr/web` と同じく**独立した npm プロジェクト**で、
