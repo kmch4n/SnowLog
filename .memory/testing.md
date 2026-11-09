@@ -13,7 +13,7 @@ npm test            # node --test "scripts/tests/*.test.cjs"
 npm run test:web    # Web をビルドし、headless Chrome で全ルートを描画して確かめる
 ```
 
-`scripts/tests/` に `node:test` ベースのテストが 38 ファイル・307 ケースある（2026-11-03 時点。JSON バックアップのテストを #90 で削除した）。
+`scripts/tests/` に `node:test` ベースのテストが 39 ファイル・318 ケースある（2026-11-09 時点）。
 `scripts/tests/helpers/` はテストではなく共有ハーネス（後述）。ファイル一覧はここに書かない（書くと腐る）。
 
 - `npm test` は 2026-10-26 に追加した。それまで `test` script が無く、テストの存在に気づきにくかった。
