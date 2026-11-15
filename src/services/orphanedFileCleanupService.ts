@@ -7,15 +7,14 @@ import {
     managedPathToUri,
 } from "./managedVideoFileService";
 import {
+    type CleanupDirectory,
+    type CleanupFileInfo,
+    runOrphanCleanup,
+} from "./orphanCleanupRun";
+import {
     getThumbnailDirectoryUri,
     toRelativeThumbnailPath,
 } from "./thumbnailService";
-
-interface CleanupTarget {
-    directoryUri: string;
-    referencedFileNames: Set<string>;
-    minimumAgeMs: number;
-}
 
 export interface OrphanedFileCleanupResult {
     deletedFiles: number;
@@ -50,104 +49,54 @@ function fileNameFromUri(uri: string): string | null {
     return trimmed.slice(index + 1);
 }
 
-function thumbnailFileNameFromStoredUri(stored: string): string | null {
-    const relative = toRelativeThumbnailPath(stored);
-    if (!relative) return null;
-    return fileNameFromUri(relative);
+function directoryUri(directory: CleanupDirectory): string {
+    return directory === "thumbnails" ? getThumbnailDirectoryUri() : getManagedVideoDirectoryUri();
 }
 
-async function directoryExists(directoryUri: string): Promise<boolean> {
-    const info = await FileSystem.getInfoAsync(directoryUri);
-    return info.exists && info.isDirectory;
-}
+async function listRegularFiles(directory: CleanupDirectory): Promise<CleanupFileInfo[]> {
+    const dirUri = directoryUri(directory);
+    const dirInfo = await FileSystem.getInfoAsync(dirUri);
+    if (!dirInfo.exists || !dirInfo.isDirectory) return [];
 
-function isRecentlyModified(modificationTimeSeconds: number, minimumAgeMs: number): boolean {
-    if (minimumAgeMs <= 0) return false;
-    const modifiedAtMs = modificationTimeSeconds * 1000;
-    return Date.now() - modifiedAtMs < minimumAgeMs;
-}
-
-async function cleanupDirectory(target: CleanupTarget): Promise<{
-    deletedFiles: number;
-    deletedBytes: number;
-}> {
-    if (!(await directoryExists(target.directoryUri))) {
-        return { deletedFiles: 0, deletedBytes: 0 };
+    const files: CleanupFileInfo[] = [];
+    for (const name of await FileSystem.readDirectoryAsync(dirUri)) {
+        const info = await FileSystem.getInfoAsync(`${dirUri}${name}`);
+        if (!info.exists || info.isDirectory) continue;
+        files.push({ name, size: info.size, modifiedAtMs: info.modificationTime * 1000 });
     }
-
-    const fileNames = await FileSystem.readDirectoryAsync(target.directoryUri);
-    let deletedFiles = 0;
-    let deletedBytes = 0;
-
-    for (const fileName of fileNames) {
-        if (target.referencedFileNames.has(fileName)) {
-            continue;
-        }
-
-        const uri = `${target.directoryUri}${fileName}`;
-        if (protectedFileUris.has(uri)) {
-            continue;
-        }
-
-        const info = await FileSystem.getInfoAsync(uri);
-        if (!info.exists || info.isDirectory) {
-            continue;
-        }
-
-        if (isRecentlyModified(info.modificationTime, target.minimumAgeMs)) {
-            continue;
-        }
-
-        deletedBytes += info.size;
-        await FileSystem.deleteAsync(uri, { idempotent: true });
-        deletedFiles += 1;
-    }
-
-    return { deletedFiles, deletedBytes };
+    return files;
 }
 
+/**
+ * 行から参照されていないサムネイルとアプリ管理の動画ファイルを消す。
+ * 手順と、取り込みと同時に走ったときの安全性は `orphanCleanupRun.ts` を参照。
+ */
 export async function cleanupOrphanedFiles(
     options: OrphanedFileCleanupOptions = {}
 ): Promise<OrphanedFileCleanupResult> {
     const minimumAgeMs = options.minimumAgeMs ?? DEFAULT_MINIMUM_FILE_AGE_MS;
-    const videos = await getAllVideos();
-    const referencedThumbnails = new Set<string>();
-    const referencedManagedVideos = new Set<string>();
-
-    for (const video of videos) {
-        const thumbnailFileName = thumbnailFileNameFromStoredUri(video.thumbnailUri);
-        if (thumbnailFileName) {
-            referencedThumbnails.add(thumbnailFileName);
-        }
-
-        // 所有権は行が持つパスだけが決める。パスの無い copy 行は何も守らない
-        // ——が、ファイルも消さない。掃除側は「参照されていない」ファイルしか
-        // 消さないので、実体は孤児として残り、手動で復旧できる（#86 §5）。
-        if (video.managedVideoPath) {
-            const managedFileName = fileNameFromUri(
-                managedPathToUri(video.managedVideoPath)
-            );
-            if (managedFileName) {
-                referencedManagedVideos.add(managedFileName);
-            }
-        }
-    }
-
-    const thumbnailResult = await cleanupDirectory({
-        directoryUri: getThumbnailDirectoryUri(),
-        referencedFileNames: referencedThumbnails,
-        minimumAgeMs,
-    });
-    const managedVideoResult = await cleanupDirectory({
-        directoryUri: getManagedVideoDirectoryUri(),
-        referencedFileNames: referencedManagedVideos,
-        minimumAgeMs,
-    });
+    const counts = await runOrphanCleanup(
+        {
+            listVideos: getAllVideos,
+            listFiles: listRegularFiles,
+            isProtected: (directory, fileName) =>
+                protectedFileUris.has(`${directoryUri(directory)}${fileName}`),
+            deleteFile: (directory, fileName) =>
+                FileSystem.deleteAsync(`${directoryUri(directory)}${fileName}`, { idempotent: true }),
+            thumbnailFileName: (stored) => {
+                const relative = toRelativeThumbnailPath(stored);
+                return relative ? fileNameFromUri(relative) : null;
+            },
+            managedFileName: (relativePath) => fileNameFromUri(managedPathToUri(relativePath)),
+            nowMs: () => Date.now(),
+        },
+        minimumAgeMs
+    );
 
     return {
-        deletedFiles: thumbnailResult.deletedFiles + managedVideoResult.deletedFiles,
-        deletedBytes: thumbnailResult.deletedBytes + managedVideoResult.deletedBytes,
-        deletedThumbnails: thumbnailResult.deletedFiles,
-        deletedManagedVideos: managedVideoResult.deletedFiles,
+        deletedFiles: counts.deletedThumbnails + counts.deletedManagedVideos,
+        deletedBytes: counts.deletedBytes,
+        deletedThumbnails: counts.deletedThumbnails,
+        deletedManagedVideos: counts.deletedManagedVideos,
     };
 }
