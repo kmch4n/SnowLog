@@ -279,6 +279,9 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     seasonScroll: {
+        // 横スクロールの ScrollView は既定で flexGrow: 1。content が flexGrow なので、
+        // 0 にしないと空のシーズンでチップが縦に引き伸ばされる
+        flexGrow: 0,
         marginBottom: 12,
     },
     seasonRow: {
