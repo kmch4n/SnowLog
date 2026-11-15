@@ -1,11 +1,10 @@
 import Foundation
 
-/// Placeholder for the PhotoKit-facing core of #86 Task C.
+/// Pure-Swift core of the SnowLog media adapter (#86 Task C).
 ///
-/// It exists so the native test path (instrument I1, #86 §10.1) can be proven before
-/// any real logic lands: a local Expo module's test spec is discovered, built, and run
-/// on an EAS simulator. Task C replaces this with the request registry, the network
-/// gate, and the injected fake PhotoKit adapters.
+/// Everything here is free of ExpoModulesCore and React so that the `Tests` spec runs
+/// on a simulator without the app host (instrument I1, #86 §10.1). PhotoKit-facing
+/// adapters build on these pieces; they are added once they can be checked on a device.
 public enum SnowLogMediaCore {
     /// Bumped when the JS/native contract of the module changes.
     public static let contractVersion = 1

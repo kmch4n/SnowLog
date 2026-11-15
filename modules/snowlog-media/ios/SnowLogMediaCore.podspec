@@ -16,6 +16,7 @@ Pod::Spec.new do |s|
   s.swift_version  = '5.9'
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
+  s.frameworks     = 'Network'
   s.source_files = 'Core/Sources/**/*.swift'
 
   s.test_spec 'Tests' do |t|
