@@ -108,7 +108,7 @@ Web は `npm run web` で起動するプレビュー。動かすうえで踏ん�
   バックフィル前に走ると管理コピーを孤児と誤認する（`_layout.tsx` のバリア）。
 - `tags(name, type)` が一意（migration `0007`）。`tag.type` ∈ `"technique" | "skier" | "custom"`。
 - `favorite_resorts.name` が一意。`diary_entries.dateKey`（YYYY-MM-DD）が一意 — 1 日 1 エントリ。
-- `app_preferences` は key-value ストア。**現在実際に使われているキー**: `capturedAt_repair_version` / `thumbnail_migration_version` / `home_sort_order` / `weekStartDay` / `dismissed_update_prompt_version`。
+- `app_preferences` は key-value ストア。**現在実際に使われているキー**: `capturedAt_repair_version` / `thumbnail_migration_version` / `home_sort_order` / `weekStartDay` / `dismissed_update_prompt_version` / `technique_defaults_seeded`（追加済みの既定の滑走種別。JSON の文字列配列。2026-11-16 追加、`src/utils/techniqueSeeding.ts`）。
     - `weekStartDay` だけが camelCase。**歴史的な事故によるもので、データマイグレーションなしに snake_case へ変えてはいけない。**
     - 言語ピッカー削除（`bab0b45`）が残した `app_locale` 行は、起動時に `seedTechniqueOptions` の隣で削除される。キー名は `app_locale` であって `locale` ではない。
     - 1.3.0 には JSON バックアップがあり、設定を書き出していた（復元は `home_sort_order` と `weekStartDay` だけ）。

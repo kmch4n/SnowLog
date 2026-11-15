@@ -16,7 +16,9 @@ export async function insertTechniqueOption(name: string): Promise<void> {
     webMockStore.techniqueOptions.push({
         id: nextId("techniqueOptions"),
         name,
-        sortOrder: webMockStore.techniqueOptions.length,
+        // ネイティブと同じく「最大の sortOrder + 1」。件数だと途中を消した後に重なる
+        sortOrder:
+            webMockStore.techniqueOptions.reduce((highest, row) => Math.max(highest, row.sortOrder), -1) + 1,
     });
 }
 

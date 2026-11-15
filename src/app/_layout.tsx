@@ -46,17 +46,28 @@ import {
     getOptionalUpdateInfo,
 } from "@/services/updateCheckService";
 import { DEFAULT_TECHNIQUE_OPTIONS } from "@/constants/techniques";
+import {
+    parseSeededTechniqueNames,
+    planTechniqueSeed,
+    TECHNIQUE_DEFAULTS_SEEDED_KEY,
+} from "@/utils/techniqueSeeding";
 import migrations from "../../drizzle/migrations";
 
-/** デフォルトの滑走種別を登録する（差分シード：未登録の項目のみ追加） */
+/**
+ * デフォルトの滑走種別を登録する。各既定は 1 回だけ追加し、利用者が消したものは
+ * 戻さない（`planTechniqueSeed`）
+ */
 async function seedTechniqueOptions() {
     const existing = await getAllTechniqueOptions();
     const existingNames = new Set(existing.map((o) => o.name));
-    for (const name of DEFAULT_TECHNIQUE_OPTIONS) {
-        if (!existingNames.has(name)) {
-            await insertTechniqueOption(name);
-        }
+    const storedSeeded = parseSeededTechniqueNames(
+        await getPreference(TECHNIQUE_DEFAULTS_SEEDED_KEY)
+    );
+    const plan = planTechniqueSeed(DEFAULT_TECHNIQUE_OPTIONS, existingNames, storedSeeded);
+    for (const name of plan.toInsert) {
+        await insertTechniqueOption(name);
     }
+    await setPreference(TECHNIQUE_DEFAULTS_SEEDED_KEY, JSON.stringify(plan.seeded));
 }
 
 /**
