@@ -106,6 +106,14 @@ Web は `npm run web` で起動するプレビュー。動かすうえで踏ん�
   **起動順の制約**: `storageMigrationService.migrateVideoStorage()` が commit するまで、サムネイル修復・
   孤児ファイル掃除・撮影日修復を走らせない。掃除は `managed_video_path` で所有を判定するため、
   バックフィル前に走ると管理コピーを孤児と誤認する（`_layout.tsx` のバリア）。
+- **マイグレーションの落とし穴（2026-11-16 に判明）**: DB を開くと `PRAGMA foreign_keys = ON`（`src/database/index.ts`）、
+  drizzle の `migrate()` は未適用のマイグレーションを**全部 1 つの `BEGIN…COMMIT` の中で**流す。SQLite はトランザクション内の
+  `PRAGMA foreign_keys` を無視するので、drizzle-kit が列制約の変更などで生成する「テーブル作り直し」
+  （`PRAGMA foreign_keys=OFF` → `DROP TABLE videos` → rename）は外部キー有効のまま走り、`ON DELETE CASCADE` で
+  `video_tags` が全件消える。0000〜0009 には無い。`scripts/tests/migrationForeignKeys.test.cjs` が、
+  作り直しを含むマイグレーションが生成された時点でスイートを落とす。その時は、マイグレーションの前に
+  トランザクションの外で `PRAGMA foreign_keys = OFF` にし、終わったら ON に戻して `PRAGMA foreign_key_check` で
+  確かめる配線を先に入れること（実機で migrate → import → search を通す）。
 - `tags(name, type)` が一意（migration `0007`）。`tag.type` ∈ `"technique" | "skier" | "custom"`。
 - `favorite_resorts.name` が一意。`diary_entries.dateKey`（YYYY-MM-DD）が一意 — 1 日 1 エントリ。
 - `app_preferences` は key-value ストア。**現在実際に使われているキー**: `capturedAt_repair_version` / `thumbnail_migration_version` / `home_sort_order` / `weekStartDay` / `dismissed_update_prompt_version` / `technique_defaults_seeded`（追加済みの既定の滑走種別。JSON の文字列配列。2026-11-16 追加、`src/utils/techniqueSeeding.ts`）。
