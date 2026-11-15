@@ -128,6 +128,9 @@ export default function VideoImportScreen() {
     const [resolvedAssetUri, setResolvedAssetUri] = useState<string | null>(null);
     const [isLoadingMeta, setIsLoadingMeta] = useState(false);
     const stagedFileUriRef = useRef<string | null>(null);
+    // 単体インポートの選択ごとに増やす番号。読み込み中でも「変更」で選び直せるので、
+    // 古い選択の取得結果が新しい選択の状態を上書きしないよう、await のたびに照合する
+    const pickGenerationRef = useRef(0);
     const bulkCompletionExitRef = useRef(false);
 
     // 一括インポート用 state
@@ -187,6 +190,8 @@ export default function VideoImportScreen() {
 
     useEffect(() => {
         return () => {
+            // 走っている選択の結果は、画面を閉じたあとに届いても捨てる
+            pickGenerationRef.current += 1;
             cleanupStagedFile();
         };
     }, [cleanupStagedFile]);
@@ -279,9 +284,9 @@ export default function VideoImportScreen() {
         async (sourceUri: string | null, filename?: string | null): Promise<string | null> => {
             if (!sourceUri) return null;
             if (!isSupportedImportUri(sourceUri)) return null;
-            const staged = await stageAssetFile(sourceUri, filename);
-            stagedFileUriRef.current = staged;
-            return staged;
+            // stagedFileUriRef への登録は呼び出し側が行う。古い選択のファイルを
+            // 新しい選択のものとして登録しないため
+            return stageAssetFile(sourceUri, filename);
         },
         []
     );
@@ -390,10 +395,13 @@ export default function VideoImportScreen() {
 
         const asset = pickerResult.assets[0];
         if (!asset) return;
+        const generation = ++pickGenerationRef.current;
+        const isStale = () => generation !== pickGenerationRef.current;
 
         // 既にインポート済みかチェック
         if (asset.assetId) {
             const existing = await getVideoByAssetId(asset.assetId);
+            if (isStale()) return;
             if (existing) {
                 Alert.alert(
                     t("import.alreadyImported.title"),
@@ -411,6 +419,7 @@ export default function VideoImportScreen() {
         }
 
         await cleanupStagedFile();
+        if (isStale()) return;
         setSelectedAsset(asset);
         setSkiResortName(null);
         setIsSkiResortFromGpsSuggestion(false);
@@ -426,6 +435,7 @@ export default function VideoImportScreen() {
             setIsLoadingMeta(true);
             try {
                 const lookup = await lookupAssetWithDownload(asset.assetId);
+                if (isStale()) return;
                 isOutsideSelection = isOutsideLimitedSelection({
                     assetId: asset.assetId,
                     access: photosAccess,
@@ -443,7 +453,8 @@ export default function VideoImportScreen() {
             } catch {
                 assetInfo = null;
             } finally {
-                setIsLoadingMeta(false);
+                // 新しい選択の読み込み中表示を、古い選択が消さない
+                if (!isStale()) setIsLoadingMeta(false);
             }
         }
 
@@ -473,6 +484,14 @@ export default function VideoImportScreen() {
         } catch {
             stagedUri = null;
         }
+        if (isStale()) {
+            // 選び直された後に届いたコピー。誰も参照しないので消す
+            if (stagedUri) {
+                await FileSystem.deleteAsync(stagedUri, { idempotent: true }).catch(() => {});
+            }
+            return;
+        }
+        stagedFileUriRef.current = stagedUri;
 
         if (!stagedUri) {
             Alert.alert(
