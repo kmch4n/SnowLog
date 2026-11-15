@@ -47,6 +47,10 @@ export const ja = {
             favoritesSubtitle: "動画詳細画面の ★ ボタンでお気に入りに追加しましょう",
         },
         importFab: "＋ インポート",
+        bulkFavorite: {
+            failedTitle: "お気に入りを変更できませんでした",
+            failedBody: "時間をおいてもう一度試してください。",
+        },
         bulkDelete: {
             title: "動画を一括削除",
             body: "{{count}}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",

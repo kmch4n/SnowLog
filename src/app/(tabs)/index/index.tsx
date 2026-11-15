@@ -208,10 +208,14 @@ export default function HomeScreen() {
             exitSelectionMode();
             refreshAll();
             refreshFav();
+        } catch {
+            // 選択は残す。もう一度押せば同じ操作をやり直せる
+            hapticError();
+            Alert.alert(t("home.bulkFavorite.failedTitle"), t("home.bulkFavorite.failedBody"));
         } finally {
             setIsBulkProcessing(false);
         }
-    }, [selectedIds, currentVideos, exitSelectionMode, refreshAll, refreshFav]);
+    }, [t, selectedIds, currentVideos, exitSelectionMode, refreshAll, refreshFav]);
 
     const handleBulkDelete = useCallback(() => {
         Alert.alert(
@@ -228,6 +232,15 @@ export default function HomeScreen() {
                         try {
                             await deleteVideosWithCleanup(Array.from(selectedIds));
                             exitSelectionMode();
+                            refreshAll();
+                            refreshFav();
+                        } catch {
+                            hapticError();
+                            Alert.alert(
+                                t("home.swipeDelete.deleteFailedTitle"),
+                                t("home.swipeDelete.deleteFailedBody")
+                            );
+                            // 一部だけ消えた可能性があるので、一覧はいまの状態に合わせる
                             refreshAll();
                             refreshFav();
                         } finally {

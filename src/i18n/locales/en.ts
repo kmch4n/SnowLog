@@ -49,6 +49,10 @@ export const en: Translations = {
             favoritesSubtitle: "Tap the ★ button on a video to add it to favorites",
         },
         importFab: "+ Import",
+        bulkFavorite: {
+            failedTitle: "Could not update favorites",
+            failedBody: "Please try again later.",
+        },
         bulkDelete: {
             title: "Delete videos",
             body: "Delete {{count}} video record(s)?\n(The original files are not deleted.)",
