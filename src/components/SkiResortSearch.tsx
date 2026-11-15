@@ -22,6 +22,11 @@ interface SkiResortSearchProps {
     value: string | null;
     onSelect: (name: string | null) => void;
     suggestionGroups?: SkiResortSuggestionGroup[];
+    /**
+     * お気に入りのチップを出すか（既定は出す）。お気に入りの管理画面では、登録済みの
+     * ものを選び直しても重複の警告になるだけなので出さない
+     */
+    showFavoriteChips?: boolean;
 }
 
 const MAX_RESULTS = 20;
@@ -29,8 +34,18 @@ const MAX_RESULTS = 20;
 /**
  * スキー場名のインクリメンタル検索コンポーネント
  * src/constants/skiResorts.json のマスターデータからフィルタリングする
+ *
+ * 値が決まるのは、候補・チップを選んだとき、×で消したとき、入力を空にしたとき、
+ * マスターの名前と完全に一致する文字（✓ が付いている状態）のまま入力欄を離れたとき。
+ * 一致しない途中の文字のまま離れたら、表示を保存済みの値に戻す。以前は入力欄の
+ * 文字と保存された値が食い違ったままになり、消したつもりの絞り込みや名前が残っていた。
  */
-export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiResortSearchProps) {
+export function SkiResortSearch({
+    value,
+    onSelect,
+    suggestionGroups = [],
+    showFavoriteChips = true,
+}: SkiResortSearchProps) {
     const { t } = useTranslation();
     const [query, setQuery] = useState(value ?? "");
     const [isFocused, setIsFocused] = useState(false);
@@ -43,8 +58,13 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
         return (SKI_RESORTS as SkiResort[]).find((r) => r.name === normalizedQuery) ?? null;
     }, [query]);
 
+    // 最新の value。blur 後の確定処理は 200ms 遅れて走るので、その間に親が値を
+    // 変えた（clearAll など）かをこれで見る
+    const valueRef = useRef(value);
+
     // 親から value が変化したとき（clearAll など）に内部状態を同期する
     useEffect(() => {
+        valueRef.current = value;
         setQuery(value ?? "");
     }, [value]);
 
@@ -75,30 +95,61 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
             .slice(0, MAX_RESULTS);
     }, [query]);
 
-    function handleSelect(resort: SkiResort) {
-        // onBlur タイマーが残っていればキャンセル（レース条件防止）
+    // 選択操作は入力欄の blur より後に届く。blur 後の確定処理が選択を上書きしないよう、
+    // どの選択でも先にタイマーを止める
+    function cancelPendingBlur() {
         if (blurTimeoutRef.current) {
             clearTimeout(blurTimeoutRef.current);
             blurTimeoutRef.current = null;
         }
+    }
+
+    function handleSelect(resort: SkiResort) {
+        cancelPendingBlur();
         setQuery(resort.name);
         setIsFocused(false);
         onSelect(resort.name);
     }
 
     function handleClear() {
+        cancelPendingBlur();
         setQuery("");
         onSelect(null);
     }
 
     function handleFavoriteSelect(name: string) {
+        cancelPendingBlur();
         setQuery(name);
         onSelect(name);
     }
 
     function handleSuggestionSelect(name: string) {
+        cancelPendingBlur();
         setQuery(name);
         onSelect(name);
+    }
+
+    function handleChangeText(text: string) {
+        setQuery(text);
+        // 入力を空にしたら × と同じく値を消す
+        if (!text.trim() && value) {
+            onSelect(null);
+        }
+    }
+
+    // 入力欄を離れたときの確定。blur の時点の文字で判断する（離れた後に文字は変わらない）。
+    // その間に親が値を変えていたら、そちらが新しいので何もしない
+    function settleTypedText(typed: string, valueAtBlur: string | null) {
+        if (valueRef.current !== valueAtBlur) return;
+        const normalized = typed.trim();
+        if (!normalized || normalized === valueAtBlur) return;
+        const exact = (SKI_RESORTS as SkiResort[]).find((r) => r.name === normalized);
+        if (exact) {
+            setQuery(exact.name);
+            onSelect(exact.name);
+        } else {
+            setQuery(valueAtBlur ?? "");
+        }
     }
 
     return (
@@ -125,14 +176,15 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
                         selectedMasterResort && styles.inputSelected,
                     ]}
                     value={query}
-                    onChangeText={(text) => {
-                        setQuery(text);
-                    }}
+                    onChangeText={handleChangeText}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => {
+                        const typed = query;
+                        const valueAtBlur = value;
                         blurTimeoutRef.current = setTimeout(() => {
                             setIsFocused(false);
                             blurTimeoutRef.current = null;
+                            settleTypedText(typed, valueAtBlur);
                         }, 200);
                     }}
                     placeholder={t("components.skiResortSearch.placeholder")}
@@ -181,7 +233,7 @@ export function SkiResortSearch({ value, onSelect, suggestionGroups = [] }: SkiR
             ))}
 
             {/* お気に入りチップ（query が空のときのみ表示） */}
-            {!query && favorites.length > 0 && (
+            {showFavoriteChips && !query && favorites.length > 0 && (
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}

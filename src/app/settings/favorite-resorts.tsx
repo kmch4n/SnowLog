@@ -84,7 +84,11 @@ export default function FavoriteResortsScreen() {
             {/* 追加フォーム（上部に配置してサジェストが下方向に展開できるようにする） */}
             <View style={styles.addForm}>
                 <View style={styles.addSearch}>
-                    <SkiResortSearch value={selectedResort} onSelect={setSelectedResort} />
+                    <SkiResortSearch
+                        value={selectedResort}
+                        onSelect={setSelectedResort}
+                        showFavoriteChips={false}
+                    />
                 </View>
                 <TouchableOpacity
                     style={[styles.addButton, !selectedResort && styles.addButtonDisabled]}
