@@ -1,6 +1,6 @@
 ---
 title: バックログ
-updated: 2026-11-09
+updated: 2026-11-16
 status: active
 ---
 
@@ -8,7 +8,7 @@ status: active
 
 コードや git log からは読み取れない「これからやりたいこと」の置き場。
 
-**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-11-09 時点で open 10 件 / 全 93 件）、
+**大原則: GitHub Issues が正。** SnowLog は Issue 運用がしっかりしており（2026-11-16 時点で open 9 件 / 全 93 件）、
 やることは基本すべて Issue 化されている。ここに同じ内容を書くと二重管理になり、必ず片方が腐る。
 このファイルには **Issue になっていないものだけ** を置く。Issue 化できたらここから消す。
 
@@ -20,13 +20,13 @@ status: active
 
 ## 既に Issue がある主要テーマ（重複して書かないこと）
 
-作業前にこの対応表を見て、既存 Issue を確認する。**2026-11-09 時点の open 10 件すべて**を載せている。
+作業前にこの対応表を見て、既存 Issue を確認する。**2026-11-16 時点の open 9 件すべて**を載せている。
 古い表は新しく立った Issue を落としたまま残っていて役に立たなかったので、更新するときは
 `gh issue list --state open` から作り直すこと。追記していくと必ず漏れる。
 
 | テーマ | Issue |
 | --- | --- |
-| 動画の保存方式の選択。Task B・D の中核は実装済み（1.4.0 に入った）。ローカルモジュール `modules/snowlog-media` と I1 用の EAS custom build（`.eas/build/ios-test.yml`、プロファイル `ios-test`）を 2026-11-09 に追加。残るは Task A の実機計測・C・E・F・G | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
+| 動画の保存方式の選択。Task B・D の中核は実装済み（1.4.0 に入った）。ローカルモジュール `modules/snowlog-media` と I1 用の EAS custom build（`.eas/build/ios-test.yml`、プロファイル `ios-test`）を 2026-11-09 に追加。残るは Task A の実機計測・C・E・F・G 2026-11-16: Task C のうち PhotoKit を使わない core（経路の判定・リクエストの登録・監視・分割コピーなど）を実装し、XCTest 26 件が EAS で通った。PhotoKit 側は未着手 | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
 | iCloud バックアップから新しい iPhone に復元したあと、写真の参照（`assetId`）を付け直す。2026-11-09 に JSON 復元の前提から書き直した。まず実機で ID が残るかを測る | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
 | `video-import.tsx` の分割（1,447 行。#86 Task E で行う） | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
 | iCloud ダウンロードの制御（#86 のサブ Issue） | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
@@ -40,6 +40,7 @@ status: active
 2026-11-02 に close: #83（`common.*` は削除）、#88（復元の設定上書きとタグ取りこぼし）。
 2026-11-03 に close: #87（限定アクセスでの「ファイル無し」誤判定）、#89（シーズンを 10/1 区切りに）、#90（JSON バックアップを廃止し iCloud バックアップに一本化）。
 2026-11-09 に close: #78（依存更新。1.4.0 の後に入れた）、#79（ラベル。VoiceOver での確認は対象外と決めた）、#91（範囲外の動画はインポートしない）、#54（Instagram との直接連携は不可。写真に保存してから取り込む方法は今のまま使える）。#78・#91 は実機未確認で、次の TestFlight で確かめる。
+2026-11-16 に close: #92（`video/[id].tsx` を 634 行に。自動保存と再生元の解決をフックへ）。同日、3 体のサブエージェントの監査で見つけた不具合（検索の `_`、統計の空シーズン、スキー場入力、既定の滑走種別の復活など）を Issue を立てずに直した。一覧は `docs/verification/post-1.4.0-testflight.md` §5。
 
 ### バックアップ往復（#72、のち廃止）と `.web` シム（#74）は closed
 
