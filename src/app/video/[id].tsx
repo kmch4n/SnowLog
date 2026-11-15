@@ -2,9 +2,7 @@ import { VideoView, useVideoPlayer } from "expo-video";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { updateFileAvailability } from "@/database/repositories/videoRepository";
-import { resolveManagedPath } from "@/services/managedVideoFileService";
-import { getAssetInfoWithDownload, isSyntheticAssetId, requestPhotosAccess } from "@/services/mediaService";
+import { isSyntheticAssetId } from "@/services/mediaService";
 import {
     Alert,
     InputAccessoryView,
@@ -29,15 +27,14 @@ import { Icon } from "@/components/ui/Icon";
 import { SkiResortSearch } from "@/components/SkiResortSearch";
 import { TagSelector } from "@/components/TagSelector";
 import { TechniqueSelector } from "@/components/TechniqueSelector";
+import { useAutosavedText } from "@/hooks/useAutosavedText";
+import { usePlaybackSource } from "@/hooks/usePlaybackSource";
 import { useVideoDetail } from "@/hooks/useVideoDetail";
 import { useSkiResortSuggestions } from "@/hooks/useSkiResortSuggestions";
 import { useTranslation } from "@/i18n/useTranslation";
 import { formatDateTime, formatDuration, formatDurationDecimal } from "@/utils/dateUtils";
-import { createDebouncedTask } from "@/utils/debouncedTask";
-import { decidePlaybackSource, type PhotosAccess } from "@/utils/playbackSource";
 
 const MEMO_INPUT_ACCESSORY_ID = "video-detail-memo-accessory";
-const AUTOSAVE_DELAY_MS = 1000;
 
 /** セクション間の薄いディバイダー */
 function SectionDivider() {
@@ -64,19 +61,26 @@ export default function VideoDetailScreen() {
     const shouldScrollMemoIntoViewRef = useRef(false);
     const memoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const [titleInput, setTitleInput] = useState("");
-    const [titleSaveStatus, setTitleSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
-    const [memoInput, setMemoInput] = useState("");
-    const [memoSaveStatus, setMemoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+    // タイトルとメモは入力から 1 秒後に自動保存する。予約した保存は、予約した描画時点の
+    // updateTitle / updateMemo（＝そのとき表示していた動画）に書く
+    const {
+        value: titleInput,
+        status: titleSaveStatus,
+        onChangeText: handleTitleChange,
+        seed: seedTitle,
+        flush: flushTitleSave,
+        cancel: cancelTitleSave,
+    } = useAutosavedText((text) => updateTitle(text.trim() || null));
+    const {
+        value: memoInput,
+        status: memoSaveStatus,
+        onChangeText: handleMemoChange,
+        seed: seedMemo,
+        flush: flushMemoSave,
+        cancel: cancelMemoSave,
+    } = useAutosavedText((text) => updateMemo(text));
     const [tagIds, setTagIds] = useState<number[]>([]);
-    const [videoUri, setVideoUri] = useState<string | null>(null);
-    // 写真へのアクセスが足りず再生元を解決できなかった（#87）。ファイル欠損とは別の表示にする
-    const [accessBlocked, setAccessBlocked] = useState(false);
-    const [assetInfoMeta, setAssetInfoMeta] = useState<{
-        width: number;
-        height: number;
-        duration: number;
-    } | null>(null);
+    const { videoUri, assetInfoMeta, accessBlocked } = usePlaybackSource(video, refresh);
 
     // アスペクト比に基づく動的プレイヤー高さ
     const playerHeight = useMemo(() => {
@@ -89,19 +93,6 @@ export default function VideoDetailScreen() {
         // 横動画・正方形: 幅に合わせる
         return screenWidth / aspectRatio;
     }, [assetInfoMeta, screenWidth, screenHeight]);
-
-    // Stable ref so the media-resolution effect can refresh without depending on it
-    const refreshRef = useRef(refresh);
-    refreshRef.current = refresh;
-
-    // タイトル / メモ自動保存用の debounce。保留中の保存は画面を離れるときに
-    // 捨てずに flush する（入力から 1 秒以内に戻っても編集が残るように）。
-    const [titleSave] = useState(() => createDebouncedTask(AUTOSAVE_DELAY_MS));
-    const [memoSave] = useState(() => createDebouncedTask(AUTOSAVE_DELAY_MS));
-    // 「保存しました」を消す 2 秒タイマー。入力が変わったときに前回分を
-    // 消さないと、古いタイマーが新しい保存の表示を早めに消してしまう。
-    const titleStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const memoStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const clearMemoScrollTimer = useCallback(() => {
         if (memoScrollTimerRef.current) {
@@ -144,77 +135,6 @@ export default function VideoDetailScreen() {
         clearMemoScrollTimer();
     }, [clearMemoScrollTimer]);
 
-    // タイトルが編集されたら1秒後に自動保存。保存の予約はユーザーの入力からだけ
-    // 行う——video からの初期値の流し込みは保存しない。
-    const handleTitleChange = useCallback(
-        (text: string) => {
-            setTitleInput(text);
-            if (titleStatusTimerRef.current) {
-                clearTimeout(titleStatusTimerRef.current);
-            }
-            setTitleSaveStatus("idle");
-            // updateTitle はこの描画時点の動画に束縛されている
-            titleSave.schedule(async () => {
-                setTitleSaveStatus("saving");
-                try {
-                    await updateTitle(text.trim() || null);
-                } catch {
-                    // 「保存中」で固まらせない。入力欄の文字は残り、次の入力でまた保存を試みる
-                    setTitleSaveStatus("idle");
-                    return;
-                }
-                setTitleSaveStatus("saved");
-                titleStatusTimerRef.current = setTimeout(
-                    () => setTitleSaveStatus("idle"),
-                    2000
-                );
-            });
-        },
-        [titleSave, updateTitle]
-    );
-
-    // メモが編集されたら1秒後に自動保存
-    const handleMemoChange = useCallback(
-        (text: string) => {
-            setMemoInput(text);
-            if (memoStatusTimerRef.current) {
-                clearTimeout(memoStatusTimerRef.current);
-            }
-            setMemoSaveStatus("idle");
-            memoSave.schedule(async () => {
-                setMemoSaveStatus("saving");
-                try {
-                    await updateMemo(text);
-                } catch {
-                    // 「保存中」で固まらせない。入力欄の文字は残り、次の入力でまた保存を試みる
-                    setMemoSaveStatus("idle");
-                    return;
-                }
-                setMemoSaveStatus("saved");
-                // 2秒後にステータスをリセット
-                memoStatusTimerRef.current = setTimeout(
-                    () => setMemoSaveStatus("idle"),
-                    2000
-                );
-            });
-        },
-        [memoSave, updateMemo]
-    );
-
-    // 画面を離れるとき、保留中の保存は捨てずに今すぐ実行する
-    useEffect(() => {
-        return () => {
-            titleSave.flush();
-            memoSave.flush();
-            if (titleStatusTimerRef.current) {
-                clearTimeout(titleStatusTimerRef.current);
-            }
-            if (memoStatusTimerRef.current) {
-                clearTimeout(memoStatusTimerRef.current);
-            }
-        };
-    }, [titleSave, memoSave]);
-
     // The video whose title and memo the inputs were last seeded from.
     const seededVideoIdRef = useRef<string | null>(null);
 
@@ -229,109 +149,12 @@ export default function VideoDetailScreen() {
         if (seededVideoIdRef.current === video.id) return;
         // Pending edits belong to the previous video; save them before replacing
         // the inputs. A no-op on first load.
-        titleSave.flush();
-        memoSave.flush();
+        flushTitleSave();
+        flushMemoSave();
         seededVideoIdRef.current = video.id;
-        setTitleInput(video.title ?? "");
-        setMemoInput(video.memo);
-    }, [video, titleSave, memoSave]);
-
-    // Every save refetches the row and hands back a new `video` object. Only the
-    // fields below decide what the player plays, so the source is resolved again
-    // only when one of them changes — not on every autosave, which would unmount
-    // the player and re-request an iCloud asset each time.
-    const playbackVideoId = video?.id;
-    const playbackIsFileAvailable = video?.isFileAvailable;
-    const playbackStorageMode = video?.storageMode;
-    const playbackManagedVideoPath = video?.managedVideoPath;
-    const playbackAssetId = video?.assetId;
-
-    // 解決結果の判定に使う「いま DB にある値」。effect の依存にすると、解決に成功して
-    // 0 → 1 に戻した瞬間に effect が走り直し、プレイヤーを一度消して解決をやり直すため ref で読む
-    const wasAvailableRef = useRef(playbackIsFileAvailable === 1);
-    wasAvailableRef.current = playbackIsFileAvailable === 1;
-
-    useEffect(() => {
-        if (playbackVideoId === undefined || playbackAssetId === undefined) return;
-        // 解決が長引く間に再生元が変わったら、古い結果を新しい再生元の上に書かない
-        let cancelled = false;
-        setVideoUri(null);
-        setAssetInfoMeta(null);
-        setAccessBlocked(false);
-
-        // 「ファイル無し」（isFileAvailable = 0）の行でも解決を試みる。以前は 1 の行しか
-        // 試さなかったので、写真へのアクセスが限定されていた間に 0 になった動画は、
-        // フルアクセスに戻しても二度と再生できなかった（#87）。
-        (async () => {
-            try {
-                let uri: string | null = null;
-                let meta: { width: number; height: number; duration: number } | null = null;
-                // アプリが持つコピーは写真ライブラリを一切見ない。権限が
-                // 拒否されていても、元の写真が消えていても再生できる。
-                let access: PhotosAccess = "all";
-
-                if (playbackStorageMode === "copy") {
-                    // コピーが見つからなくても写真ライブラリへ黙って
-                    // フォールバックしない——別物を掴むことになる。
-                    uri = playbackManagedVideoPath
-                        ? await resolveManagedPath(playbackManagedVideoPath)
-                        : null;
-                } else {
-                    access = await requestPhotosAccess();
-                    if (cancelled) return;
-                    if (access !== "none") {
-                        const info = await getAssetInfoWithDownload(playbackAssetId);
-                        if (info?.uri || info?.localUri) {
-                            // 再生には Photos フレームワークの uri (ph://) を優先利用する
-                            uri = info.uri ?? info.localUri ?? null;
-                            meta = { width: info.width, height: info.height, duration: info.duration };
-                        }
-                    }
-                }
-                if (cancelled) return;
-
-                const decision = decidePlaybackSource({
-                    resolved: uri !== null,
-                    access,
-                    wasAvailable: wasAvailableRef.current,
-                });
-                switch (decision.kind) {
-                    case "play":
-                        // 高さ変更は LAYOUT_SPRING の layout transition が滑らかに遷移させる
-                        setVideoUri(uri);
-                        if (meta) setAssetInfoMeta(meta);
-                        if (decision.markAvailable) {
-                            await updateFileAvailability(playbackVideoId, true);
-                            refreshRef.current();
-                        }
-                        return;
-                    case "missing":
-                        if (decision.markMissing) {
-                            await updateFileAvailability(playbackVideoId, false);
-                            refreshRef.current();
-                        }
-                        return;
-                    case "notAccessible":
-                        // 権限が足りないのは一時的な状態であり、ファイル欠損ではない。
-                        // 開くたびにモーダルを出さず、プレイヤーの位置に案内を出す
-                        setAccessBlocked(true);
-                        return;
-                }
-            } catch {
-                // 一時的エラー（iCloud・ネットワーク等）の可能性があるため
-                // DB の isFileAvailable は更新しない
-            }
-        })();
-        return () => {
-            cancelled = true;
-        };
-    }, [
-        t,
-        playbackVideoId,
-        playbackStorageMode,
-        playbackManagedVideoPath,
-        playbackAssetId,
-    ]);
+        seedTitle(video.title ?? "");
+        seedMemo(video.memo);
+    }, [video, flushTitleSave, flushMemoSave, seedTitle, seedMemo]);
 
     /** 動画レコードを削除する（確認ダイアログ付き） */
     const handleDelete = useCallback(() => {
@@ -356,14 +179,14 @@ export default function VideoDetailScreen() {
                         }
                         // 消えた行への保存は捨てる。削除の前に取り消すと、削除が失敗したときに
                         // 入力欄には残っているのに保存されない編集ができる
-                        titleSave.cancel();
-                        memoSave.cancel();
+                        cancelTitleSave();
+                        cancelMemoSave();
                         router.back();
                     },
                 },
             ]
         );
-    }, [removeVideo, router, t, titleSave, memoSave]);
+    }, [removeVideo, router, t, cancelTitleSave, cancelMemoSave]);
 
     const handleSaveSkiResort = useCallback(
         async (name: string | null) => {

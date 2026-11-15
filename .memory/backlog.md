@@ -29,7 +29,6 @@ status: active
 | 動画の保存方式の選択。Task B・D の中核は実装済み（1.4.0 に入った）。ローカルモジュール `modules/snowlog-media` と I1 用の EAS custom build（`.eas/build/ios-test.yml`、プロファイル `ios-test`）を 2026-11-09 に追加。残るは Task A の実機計測・C・E・F・G | [#86](https://github.com/kmch4n/SnowLog/issues/86) |
 | iCloud バックアップから新しい iPhone に復元したあと、写真の参照（`assetId`）を付け直す。2026-11-09 に JSON 復元の前提から書き直した。まず実機で ID が残るかを測る | [#85](https://github.com/kmch4n/SnowLog/issues/85) |
 | `video-import.tsx` の分割（1,447 行。#86 Task E で行う） | [#80](https://github.com/kmch4n/SnowLog/issues/80) |
-| `video/[id].tsx` の分割（811 行。自動保存と再生元の解決をフックへ。#86 Task F の前が望ましい） | [#92](https://github.com/kmch4n/SnowLog/issues/92) |
 | iCloud ダウンロードの制御（#86 のサブ Issue） | [#70](https://github.com/kmch4n/SnowLog/issues/70) |
 | カスタムタグ UI の見直し | [#69](https://github.com/kmch4n/SnowLog/issues/69) |
 | 動画の撮影日を手で直せるようにする（#54 から分離。他アプリから保存した動画は撮影日が保存日になる） | [#93](https://github.com/kmch4n/SnowLog/issues/93) |
@@ -60,5 +59,5 @@ status: active
 | 項目 | 実装先 |
 | --- | --- |
 | 撮影地からスキー場をサジェスト | `src/utils/geoUtils.ts`（GPS → Haversine 最近傍）、`src/hooks/useSkiResortSuggestions.ts`、`src/constants/skiResorts.json`（378 件・座標入り）。Issue [#68](https://github.com/kmch4n/SnowLog/issues/68) / コミット `a0bfd29`・`0305ba4` |
-| 動画詳細の拡充表示（時刻・解像度・秒数） | `src/app/video/[id].tsx` — `mediaService` の `getAssetInfoAsync` から `width` / `height` / `duration` を取得して表示 |
+| 動画詳細の拡充表示（時刻・解像度・秒数） | `src/app/video/[id].tsx`（値は `src/hooks/usePlaybackSource.ts` が取る） — `mediaService` の `getAssetInfoAsync` から `width` / `height` / `duration` を取得して表示 |
 | 写真アプリで開くボタン | `src/app/video/[id].tsx` — `Linking.openURL("photos-redirect://")` |

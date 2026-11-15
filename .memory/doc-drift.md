@@ -61,12 +61,12 @@ status: active
 
 ## 3. ファイルサイズ規約の逸脱
 
-`.claude/CLAUDE.md` と `AGENTS.md` はファイルを ~500〜700 行に収めるよう定めているが、`src/` に超えているファイルが 2 つある
-（2026-11-09、`e838b14` で計測）。
+`.claude/CLAUDE.md` と `AGENTS.md` はファイルを ~500〜700 行に収めるよう定めているが、`src/` に超えているファイルが 1 つ残っている
+（2026-11-16 に計測）。
 
 - `src/app/video-import.tsx` — **1,447 行**。Issue [#80](https://github.com/kmch4n/SnowLog/issues/80)（#86 Task E でまとめて分割する）。
-- `src/app/video/[id].tsx` — **811 行**。#87 の修正で 750 行から増えた。自動保存と再生元の解決をフックに出す。
-  Issue [#92](https://github.com/kmch4n/SnowLog/issues/92)。
+- 【解消 2026-11-16】`src/app/video/[id].tsx` — 811 行あったが、自動保存（`useAutosavedText`）と再生元の解決
+  （`usePlaybackSource`）をフックに出して 634 行になった（#92）。
 
 ---
 
