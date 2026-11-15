@@ -105,13 +105,11 @@ export const en: Translations = {
         empty: "No videos match your search",
         searchPlaceholder: "Search by filename, title, or memo",
         clearAll: "Clear",
+        clearDateRange: "Remove the date filter ({{range}})",
         datePresets: {
-            all: "All",
             thisSeason: "This season",
-            lastSeason: "Last season",
             thisMonth: "This month",
             lastMonth: "Last month",
-            last30Days: "Last 30 days",
         },
     },
     settings: {

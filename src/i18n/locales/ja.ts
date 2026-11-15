@@ -103,13 +103,11 @@ export const ja = {
         empty: "該当する動画が見つかりません",
         searchPlaceholder: "ファイル名・タイトル・メモで検索",
         clearAll: "クリア",
+        clearDateRange: "期間の絞り込みを解除（{{range}}）",
         datePresets: {
-            all: "すべて",
             thisSeason: "今シーズン",
-            lastSeason: "前シーズン",
             thisMonth: "今月",
             lastMonth: "先月",
-            last30Days: "過去30日",
         },
     },
     settings: {

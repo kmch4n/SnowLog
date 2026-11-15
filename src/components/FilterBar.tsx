@@ -13,7 +13,7 @@ import { Colors } from "../constants/colors";
 import { IconNames } from "../constants/icons";
 import { getAllTags } from "../database/repositories/tagRepository";
 import { useTranslation } from "../i18n/useTranslation";
-import { endOfMonth, getCurrentSeason, startOfMonth } from "../utils/dateUtils";
+import { endOfMonth, formatDateShort, getCurrentSeason, startOfMonth } from "../utils/dateUtils";
 import type { FilterOptions, Tag } from "../types";
 import { SkiResortSearch } from "./SkiResortSearch";
 import { TagChip } from "./TagChip";
@@ -55,6 +55,31 @@ function computeDateRange(key: PresetKey): { dateFrom: number; dateTo: number } 
     }
 }
 
+/**
+ * 絞り込みの期間がどのプリセットに当たるか。プリセットの強調は状態として持たずに期間から求める。
+ * 統計の月や日をタップして来たときは、どのプリセットにも当たらない（以前は直前に選んでいた
+ * プリセットが強調されたまま、別の月で絞り込まれていた）
+ */
+function presetForRange(dateFrom: number | undefined, dateTo: number | undefined): PresetKey | null {
+    if (dateFrom === undefined || dateTo === undefined) return null;
+    for (const preset of DATE_PRESETS) {
+        const range = computeDateRange(preset.key);
+        if (range.dateFrom === dateFrom && range.dateTo === dateTo) return preset.key;
+    }
+    return null;
+}
+
+function formatCustomRange(
+    dateFrom: number | undefined,
+    dateTo: number | undefined,
+    locale: "ja" | "en"
+): string {
+    const from = dateFrom !== undefined ? formatDateShort(dateFrom, locale) : "";
+    const to = dateTo !== undefined ? formatDateShort(dateTo, locale) : "";
+    if (from === to) return from;
+    return `${from}〜${to}`;
+}
+
 const DEBOUNCE_MS = 400;
 
 /**
@@ -62,10 +87,11 @@ const DEBOUNCE_MS = 400;
  * テキスト検索・スキー場名・タグ・期間でのフィルタリングをサポート
  */
 export function FilterBar({ filter, onChange }: FilterBarProps) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const [allTags, setAllTags] = useState<Tag[]>([]);
     const [searchDraft, setSearchDraft] = useState(filter.searchText ?? "");
-    const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
+    const activePreset = presetForRange(filter.dateFrom, filter.dateTo);
+    const hasDateFilter = filter.dateFrom !== undefined || filter.dateTo !== undefined;
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // The newest filter, whether it came from the parent or was just emitted from
     // here. Every change merges against this rather than the `filter` captured by
@@ -93,21 +119,29 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
 
     useFocusEffect(
         useCallback(() => {
-            getAllTags().then(setAllTags);
-        }, [])
+            getAllTags().then((tags) => {
+                setAllTags(tags);
+                // 設定で消したタグが絞り込みに残ると、チップは消えるのに結果が 0 件のままになる
+                const selected = latestFilterRef.current.tagIds;
+                if (!selected || selected.length === 0) return;
+                const existing = new Set(tags.map((tag) => tag.id));
+                const kept = selected.filter((id) => existing.has(id));
+                if (kept.length !== selected.length) {
+                    const next = {
+                        ...latestFilterRef.current,
+                        tagIds: kept.length > 0 ? kept : undefined,
+                    };
+                    latestFilterRef.current = next;
+                    onChange(next);
+                }
+            });
+        }, [onChange])
     );
 
     // Sync internal search state when parent clears filters
     useEffect(() => {
         setSearchDraft(filter.searchText ?? "");
     }, [filter.searchText]);
-
-    // Sync preset state when parent clears date filters
-    useEffect(() => {
-        if (filter.dateFrom === undefined && filter.dateTo === undefined) {
-            setActivePreset(null);
-        }
-    }, [filter.dateFrom, filter.dateTo]);
 
     function handleSearchChange(text: string) {
         setSearchDraft(text);
@@ -133,18 +167,18 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
 
     function handlePresetPress(key: PresetKey) {
         if (activePreset === key) {
-            // Deactivate
-            setActivePreset(null);
             updateFilter({ dateFrom: undefined, dateTo: undefined });
         } else {
-            setActivePreset(key);
             const range = computeDateRange(key);
             updateFilter({ dateFrom: range.dateFrom, dateTo: range.dateTo });
         }
     }
 
+    function clearDateRange() {
+        updateFilter({ dateFrom: undefined, dateTo: undefined });
+    }
+
     function clearAll() {
-        setActivePreset(null);
         setSearchDraft("");
         if (debounceRef.current) clearTimeout(debounceRef.current);
         latestFilterRef.current = {};
@@ -155,8 +189,13 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
         (filter.skiResortName && filter.skiResortName.length > 0) ||
         (filter.tagIds && filter.tagIds.length > 0) ||
         (filter.searchText && filter.searchText.length > 0) ||
-        filter.dateFrom !== undefined ||
-        filter.dateTo !== undefined;
+        hasDateFilter;
+
+    // プリセットに当たらない期間（統計の月・日から来たとき）も、見えるチップにして外せるようにする
+    const customRangeLabel =
+        hasDateFilter && activePreset === null
+            ? formatCustomRange(filter.dateFrom, filter.dateTo, locale)
+            : null;
 
     return (
         <View style={styles.container}>
@@ -236,6 +275,22 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
                 style={styles.presetScroll}
                 contentContainerStyle={styles.presetScrollContent}
             >
+                {customRangeLabel !== null && (
+                    <PressableScale
+                        style={[styles.presetChip, styles.presetChipActive]}
+                        onPress={clearDateRange}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: true }}
+                        accessibilityLabel={t("search.clearDateRange", { range: customRangeLabel })}
+                    >
+                        <Text
+                            style={[styles.presetText, styles.presetTextActive]}
+                            maxFontSizeMultiplier={1.4}
+                        >
+                            {`${customRangeLabel}  ×`}
+                        </Text>
+                    </PressableScale>
+                )}
                 {DATE_PRESETS.map((preset) => {
                     const active = activePreset === preset.key;
                     return (
