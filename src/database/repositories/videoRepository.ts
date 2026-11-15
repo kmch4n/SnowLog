@@ -1,12 +1,25 @@
-import { and, desc, eq, gte, inArray, isNotNull, isNull, like, lte, ne, notInArray, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, notInArray, or, sql, type SQL } from "drizzle-orm";
+import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 
 import { db, videoTags, videos } from "../index";
 import type { FilterOptions } from "../../types";
 import type { VideoInsert } from "../schema";
 
-/** Escape SQL LIKE special characters */
+/**
+ * Escape SQL LIKE special characters, for use with `containsText` below.
+ *
+ * SQLite's LIKE has no default escape character, so the backslashes added here mean
+ * nothing unless the query also names the backslash in an ESCAPE clause. drizzle's
+ * `like()` does not.
+ * Without it "IMG_0123" (every iPhone filename) matched nothing.
+ */
 function escapeLike(text: string): string {
-    return text.replace(/[%_]/g, "\\$&");
+    return text.replace(/[\\%_]/g, "\\$&");
+}
+
+/** `column LIKE '%<text>%'` with a backslash ESCAPE clause. Case-insensitive for ASCII, as SQLite's LIKE is */
+function containsText(column: SQLiteColumn, text: string): SQL {
+    return sql`${column} LIKE ${`%${escapeLike(text)}%`} ESCAPE '\\'`;
 }
 
 function getLocalDayBounds(unixTimestamp: number): { start: number; end: number } {
@@ -68,12 +81,11 @@ export async function getVideosByFilter(options: FilterOptions = {}) {
         conditions.push(lte(videos.capturedAt, options.dateTo));
     }
     if (options.searchText) {
-        const pattern = `%${escapeLike(options.searchText)}%`;
         conditions.push(
             or(
-                like(videos.filename, pattern),
-                like(videos.title, pattern),
-                like(videos.memo, pattern),
+                containsText(videos.filename, options.searchText),
+                containsText(videos.title, options.searchText),
+                containsText(videos.memo, options.searchText),
             )!
         );
     }
