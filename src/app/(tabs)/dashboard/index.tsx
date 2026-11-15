@@ -6,6 +6,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
+    View,
 } from "react-native";
 
 import { Colors } from "@/constants/colors";
@@ -29,7 +30,8 @@ import { buildSearchHref } from "@/utils/searchRouteParams";
 export default function DashboardScreen() {
     const router = useRouter();
     const { t } = useTranslation();
-    const { stats, isLoading, error, season, setSeason, availableSeasons } = useDashboard();
+    const { stats, statsSeasonStartYear, isLoading, error, season, setSeason, availableSeasons } =
+        useDashboard();
 
     const openSearch = useCallback(
         (filter: FilterOptions) => {
@@ -91,40 +93,45 @@ export default function DashboardScreen() {
         [openSearch]
     );
 
+    // 選択中のシーズンの統計がまだ無いときだけ読み込み表示にする。タブに戻ったときの
+    // 同じシーズンの再取得で中身を消すと、スクロール位置が先頭に戻ってしまう
+    const hasStatsForSeason = stats !== null && statsSeasonStartYear === season.startYear;
+    const showSpinner = isLoading && !hasStatsForSeason;
     const isEmpty = !stats || stats.summary.totalVideoCount === 0;
-    const showCentered = isLoading || !!error || isEmpty;
 
     return (
         <ScrollView
             style={styles.container}
-            contentContainerStyle={showCentered ? styles.centeredContent : styles.content}
+            contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
         >
-            {isLoading ? (
-                <ActivityIndicator size="large" color={Colors.alpineBlue} />
+            {/* シーズン切替。空のシーズンや読み込み失敗のときも出す。消すと別のシーズンへ戻れない */}
+            <SeasonSelector
+                seasons={availableSeasons}
+                selected={season}
+                onSelect={setSeason}
+            />
+
+            {showSpinner ? (
+                <View style={styles.centeredState}>
+                    <ActivityIndicator size="large" color={Colors.alpineBlue} />
+                </View>
             ) : error ? (
-                <>
+                <View style={styles.centeredState}>
                     <Text style={styles.emptyIcon}>⚠️</Text>
                     <Text style={styles.emptyTitle}>{t("dashboard.loadFailed")}</Text>
                     <Text style={styles.emptyText}>{error}</Text>
-                </>
+                </View>
             ) : isEmpty ? (
-                <>
+                <View style={styles.centeredState}>
                     <Text style={styles.emptyIcon}>📊</Text>
                     <Text style={styles.emptyTitle}>{t("dashboard.empty")}</Text>
                     <Text style={styles.emptyText}>
                         {t("dashboard.emptySeason", { season: season.label })}
                     </Text>
-                </>
+                </View>
             ) : (
                 <>
-                    {/* シーズン切替 */}
-                    <SeasonSelector
-                        seasons={availableSeasons}
-                        selected={season}
-                        onSelect={setSeason}
-                    />
-
                     {/* サマリーカード */}
                     <SummaryCards summary={stats.summary} />
 
@@ -245,10 +252,11 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.glacierWhite,
     },
     content: {
+        flexGrow: 1,
         paddingTop: 12,
         paddingBottom: 32,
     },
-    centeredContent: {
+    centeredState: {
         flexGrow: 1,
         justifyContent: "center",
         alignItems: "center",

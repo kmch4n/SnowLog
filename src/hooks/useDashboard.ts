@@ -18,6 +18,9 @@ export function useDashboard() {
     const [season, setSeason] = useState<Season>(getCurrentSeason());
     const [availableSeasons, setAvailableSeasons] = useState<Season[]>([]);
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    // stats がどのシーズンのものか。同じシーズンの再取得（タブに戻ったとき）は表示を
+    // 残したまま裏で更新し、別のシーズンへの切り替えだけ読み込み表示にするために使う
+    const [statsSeasonStartYear, setStatsSeasonStartYear] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +71,7 @@ export function useDashboard() {
 
                     if (!cancelled) {
                         setStats({ ...data, recentVideos: enrichedRecent });
+                        setStatsSeasonStartYear(season.startYear);
                     }
                 } catch (e) {
                     if (!cancelled) {
@@ -86,5 +90,5 @@ export function useDashboard() {
         }, [season])
     );
 
-    return { stats, isLoading, error, season, setSeason, availableSeasons };
+    return { stats, statsSeasonStartYear, isLoading, error, season, setSeason, availableSeasons };
 }
