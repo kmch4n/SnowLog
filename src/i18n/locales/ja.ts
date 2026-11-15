@@ -53,7 +53,10 @@ export const ja = {
         },
         bulkDelete: {
             title: "動画を一括削除",
-            body: "{{count}}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",
+            body: {
+                one: "{{count}}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",
+                other: "{{count}}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",
+            },
         },
         swipeDelete: {
             title: "動画を削除",
@@ -80,7 +83,10 @@ export const ja = {
         loadFailed: "読み込みに失敗しました",
         seeMore: "もっと見る →",
         videosLabel: "動画数",
-        videoCountShort: "{{count}}本",
+        videoCountShort: {
+            one: "{{count}}本",
+            other: "{{count}}本",
+        },
         heatmapLess: "少",
         heatmapMore: "多",
         summary: {
@@ -97,13 +103,22 @@ export const ja = {
         switchToMonth: "タップで月表示",
         previousPeriod: "前へ",
         nextPeriod: "次へ",
-        videoCount: "{{count}}件",
-        videoCountShort: "{{count}}本",
+        videoCount: {
+            one: "{{count}}本",
+            other: "{{count}}本",
+        },
+        videoCountShort: {
+            one: "{{count}}本",
+            other: "{{count}}本",
+        },
         weekTitle: "{{year}}年{{month}}月 第{{week}}週",
     },
     search: {
         title: "検索",
-        resultCount: "{{count}}件",
+        resultCount: {
+            one: "{{count}}件",
+            other: "{{count}}件",
+        },
         empty: "該当する動画が見つかりません",
         searchPlaceholder: "ファイル名・タイトル・メモで検索",
         clearAll: "クリア",
@@ -182,8 +197,11 @@ export const ja = {
             deleteSelected: "選択した動画を削除",
             deleteFailed: "削除に失敗しました",
             deleteFailedBody: "重複候補の削除中にエラーが発生しました。",
-            scanningCount: "{{count}}件をスキャン中...",
-            summaryCount: "{{videoCount}}件中 {{groupCount}}グループ",
+            scanningCount: {
+                one: "{{count}}本をスキャン中...",
+                other: "{{count}}本をスキャン中...",
+            },
+            summaryCount: "{{videoCount}}本中 {{groupCount}}グループ",
             loadingVideos: "動画を読み込んでいます",
             loadingVideosBody: "ライブラリの内容を取得しています。",
             computing: "重複候補を計算しています",
@@ -196,7 +214,10 @@ export const ja = {
             keepLabel: "残す",
             removeConfirm: {
                 title: "重複候補を削除",
-                bodyWithCount: "{{count}}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",
+                bodyWithCount: {
+                    one: "{{count}}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",
+                    other: "{{count}}件の動画の記録を削除しますか？\n（元の動画ファイルは削除されません）",
+                },
             },
             reasons: {
                 durationExact: "長さが一致",
@@ -217,7 +238,10 @@ export const ja = {
             confirmTitle: "不要ファイルを削除",
             confirmBody: "SnowLog 内に残った不要ファイルを削除します。\n元の写真アプリの動画は削除されません。",
             completedTitle: "削除しました",
-            completedBody: "{{count}}件の不要ファイルを削除しました。",
+            completedBody: {
+                one: "{{count}}件の不要ファイルを削除しました。",
+                other: "{{count}}件の不要ファイルを削除しました。",
+            },
             noFilesBody: "削除する不要ファイルはありませんでした。",
             failedTitle: "削除に失敗しました",
             failedBody: "不要ファイルを削除できませんでした。時間をおいてもう一度試してください。",
@@ -302,7 +326,10 @@ export const ja = {
         },
         sameDayResortPrompt: {
             title: "同じ日の動画にも設定しますか？",
-            body: "同じ日に撮影された未設定動画 {{count}}本にも「{{resortName}}」を設定できます。",
+            body: {
+                one: "同じ日に撮影された未設定動画 {{count}}本にも「{{resortName}}」を設定できます。",
+                other: "同じ日に撮影された未設定動画 {{count}}本にも「{{resortName}}」を設定できます。",
+            },
             apply: "まとめて設定",
             keepCurrent: "この動画だけ",
         },
@@ -311,7 +338,10 @@ export const ja = {
         webUnsupportedBody: "動画のインポートはiOSアプリでのみ利用できます。\nEAS Build でアプリをビルドしてお試しください。",
         bulk: {
             summaryTitle: "一括インポート完了",
-            summarySuccess: "{{count}}本インポートしました",
+            summarySuccess: {
+                one: "{{count}}本インポートしました",
+                other: "{{count}}本インポートしました",
+            },
             summarySkipped: "スキップ: {{count}}本",
             summaryError: "エラー: {{count}}本",
             summaryNotAccessible:
@@ -340,9 +370,18 @@ export const ja = {
         gpsConfirm: {
             title: "スキー場を設定しますか？",
             description: "GPS から近くのスキー場を検出しました。動画にスキー場名を設定する場合はチェックを残してください。",
-            distanceLabel: "{{count}}本 · {{distance}}km",
-            sameDayTarget: "同日の未設定動画 {{count}}本にも適用",
-            noGps: "GPS情報なし: {{count}}本（後で個別に設定できます）",
+            distanceLabel: {
+                one: "{{count}}本 · {{distance}}km",
+                other: "{{count}}本 · {{distance}}km",
+            },
+            sameDayTarget: {
+                one: "同日の未設定動画 {{count}}本にも適用",
+                other: "同日の未設定動画 {{count}}本にも適用",
+            },
+            noGps: {
+                one: "GPS情報なし: {{count}}本（後で個別に設定できます）",
+                other: "GPS情報なし: {{count}}本（後で個別に設定できます）",
+            },
             apply: "設定する",
             skip: "スキップ",
         },
@@ -454,7 +493,10 @@ export const ja = {
         iconNavigate: "詳細を表示",
         iconDelete: "削除する",
         listSeparator: "、",
-        videoCount: "動画{{count}}本",
+        videoCount: {
+            one: "動画{{count}}本",
+            other: "動画{{count}}本",
+        },
         hasDiary: "日記あり",
         monthValue: "{{month}}、{{metric}} {{value}}",
         removeTag: "{{name}}を外す",

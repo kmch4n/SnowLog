@@ -55,7 +55,10 @@ export const en: Translations = {
         },
         bulkDelete: {
             title: "Delete videos",
-            body: "Delete {{count}} video record(s)?\n(The original files are not deleted.)",
+            body: {
+                one: "Delete {{count}} video record?\n(The original file is not deleted.)",
+                other: "Delete {{count}} video records?\n(The original files are not deleted.)",
+            },
         },
         swipeDelete: {
             title: "Delete video",
@@ -82,7 +85,10 @@ export const en: Translations = {
         loadFailed: "Failed to load",
         seeMore: "See more →",
         videosLabel: "Videos",
-        videoCountShort: "{{count}} videos",
+        videoCountShort: {
+            one: "{{count}} video",
+            other: "{{count}} videos",
+        },
         heatmapLess: "Less",
         heatmapMore: "More",
         summary: {
@@ -99,13 +105,22 @@ export const en: Translations = {
         switchToMonth: "Tap for month view",
         previousPeriod: "Previous",
         nextPeriod: "Next",
-        videoCount: "{{count}} videos",
-        videoCountShort: "{{count}} videos",
+        videoCount: {
+            one: "{{count}} video",
+            other: "{{count}} videos",
+        },
+        videoCountShort: {
+            one: "{{count}} video",
+            other: "{{count}} videos",
+        },
         weekTitle: "{{month}}/{{year}} week {{week}}",
     },
     search: {
         title: "Search",
-        resultCount: "{{count}} result(s)",
+        resultCount: {
+            one: "{{count}} result",
+            other: "{{count}} results",
+        },
         empty: "No videos match your search",
         searchPlaceholder: "Search by filename, title, or memo",
         clearAll: "Clear",
@@ -184,8 +199,11 @@ export const en: Translations = {
             deleteSelected: "Delete selected videos",
             deleteFailed: "Delete failed",
             deleteFailedBody: "An error occurred while deleting duplicate candidates.",
-            scanningCount: "Scanning {{count}} videos...",
-            summaryCount: "{{groupCount}} groups from {{videoCount}} videos",
+            scanningCount: {
+                one: "Scanning {{count}} video...",
+                other: "Scanning {{count}} videos...",
+            },
+            summaryCount: "Videos: {{videoCount}} · Groups: {{groupCount}}",
             loadingVideos: "Loading videos",
             loadingVideosBody: "Fetching library contents.",
             computing: "Computing duplicate candidates",
@@ -198,7 +216,10 @@ export const en: Translations = {
             keepLabel: "Keep",
             removeConfirm: {
                 title: "Remove duplicates",
-                bodyWithCount: "Delete {{count}} selected video records?\n(The original files are not deleted.)",
+                bodyWithCount: {
+                    one: "Delete {{count}} selected video record?\n(The original file is not deleted.)",
+                    other: "Delete {{count}} selected video records?\n(The original files are not deleted.)",
+                },
             },
             reasons: {
                 durationExact: "Same duration",
@@ -219,7 +240,10 @@ export const en: Translations = {
             confirmTitle: "Delete unused files",
             confirmBody: "SnowLog will delete unused files left inside the app.\nVideos in Photos will not be deleted.",
             completedTitle: "Deleted",
-            completedBody: "Deleted {{count}} unused file(s).",
+            completedBody: {
+                one: "Deleted {{count}} unused file.",
+                other: "Deleted {{count}} unused files.",
+            },
             noFilesBody: "There were no unused files to delete.",
             failedTitle: "Delete failed",
             failedBody: "Could not delete unused files. Please try again later.",
@@ -304,7 +328,10 @@ export const en: Translations = {
         },
         sameDayResortPrompt: {
             title: "Apply to same-day videos?",
-            body: "You can also set \"{{resortName}}\" on {{count}} same-day unassigned video(s).",
+            body: {
+                one: "You can also set \"{{resortName}}\" on {{count}} same-day unassigned video.",
+                other: "You can also set \"{{resortName}}\" on {{count}} same-day unassigned videos.",
+            },
             apply: "Apply to all",
             keepCurrent: "This video only",
         },
@@ -313,7 +340,10 @@ export const en: Translations = {
         webUnsupportedBody: "Video import is available only in the iOS app.\nBuild the app with EAS Build and try again.",
         bulk: {
             summaryTitle: "Bulk import complete",
-            summarySuccess: "{{count}} video(s) imported",
+            summarySuccess: {
+                one: "{{count}} video imported",
+                other: "{{count}} videos imported",
+            },
             summarySkipped: "Skipped: {{count}}",
             summaryError: "Errors: {{count}}",
             summaryNotAccessible:
@@ -342,9 +372,18 @@ export const en: Translations = {
         gpsConfirm: {
             title: "Apply detected resort?",
             description: "We detected nearby ski resorts from GPS metadata. Keep the boxes checked to apply the resort name.",
-            distanceLabel: "{{count}} videos · {{distance}}km",
-            sameDayTarget: "Also applies to {{count}} same-day unassigned video(s)",
-            noGps: "No GPS metadata: {{count}} videos. You can set resorts individually later.",
+            distanceLabel: {
+                one: "{{count}} video · {{distance}}km",
+                other: "{{count}} videos · {{distance}}km",
+            },
+            sameDayTarget: {
+                one: "Also applies to {{count}} same-day unassigned video",
+                other: "Also applies to {{count}} same-day unassigned videos",
+            },
+            noGps: {
+                one: "No GPS metadata: {{count}} video. You can set its resort later.",
+                other: "No GPS metadata: {{count}} videos. You can set resorts individually later.",
+            },
             apply: "Apply",
             skip: "Skip",
         },
@@ -456,7 +495,10 @@ export const en: Translations = {
         iconNavigate: "Open details",
         iconDelete: "Delete",
         listSeparator: ", ",
-        videoCount: "{{count}} videos",
+        videoCount: {
+            one: "{{count}} video",
+            other: "{{count}} videos",
+        },
         hasDiary: "Diary entry",
         monthValue: "{{month}}, {{metric}} {{value}}",
         removeTag: "Remove {{name}}",

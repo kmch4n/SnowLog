@@ -206,6 +206,33 @@ const ja = loadJa();
 const leaves = new Set();
 const branches = new Set();
 flatten(ja, "", leaves, branches);
+
+/**
+ * i18n-js plural forms. `t("calendar.videoCount", { count })` names the branch, and
+ * i18n-js picks `.one` / `.other` (or `.zero`) by count, so those leaves are live
+ * when their branch literal is. Only a branch whose children are all plural forms,
+ * with `other` among them, counts — otherwise a branch literal could keep arbitrary
+ * children alive.
+ */
+const PLURAL_FORMS = new Set(["zero", "one", "other"]);
+function pluralBranchesOf(value, prefix, out) {
+    if (value === null || typeof value !== "object") return out;
+    const children = Object.keys(value);
+    if (
+        prefix &&
+        children.length > 0 &&
+        children.includes("other") &&
+        children.every((child) => PLURAL_FORMS.has(child))
+    ) {
+        out.add(prefix);
+        return out;
+    }
+    for (const [key, child] of Object.entries(value)) {
+        pluralBranchesOf(child, prefix ? `${prefix}.${key}` : key, out);
+    }
+    return out;
+}
+const pluralBranches = pluralBranchesOf(ja, "", new Set());
 const namespaces = new Set(Object.keys(ja));
 const scan = scanSources(walk(srcRoot));
 const allPrefixes = new Set([
@@ -223,6 +250,11 @@ function keyLikeLiterals() {
 
 function isLive(key) {
     if (scan.literals.has(key)) return true;
+    const lastDot = key.lastIndexOf(".");
+    if (lastDot > 0 && PLURAL_FORMS.has(key.slice(lastDot + 1))) {
+        const branch = key.slice(0, lastDot);
+        if (pluralBranches.has(branch) && scan.literals.has(branch)) return true;
+    }
     // A literal naming a branch does not keep its children live: the only
     // branch literals are `labelPrefix` values, and letting them count here
     // would bypass the prefix resolution this test exists to check.
