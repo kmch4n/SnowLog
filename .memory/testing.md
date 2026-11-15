@@ -302,6 +302,10 @@ PR 前には `npm run lint` も実行する。
 | `simulator` | 全ネイティブモジュール込みでアプリがコンパイルできる（依存更新・ネイティブ追加の確認） | `npx eas-cli build -p ios --profile simulator --non-interactive --wait` |
 | `ios-test` | `modules/snowlog-media` の `SnowLogMediaCore` の XCTest がシミュレータで通る（#86 §10.1 の I1） | `npx eas-cli build -p ios --profile ios-test --non-interactive --wait` |
 
+**既知の不安定**: `simulator` ビルドが `Script 'Copy generated compatibility header' failed └─Pods/RNScreens` で落ちることがある
+（2026-11-16、build `2c9f1f37`）。Xcode ログにスクリプト自身の出力は残らず、同じネイティブ構成の再実行（`c5bc1982`）は通った。
+並列ビルドでヘッダーの生成より先にコピーが走る順序の問題と見ている。この失敗だけなら一度再実行し、2 回続いたら調べる。
+
 `ios-test` の仕組みは `.eas/build/ios-test.yml` にある。要点は次のとおり。
 
 - Expo の autolinking は、`includeTests` を付けない限り test spec を `pod install` に渡さない。付けると
