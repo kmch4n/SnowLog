@@ -34,7 +34,12 @@ export function TechniqueSelector({ selected, onChange }: TechniqueSelectorProps
         }
     }
 
-    if (options.length === 0) {
+    // 設定で消した種別が付いたままの動画がある。選択肢に無くても選択中として出し、
+    // 押せば外せるようにする（出さないと、カードや統計には残るのに外す手段が無い）
+    const optionNames = new Set(options.map((opt) => opt.name));
+    const removedButSelected = selected.filter((name) => !optionNames.has(name));
+
+    if (options.length === 0 && removedButSelected.length === 0) {
         return (
             <Text style={styles.empty}>{t("components.techniqueSelector.manageHint")}</Text>
         );
@@ -58,6 +63,17 @@ export function TechniqueSelector({ selected, onChange }: TechniqueSelectorProps
                     </TouchableOpacity>
                 );
             })}
+            {removedButSelected.map((name) => (
+                <TouchableOpacity
+                    key={`removed:${name}`}
+                    onPress={() => toggle(name)}
+                    style={[styles.chip, styles.chipSelected]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: true }}
+                >
+                    <Text style={[styles.chipText, styles.chipTextSelected]}>{name}</Text>
+                </TouchableOpacity>
+            ))}
         </View>
     );
 }
