@@ -60,19 +60,28 @@ export async function importVideo(
     const releaseCleanupProtection = protectFilesFromOrphanedCleanup(protectedFileUris);
 
     try {
-        if (isSyntheticImport) {
-            videoUri = await persistManagedVideoFile(videoUri, videoId, asset.filename);
-        }
-
         let thumbnailUri: string;
         try {
-            thumbnailUri = await generateAndSaveThumbnail(videoUri, videoId);
-        } catch (error) {
-            if (videoUri !== options.sourceUri) {
-                thumbnailUri = await generateAndSaveThumbnail(options.sourceUri, videoId);
-            } else {
-                throw error;
+            if (isSyntheticImport) {
+                videoUri = await persistManagedVideoFile(videoUri, videoId, asset.filename);
             }
+
+            try {
+                thumbnailUri = await generateAndSaveThumbnail(videoUri, videoId);
+            } catch (error) {
+                if (videoUri !== options.sourceUri) {
+                    thumbnailUri = await generateAndSaveThumbnail(options.sourceUri, videoId);
+                } else {
+                    throw error;
+                }
+            }
+        } catch (error) {
+            // 行を入れる前に失敗した。コピー済み（またはコピー途中）の動画は誰も参照しない
+            // ので、次の起動の掃除を待たずにここで消す
+            if (managedVideoPath) {
+                await deleteManagedPath(managedVideoPath).catch(() => {});
+            }
+            throw error;
         }
 
         const capturedAt = Number.isFinite(assetCreationTime)
