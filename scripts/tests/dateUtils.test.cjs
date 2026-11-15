@@ -252,3 +252,16 @@ test("describeDateKey returns anything that is not YYYY-MM-DD unchanged", () => 
     assert.equal(describeDateKey("2025-1-1", "ja"), "2025-1-1");
     assert.equal(describeDateKey("", "en"), "");
 });
+
+test("formatDurationDecimal carries a rounded-up 60.0 seconds into the minutes", () => {
+    assert.equal(formatDurationDecimal(59.96), "1分0.0秒");
+    assert.equal(formatDurationDecimal(119.97, "en"), "2m 0.0s");
+    assert.equal(formatDurationDecimal(59.94), "59.9秒");
+});
+
+test("formatDurationHM does not report a non-zero total as zero minutes", () => {
+    assert.equal(formatDurationHM(45), "1分未満");
+    assert.equal(formatDurationHM(45, "en"), "< 1 min");
+    assert.equal(formatDurationHM(60), "1分");
+    assert.equal(formatDurationHM(0), "0分");
+});

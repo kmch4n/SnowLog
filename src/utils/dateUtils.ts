@@ -96,8 +96,11 @@ export function formatDurationDecimal(
     seconds: number,
     locale: SupportedLocale = "ja"
 ): string {
-    const m = Math.floor(seconds / 60);
-    const s = (seconds % 60).toFixed(1);
+    // 先に 0.1 秒単位へ丸めてから分と秒に分ける。秒だけを丸めると 59.96 秒が
+    // 「60.0秒」に、119.97 秒が「1m 60.0s」になっていた
+    const tenths = Math.round(seconds * 10);
+    const m = Math.floor(tenths / 600);
+    const s = ((tenths % 600) / 10).toFixed(1);
     if (locale === "en") {
         return m > 0 ? `${m}m ${s}s` : `${s}s`;
     }
@@ -222,6 +225,10 @@ export function formatDurationHM(
     totalSeconds: number,
     locale: SupportedLocale = "ja"
 ): string {
+    // 動画があるのに「0分」と出さない
+    if (totalSeconds > 0 && totalSeconds < 60) {
+        return locale === "en" ? "< 1 min" : "1分未満";
+    }
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
     if (locale === "en") {
