@@ -3,13 +3,13 @@
  */
 import type { VideoWithTags } from "./index";
 
-/** シーズン定義（11月〜翌年5月） */
+/** シーズン定義（10月1日〜翌年9月30日。`dateUtils.buildSeason`、#89） */
 export interface Season {
     label: string; // "2025-26"
     startYear: number; // 2025
     endYear: number; // 2026
-    dateFrom: number; // Nov 1 00:00 Unix sec
-    dateTo: number; // May 31 23:59 Unix sec
+    dateFrom: number; // Oct 1 00:00 local, Unix sec
+    dateTo: number; // Sep 30 23:59:59 local, Unix sec
 }
 
 /** サマリー統計 */
