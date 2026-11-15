@@ -90,16 +90,32 @@ function intersectReasons(matches: PairMatch[]): DuplicateReasonKey[] {
     return sharedReasons;
 }
 
+/**
+ * Names that many unrelated videos share, so an equal name says nothing about them
+ * being the same video: the fallback the import uses when the picker returns no
+ * filename ("video.mp4"), and the name iOS gives every edited export
+ * ("FullSizeRender.mov"). Compared after normalisation.
+ */
+const GENERIC_FILENAMES = new Set(["video", "movie", "fullsizerender"]);
+
+/**
+ * Comparison key for a filename: extension, "(n)" and copy markers removed, then only
+ * letters and digits kept. Letters and digits of any script count — keeping only
+ * [a-z0-9] reduced "大回り1.mov" and "小回り1.mov" to "1" and reported them as the same
+ * file. Returns "" for a generic name, which never counts as a filename match.
+ */
 function normalizeFilename(filename: string): string {
     const normalized = stripTrailingCopyMarkers(
         filename
+        .normalize("NFKC")
         .toLowerCase()
         .replace(/\.[a-z0-9]+$/i, "")
         .replace(/\(\d+\)$/g, "")
         .replace(/\s+$/g, "")
     );
 
-    return normalized.replace(/[^a-z0-9]/g, "");
+    const key = normalized.replace(/[^\p{L}\p{N}]/gu, "");
+    return GENERIC_FILENAMES.has(key) ? "" : key;
 }
 
 function buildPairMatch(left: VideoWithTags, right: VideoWithTags): PairMatch | null {

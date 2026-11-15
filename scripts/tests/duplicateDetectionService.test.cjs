@@ -263,3 +263,46 @@ test("groups are ordered by similarity score, highest first", () => {
 // reason per pair, and intersectReasons only ever shrinks the list, so five is
 // structurally impossible. An assert on it can never fail, and a test that
 // cannot fail is worse than no test.
+
+// normalizeFilename used to keep only [a-z0-9], so Japanese names collapsed to their
+// digits: "大回り1" and "小回り1" both became "1" and matched as "nearly the same
+// filename" across a year, and the screen preselects all but the first for deletion.
+test("different non-Latin filenames are not a filename match", () => {
+    const groups = detectDuplicateCandidates([
+        makeVideo({ id: "a", filename: "大回り1.mov", duration: 20, capturedAt: 1000 }),
+        makeVideo({ id: "b", filename: "小回り1.mov", duration: 21, capturedAt: 1000 + 365 * 86400 }),
+    ]);
+    assert.deepEqual(groups, []);
+});
+
+test("the same non-Latin filename still matches, full-width digits included", () => {
+    const groups = detectDuplicateCandidates([
+        makeVideo({ id: "a", filename: "大回り1.mov", duration: 20, capturedAt: 1000 }),
+        makeVideo({ id: "b", filename: "大回り１.MOV", duration: 21, capturedAt: 9000 }),
+    ]);
+    assert.equal(groups.length, 1);
+    assert.deepEqual(idsOf(groups[0]), ["a", "b"]);
+    assert.ok(groups[0].reasons.includes("filenameNearlyExact"));
+});
+
+// "video.mp4" is the import's fallback when the picker returns no filename, and
+// "FullSizeRender.mov" is what iOS names every edited export. Unrelated videos share
+// them, so on their own they must not group videos shot hours apart.
+test("generic filenames are not evidence of a duplicate", () => {
+    for (const filename of ["video.mp4", "FullSizeRender.mov", "movie.mov"]) {
+        const groups = detectDuplicateCandidates([
+            makeVideo({ id: "a", filename, duration: 20, capturedAt: 1000 }),
+            makeVideo({ id: "b", filename, duration: 21, capturedAt: 1000 + 7200 }),
+        ]);
+        assert.deepEqual(groups, [], filename);
+    }
+});
+
+test("generic filenames still group on capture time and duration", () => {
+    const groups = detectDuplicateCandidates([
+        makeVideo({ id: "a", filename: "FullSizeRender.mov", duration: 20, capturedAt: 1000 }),
+        makeVideo({ id: "b", filename: "FullSizeRender.mov", duration: 20, capturedAt: 1003 }),
+    ]);
+    assert.equal(groups.length, 1);
+    assert.ok(!groups[0].reasons.includes("filenameNearlyExact"));
+});
