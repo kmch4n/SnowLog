@@ -151,7 +151,7 @@ export const en: Translations = {
             techniques: "Manage video technique categories",
             tags: "Manage tags applied to videos",
             favoriteResorts: "Quick-pick frequently used ski resorts",
-            calendar: "Change week start and default view",
+            calendar: "Change the first day of the week",
             duplicateCandidates: "Review and clean up potential duplicates",
             storageCleanup: "Delete unused thumbnails and managed video files",
         },
@@ -289,7 +289,7 @@ export const en: Translations = {
         gpsSuggestionLabel: "📍 Resorts near where you filmed",
         bulkPickButtonWithLimit: "Bulk import (up to {{limit}})",
         titleField: "Title",
-        titlePlaceholder: "Enter a title (defaults to capture date)",
+        titlePlaceholder: "Enter a title (defaults to the capture date and time)",
         memoField: "Memo",
         memoPlaceholder: "Enter a memo",
         resortField: "Ski resort",
@@ -463,7 +463,7 @@ export const en: Translations = {
             manageHint: "Add new ones from Settings → Techniques",
         },
         tagSelector: {
-            placeholder: "Search tags",
+            placeholder: "Enter a tag name",
             skierHeader: "Skiers",
             customHeader: "Custom tags",
         },
@@ -480,8 +480,8 @@ export const en: Translations = {
         videoLoadFailed: "Failed to load videos.",
         boundary: {
             title: "Something went wrong",
-            body: "An unexpected error occurred. Tap retry to continue.",
-            retry: "Retry",
+            body: "An unexpected error occurred. Please try again.",
+            retry: "Try again",
         },
     },
     a11y: {

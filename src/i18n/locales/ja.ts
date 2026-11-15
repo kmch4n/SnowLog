@@ -16,7 +16,7 @@ export const ja = {
     permissions: {
         photoLibraryRequired: {
             title: "権限が必要です",
-            body: "フォトライブラリへのアクセスを許可してください。",
+            body: "写真ライブラリへのアクセスを許可してください。",
         },
         photoLibraryPlaybackRequired: {
             title: "写真ライブラリへのアクセスが必要です",
@@ -149,7 +149,7 @@ export const ja = {
             techniques: "動画の滑走種別を管理します",
             tags: "動画に付けるタグを管理します",
             favoriteResorts: "よく使うスキー場をクイックピックに登録します",
-            calendar: "週始まりや既定ビューを変更します",
+            calendar: "週の始まりの曜日を変更します",
             duplicateCandidates: "重複の可能性がある動画を確認・整理します",
             storageCleanup: "使われていないサムネイルや管理動画ファイルを削除します",
         },
@@ -461,7 +461,7 @@ export const ja = {
             manageHint: "設定 → 滑走種別 から追加できます",
         },
         tagSelector: {
-            placeholder: "タグを検索",
+            placeholder: "タグ名を入力",
             skierHeader: "滑走者",
             customHeader: "カスタムタグ",
         },
@@ -478,8 +478,8 @@ export const ja = {
         videoLoadFailed: "動画の取得に失敗しました。",
         boundary: {
             title: "問題が発生しました",
-            body: "予期しないエラーが発生しました。リトライしてください。",
-            retry: "リトライ",
+            body: "予期しないエラーが発生しました。もう一度試してください。",
+            retry: "もう一度試す",
         },
     },
     a11y: {

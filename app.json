@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "スキー動画のインポートとサムネイル生成のため、フォトライブラリへのアクセスが必要です。",
+        "NSPhotoLibraryUsageDescription": "スキー動画のインポートと再生、サムネイルの作成のため、写真ライブラリへのアクセスが必要です。",
         "CFBundleDevelopmentRegion": "ja",
         "CFBundleLocalizations": [
           "ja",
@@ -41,7 +41,7 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "スキー動画のインポートとサムネイル生成のため、フォトライブラリへのアクセスが必要です。",
+          "photosPermission": "スキー動画のインポートと再生、サムネイルの作成のため、写真ライブラリへのアクセスが必要です。",
           "savePhotosPermission": false,
           "isAccessMediaLocationEnabled": true
         }
