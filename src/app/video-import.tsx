@@ -608,6 +608,10 @@ export default function VideoImportScreen() {
                 const entry = map.get(item.detectedResort);
                 if (entry) {
                     entry.videoIds.push(item.videoId);
+                    // 表示する距離はグループで最も近いもの。最初に処理した 1 本の値ではなく
+                    if (item.detectedResortDistance != null) {
+                        entry.distanceKm = Math.min(entry.distanceKm, item.detectedResortDistance);
+                    }
                     if (item.capturedAt != null) {
                         entry.capturedAtValues.push(item.capturedAt);
                     }
