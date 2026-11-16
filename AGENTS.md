@@ -72,6 +72,9 @@ the shape of its imports. Both points, and the rest of the mechanics, are in `.m
 Manual verification carries the load. Before finishing: run `npm run lint` and verify the affected
 flow on iOS. For database changes, regenerate migrations, start from a clean local database, and
 walk migrate → import → search. When touching `*.web.*`, also click through in a browser.
+Without a device or a Mac, `gh workflow run ios-simulator.yml` builds the real iOS app, drives it
+in a simulator with Maestro, and uploads screenshots — look at them before reporting UI changes
+(`.memory/testing.md`).
 
 ## Git
 
