@@ -1,8 +1,8 @@
-# Single import up to the system photo picker (PHPicker). The flow stops with the
-# picker open; the workflow then saves its element hierarchy, which tells the next
-# version of this flow how to select a video in it.
+# Single import through the system photo picker (PHPicker), then the result on Home,
+# the dashboard and the calendar. The test videos are .maestro/media/*.mov; the
+# Hakuba one carries GPS, so the import screen should suggest a nearby resort.
 appId: com.kmch4n.snowlog
-name: Single import up to the picker
+name: Single import
 ---
 - launchApp
 - extendedWaitUntil:
@@ -18,5 +18,34 @@ name: Single import up to the picker
 - takeScreenshot: 10_import_screen
 - tapOn:
     id: "import-pick-video"
-- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "ビデオ, 三秒, .*"
+    timeout: 20000
 - takeScreenshot: 11_picker
+- tapOn: "ビデオ, 三秒, .*"
+- extendedWaitUntil:
+    visible: ".*撮影地の近くのスキー場.*"
+    timeout: 30000
+- takeScreenshot: 12_selected_with_gps
+- tapOn:
+    text: ".*白馬.*"
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "import-save"
+    direction: DOWN
+- takeScreenshot: 13_form_bottom
+- tapOn:
+    id: "import-save"
+- extendedWaitUntil:
+    visible:
+      id: "home-import-button"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: 14_home_with_video
+- tapOn: "ダッシュボード"
+- waitForAnimationToEnd
+- takeScreenshot: 15_dashboard_with_video
+- tapOn: "カレンダー"
+- waitForAnimationToEnd
+- takeScreenshot: 16_calendar_with_video

@@ -61,6 +61,9 @@ jobs:
 
       - name: Boot a Japanese iPhone simulator with test videos
         run: |
+          # The simulator takes the host's time zone; the app groups by local day.
+          sudo systemsetup -settimezone Asia/Tokyo > /dev/null
+          date
           UDID=$(xcrun simctl list devices available -j | python3 -c '
           import json, sys
           devices = json.load(sys.stdin)["devices"]
