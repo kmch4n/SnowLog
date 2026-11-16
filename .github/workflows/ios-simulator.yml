@@ -109,11 +109,15 @@ jobs:
           for flow in "$GITHUB_WORKSPACE"/.maestro/*.yaml; do
             name=$(basename "$flow" .yaml)
             echo "::group::$name"
-            if ! maestro --device "$UDID" test "$flow" --debug-output "$OUT/maestro/$name"; then
+            if ! maestro --device "$UDID" test "$flow" -e SCREENS="$OUT/screens" \
+                --debug-output "$OUT/maestro/$name"; then
               echo "::error::flow $name failed"
               status=1
             fi
             xcrun simctl io "$UDID" screenshot "$OUT/screens/${name}__end.png" || true
+            # Whatever is on screen when the flow ends, as Maestro sees it: the
+            # selectors for the next step of a flow come from here.
+            maestro --device "$UDID" hierarchy > "$OUT/hierarchy_${name}.json" || true
             echo "::endgroup::"
           done
           exit $status

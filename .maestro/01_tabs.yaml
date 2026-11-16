@@ -1,25 +1,27 @@
 # Opens every tab on a fresh install and screenshots it.
-# Run by .github/workflows/ios-simulator.yml; the simulator is set to Japanese first.
+# Run by .github/workflows/ios-simulator.yml, which passes SCREENS (an absolute
+# directory) and switches the simulator to Japanese first.
 appId: com.kmch4n.snowlog
 name: Tabs render on a fresh install
 ---
 - launchApp:
     clearState: true
 - extendedWaitUntil:
-    visible: ".*インポート.*"
+    visible:
+      id: "home-import-button"
     timeout: 90000
-- takeScreenshot: 01_home
+- takeScreenshot: ${SCREENS}/01_home
 - tapOn: "ダッシュボード"
 - waitForAnimationToEnd
-- takeScreenshot: 02_dashboard
+- takeScreenshot: ${SCREENS}/02_dashboard
 - tapOn: "カレンダー"
 - waitForAnimationToEnd
-- takeScreenshot: 03_calendar
+- takeScreenshot: ${SCREENS}/03_calendar
 - tapOn:
     text: "検索"
     index: 0
 - waitForAnimationToEnd
-- takeScreenshot: 04_search
+- takeScreenshot: ${SCREENS}/04_search
 - tapOn: "設定"
 - waitForAnimationToEnd
-- takeScreenshot: 05_settings
+- takeScreenshot: ${SCREENS}/05_settings

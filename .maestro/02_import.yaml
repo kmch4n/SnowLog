@@ -1,31 +1,22 @@
-# Single import through the system photo picker (PHPicker). The picker is a system
-# view, so the steps that touch it are optional while the selectors are worked out;
-# the screenshots show how far it got.
+# Single import up to the system photo picker (PHPicker). The flow stops with the
+# picker open; the workflow then saves its element hierarchy, which tells the next
+# version of this flow how to select a video in it.
 appId: com.kmch4n.snowlog
-name: Single import
+name: Single import up to the picker
 ---
 - launchApp
 - extendedWaitUntil:
-    visible: ".*インポート.*"
+    visible:
+      id: "home-import-button"
     timeout: 60000
-- tapOn: ".*インポート.*"
+- tapOn:
+    id: "home-import-button"
 - extendedWaitUntil:
-    visible: ".*タップして動画を選択.*"
+    visible:
+      id: "import-pick-video"
     timeout: 20000
-- takeScreenshot: 10_import_screen
-- tapOn: ".*タップして動画を選択.*"
-- waitForAnimationToEnd
-- takeScreenshot: 11_picker
+- takeScreenshot: ${SCREENS}/10_import_screen
 - tapOn:
-    point: "17%,22%"
-    optional: true
+    id: "import-pick-video"
 - waitForAnimationToEnd
-- takeScreenshot: 12_after_pick
-- tapOn:
-    text: "Add"
-    optional: true
-- tapOn:
-    text: "追加"
-    optional: true
-- waitForAnimationToEnd
-- takeScreenshot: 13_import_form
+- takeScreenshot: ${SCREENS}/11_picker

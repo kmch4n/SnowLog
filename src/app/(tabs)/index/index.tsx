@@ -464,6 +464,7 @@ export default function HomeScreen() {
                             onPress={handleImportPress}
                             activeOpacity={0.8}
                             accessibilityRole="button"
+                            testID="home-import-button"
                         >
                             <Text style={styles.fabText}>{t("home.importFab")}</Text>
                         </TouchableOpacity>

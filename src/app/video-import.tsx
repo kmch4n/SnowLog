@@ -1077,6 +1077,7 @@ export default function VideoImportScreen() {
                     style={styles.pickButton}
                     onPress={handlePickVideo}
                     accessibilityRole="button"
+                    testID="import-pick-video"
                 >
                     {selectedAsset ? (
                         <View style={styles.previewContainer}>
@@ -1122,6 +1123,7 @@ export default function VideoImportScreen() {
                         style={styles.bulkButton}
                         onPress={handlePickBulk}
                         accessibilityRole="button"
+                        testID="import-pick-bulk"
                     >
                         <Text style={styles.bulkButtonText}>
                             {t("import.bulkPickButtonWithLimit", { limit: BULK_SELECTION_LIMIT })}
@@ -1227,6 +1229,7 @@ export default function VideoImportScreen() {
                         (!selectedAsset || !resolvedAssetUri || isLoadingMeta) && styles.saveButtonDisabled,
                     ]}
                     onPress={handleSave}
+                    testID="import-save"
                     disabled={!selectedAsset || isSaving || !resolvedAssetUri || isLoadingMeta}
                     accessibilityRole="button"
                     accessibilityLabel={t("import.save")}
