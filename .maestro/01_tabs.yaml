@@ -6,7 +6,7 @@ name: Tabs render on a fresh install
 - launchApp:
     clearState: true
 - extendedWaitUntil:
-    visible: "＋ インポート"
+    visible: ".*インポート.*"
     timeout: 90000
 - takeScreenshot: 01_home
 - tapOn: "ダッシュボード"

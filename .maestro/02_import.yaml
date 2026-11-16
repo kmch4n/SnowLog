@@ -6,14 +6,14 @@ name: Single import
 ---
 - launchApp
 - extendedWaitUntil:
-    visible: "＋ インポート"
+    visible: ".*インポート.*"
     timeout: 60000
-- tapOn: "＋ インポート"
+- tapOn: ".*インポート.*"
 - extendedWaitUntil:
-    visible: "🎬 タップして動画を選択"
+    visible: ".*タップして動画を選択.*"
     timeout: 20000
 - takeScreenshot: 10_import_screen
-- tapOn: "🎬 タップして動画を選択"
+- tapOn: ".*タップして動画を選択.*"
 - waitForAnimationToEnd
 - takeScreenshot: 11_picker
 - tapOn:

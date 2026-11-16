@@ -87,11 +87,23 @@ jobs:
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
-      - name: Run the flows
+      - name: Warm up the Maestro driver and dump the launch screen
         env:
-          MAESTRO_DRIVER_STARTUP_TIMEOUT: "240000"
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: "600000"
         run: |
           maestro --version
+          xcrun simctl launch "$UDID" "$APP_ID"
+          sleep 20
+          # The first driver start installs the XCTest runner and is slow on a cold
+          # runner; doing it here keeps the flows' own timeouts meaningful. The
+          # hierarchy shows the exact text and ids the flows can select on.
+          maestro --device "$UDID" hierarchy > "$OUT/hierarchy_launch.json"
+          xcrun simctl io "$UDID" screenshot "$OUT/screens/00_launch.png"
+
+      - name: Run the flows
+        env:
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: "600000"
+        run: |
           status=0
           cd "$OUT/screens"
           for flow in "$GITHUB_WORKSPACE"/.maestro/*.yaml; do
