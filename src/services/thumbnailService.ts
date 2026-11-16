@@ -124,6 +124,25 @@ export async function generateAndSaveThumbnail(
 }
 
 /**
+ * インポート画面のプレビュー用に、動画の先頭フレームを一時ファイルとして作る。
+ * 保存はしない（キャッシュに置かれ、OS が片付ける）。作れなければ null。
+ *
+ * 以前はプレビューに動画ファイルの URI をそのまま `Image` へ渡していた。`Image` は
+ * 動画を描けないので、選んだ動画のプレビューは常に灰色の枠だった。
+ */
+export async function createPreviewThumbnail(videoUri: string): Promise<string | null> {
+    try {
+        const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
+            time: 0,
+            quality: 0.5,
+        });
+        return uri;
+    } catch {
+        return null;
+    }
+}
+
+/**
  * サムネイルファイルを削除する
  * @param stored DB に保存されたサムネイル URI（相対 or 絶対）
  */

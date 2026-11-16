@@ -23,6 +23,10 @@ export async function generateAndSaveThumbnail(
     return "";
 }
 
+export async function createPreviewThumbnail(_videoUri: string): Promise<string | null> {
+    return null;
+}
+
 export async function deleteThumbnail(_stored: string): Promise<void> {
     // no-op
 }

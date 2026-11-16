@@ -38,6 +38,7 @@ import {
     hapticWarning,
 } from "@/services/hapticsService";
 import { setPendingBulkImportSummary } from "@/services/bulkImportSummaryService";
+import { createPreviewThumbnail } from "@/services/thumbnailService";
 import { importVideo, type ImportableAsset } from "@/services/importService";
 import {
     getAssetInfoWithDownload,
@@ -126,6 +127,8 @@ export default function VideoImportScreen() {
     >([]);
     const [assetCreationTime, setAssetCreationTime] = useState<number | null>(null);
     const [resolvedAssetUri, setResolvedAssetUri] = useState<string | null>(null);
+    // 選んだ動画の先頭フレーム（プレビュー用の一時ファイル）
+    const [previewThumbnailUri, setPreviewThumbnailUri] = useState<string | null>(null);
     const [isLoadingMeta, setIsLoadingMeta] = useState(false);
     const stagedFileUriRef = useRef<string | null>(null);
     // 単体インポートの選択ごとに増やす番号。読み込み中でも「変更」で選び直せるので、
@@ -426,6 +429,7 @@ export default function VideoImportScreen() {
         setGpsSuggestions([]);
         setAssetCreationTime(null);
         setResolvedAssetUri(null);
+        setPreviewThumbnailUri(null);
 
         // MediaLibrary のメタデータから GPS 座標・撮影日時を取得
         // iCloud 専用アセットの場合は自動ダウンロードでリトライする
@@ -504,6 +508,8 @@ export default function VideoImportScreen() {
         }
 
         setResolvedAssetUri(stagedUri);
+        const preview = await createPreviewThumbnail(stagedUri);
+        if (!isStale()) setPreviewThumbnailUri(preview);
     }, [cleanupStagedFile, router, stageForImport, t]);
 
     /** 動画をインポートしてDBに保存する */
@@ -1081,11 +1087,15 @@ export default function VideoImportScreen() {
                 >
                     {selectedAsset ? (
                         <View style={styles.previewContainer}>
-                            <Image
-                                source={{ uri: selectedAsset.uri }}
-                                style={styles.previewImage}
-                                resizeMode="cover"
-                            />
+                            {previewThumbnailUri ? (
+                                <Image
+                                    source={{ uri: previewThumbnailUri }}
+                                    style={styles.previewImage}
+                                    resizeMode="cover"
+                                />
+                            ) : (
+                                <View style={styles.previewImage} />
+                            )}
                             <View style={styles.previewMeta}>
                                 <Text style={styles.previewFilename} numberOfLines={1}>
                                     {selectedAsset.fileName ?? t("import.fallbackFilename")}
