@@ -84,6 +84,12 @@ jobs:
           xcrun simctl privacy "$UDID" grant photos "$APP_ID"
           xcrun simctl addmedia "$UDID" .maestro/media/*.mov
           xcrun simctl list devices | grep "$UDID"
+          # What Photos recorded for the test videos: capture date and location.
+          # The import's GPS resort suggestion depends on the location surviving.
+          sleep 5
+          sqlite3 "$HOME/Library/Developer/CoreSimulator/Devices/$UDID/data/Media/PhotoData/Photos.sqlite" \
+            "SELECT ZFILENAME, ZLATITUDE, ZLONGITUDE, datetime(ZDATECREATED + 978307200, 'unixepoch') FROM ZASSET;" \
+            | tee "$OUT/photos_assets.txt" || true
 
       - name: Install Maestro
         run: |

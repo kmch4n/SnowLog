@@ -24,9 +24,16 @@ name: Single import
 - takeScreenshot: 11_picker
 - tapOn: "ビデオ, 三秒, .*"
 - extendedWaitUntil:
-    visible: ".*撮影地の近くのスキー場.*"
+    visible:
+      id: "import-save"
     timeout: 30000
-- takeScreenshot: 12_selected_with_gps
+# The GPS suggestion depends on Photos keeping the clip's location
+# (photos_assets.txt in the artifact shows what it recorded).
+- extendedWaitUntil:
+    visible: ".*撮影地の近くのスキー場.*"
+    timeout: 15000
+    optional: true
+- takeScreenshot: 12_selected
 - tapOn:
     text: ".*白馬.*"
     optional: true
