@@ -15,8 +15,8 @@ name: Single import up to the picker
     visible:
       id: "import-pick-video"
     timeout: 20000
-- takeScreenshot: ${SCREENS}/10_import_screen
+- takeScreenshot: 10_import_screen
 - tapOn:
     id: "import-pick-video"
 - waitForAnimationToEnd
-- takeScreenshot: ${SCREENS}/11_picker
+- takeScreenshot: 11_picker
