@@ -323,6 +323,32 @@ PR 前には `npm run lint` も実行する。
 `ios-test` が示せるのは、偽のアダプターが通る経路でアプリが何を要求するかまで。実際の通信量は示せない
 （#86 §10.1 の I2・I3 と、実機での計測が別に要る）。
 
+## iOS シミュレータで画面を確かめる: GitHub Actions + Maestro（2026-11-16 追加）
+
+実機も Mac も使わずに、**本物の iOS アプリの画面**を確かめる手段。`.github/workflows/ios-simulator.yml` が
+GitHub の `macos-26` ランナー（Xcode 26.2。EAS と同じ）でシミュレータ向けにビルドし、日本語・Asia/Tokyo の
+iPhone シミュレータに入れて `.maestro/*.yaml` を流す。公開リポジトリなので無料で、EAS のビルド回数も使わない。
+1 回 25〜35 分。
+
+- 実行: `gh workflow run ios-simulator.yml --ref main`（`repo` 権限のトークンで動く）。
+  結果: `gh run download <id> -n ios-simulator` で、`screens/*.png`（各ステップのスクリーンショット）、
+  `hierarchy_*.json`（各フローが終わった時点の画面を Maestro がどう見ているか）、`app.log`、`photos_assets.txt`、
+  `xcodebuild.log` が取れる。**変更を入れたら、ここで画面を見てから報告する。**
+- フロー: `01_tabs`（新規インストールで全タブ）、`02_import`（写真ピッカーで動画を選び、保存し、ホーム・統計・
+  カレンダーに出ることまで）。テスト動画は `.maestro/media/*.mov`（撮影日と位置を QuickTime のメタデータに持つ）。
+- 要素の指定は **`testID`**（`id:`）を使う。文字の正規表現は別の文言にも当たる（「インポート」が空の画面の説明文に
+  当たって、ボタンではなく説明文をタップしていた）。写真ピッカーのセルは「ビデオ, 三秒, 11月07日, 1:15」のような
+  ラベルを持つので、長さと日付で選べる。新しい画面のセレクタは、前の実行の `hierarchy_*.json` から拾う。
+- 落とし穴:
+  - Maestro の初回のドライバー起動は遅い（数分）。ワークフローは先に `maestro hierarchy` を流して温める。
+  - `takeScreenshot` は隠しディレクトリ `.maestro/` の下に書く。`upload-artifact` は隠しファイルを既定で
+    上げないので、ワークフローが PNG をコピーしている。絶対パスは受け付けない。
+  - `simctl addmedia` で入れた動画の位置は、ffmpeg で `com.apple.quicktime.location.ISO6709`（mdta）だけを
+    書いても Photos に入らなかった（`photos_assets.txt` で -180）。古い `©xyz`（`-metadata location=`）も書く。
+  - gh トークンに `workflow` 権限が無いので、`.github/workflows/` の変更は SSH で push する。
+- 示せないもの: iCloud からの実際のダウンロード、限定アクセスで範囲外を選ぶ操作、回線の切り替え、性能と触覚。
+  これらは実機（`docs/verification/`）で見る。
+
 ## `pr/pv`（PV）は別のテスト面
 
 2026-07-29 に `pr/pv/`（Remotion 製の紹介映像）が入った。`pr/web` と同じく**独立した npm プロジェクト**で、
