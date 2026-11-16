@@ -1,0 +1,31 @@
+# Single import through the system photo picker (PHPicker). The picker is a system
+# view, so the steps that touch it are optional while the selectors are worked out;
+# the screenshots show how far it got.
+appId: com.kmch4n.snowlog
+name: Single import
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "＋ インポート"
+    timeout: 60000
+- tapOn: "＋ インポート"
+- extendedWaitUntil:
+    visible: "🎬 タップして動画を選択"
+    timeout: 20000
+- takeScreenshot: 10_import_screen
+- tapOn: "🎬 タップして動画を選択"
+- waitForAnimationToEnd
+- takeScreenshot: 11_picker
+- tapOn:
+    point: "17%,22%"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 12_after_pick
+- tapOn:
+    text: "Add"
+    optional: true
+- tapOn:
+    text: "追加"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 13_import_form

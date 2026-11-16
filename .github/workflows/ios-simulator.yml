@@ -1,0 +1,121 @@
+# Builds the app for the iOS Simulator on a GitHub-hosted Mac and drives it with
+# Maestro, so changes can be looked at on iOS without a Mac or a device. Free for this
+# public repository and independent of the EAS build quota.
+#
+# Run it from the Actions tab or `gh workflow run ios-simulator.yml`. The screenshots,
+# the Maestro output and the app's log are uploaded as the `ios-simulator` artifact.
+# Flows live in .maestro/; the simulator is switched to Japanese before they run.
+# See .memory/testing.md, "iOS シミュレータで画面を確かめる".
+name: iOS simulator
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-simulator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    name: Build and drive the app
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      APP_ID: com.kmch4n.snowlog
+      OUT: ${{ github.workspace }}/artifacts
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Select Xcode 26.2 (the version EAS builds with)
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.2.app
+          xcodebuild -version
+          mkdir -p "$OUT/screens"
+
+      - run: npm ci
+
+      - name: Generate the iOS project
+        env:
+          CI: "1"
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Build for the simulator
+        run: |
+          build() {
+            xcodebuild -workspace ios/SnowLog.xcworkspace -scheme SnowLog \
+              -configuration Release -sdk iphonesimulator \
+              -destination "generic/platform=iOS Simulator" \
+              -derivedDataPath ios/build ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
+              CODE_SIGNING_ALLOWED=NO -quiet build > "$OUT/xcodebuild.log" 2>&1
+          }
+          # The RNScreens "Copy generated compatibility header" step occasionally
+          # fails on a cold parallel build (.memory/testing.md); retry once.
+          build || { echo "first build failed, retrying"; tail -40 "$OUT/xcodebuild.log"; build; } || {
+            tail -80 "$OUT/xcodebuild.log"; exit 1;
+          }
+          ls -d ios/build/Build/Products/Release-iphonesimulator/SnowLog.app
+
+      - name: Boot a Japanese iPhone simulator with test videos
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          phones = [(rt, d) for rt, ds in devices.items() if "iOS" in rt for d in ds if d["name"].startswith("iPhone")]
+          phones.sort(key=lambda p: (p[0], p[1]["name"]))
+          preferred = [p for p in phones if p[1]["name"] == "iPhone 17"] or phones
+          print(preferred[-1][1]["udid"])')
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl spawn "$UDID" defaults write "Apple Global Domain" AppleLanguages -array ja-JP
+          xcrun simctl spawn "$UDID" defaults write "Apple Global Domain" AppleLocale -string ja_JP
+          xcrun simctl shutdown "$UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100
+          xcrun simctl install "$UDID" ios/build/Build/Products/Release-iphonesimulator/SnowLog.app
+          xcrun simctl privacy "$UDID" grant photos "$APP_ID"
+          xcrun simctl addmedia "$UDID" .maestro/media/*.mov
+          xcrun simctl list devices | grep "$UDID"
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run the flows
+        env:
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: "240000"
+        run: |
+          maestro --version
+          status=0
+          cd "$OUT/screens"
+          for flow in "$GITHUB_WORKSPACE"/.maestro/*.yaml; do
+            name=$(basename "$flow" .yaml)
+            echo "::group::$name"
+            if ! maestro --device "$UDID" test "$flow" --debug-output "$OUT/maestro/$name"; then
+              echo "::error::flow $name failed"
+              status=1
+            fi
+            xcrun simctl io "$UDID" screenshot "$OUT/screens/${name}__end.png" || true
+            echo "::endgroup::"
+          done
+          exit $status
+
+      - name: Collect the app log
+        if: always()
+        run: |
+          xcrun simctl spawn "$UDID" log show --last 20m --style compact \
+            --predicate 'process == "SnowLog"' > "$OUT/app.log" 2>&1 || true
+          tail -50 "$OUT/app.log" || true
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ios-simulator
+          path: artifacts/
+          retention-days: 14
