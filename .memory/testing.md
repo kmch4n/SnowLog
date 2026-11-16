@@ -343,10 +343,13 @@ iPhone シミュレータに入れて `.maestro/*.yaml` を流す。公開リポ
   - Maestro の初回のドライバー起動は遅い（数分）。ワークフローは先に `maestro hierarchy` を流して温める。
   - `takeScreenshot` は隠しディレクトリ `.maestro/` の下に書く。`upload-artifact` は隠しファイルを既定で
     上げないので、ワークフローが PNG をコピーしている。絶対パスは受け付けない。
-  - `simctl addmedia` で入れた動画の位置は、ffmpeg で `com.apple.quicktime.location.ISO6709`（mdta）だけを
-    書いても Photos に入らなかった（`photos_assets.txt` で -180）。古い `©xyz`（`-metadata location=`）も書く。
+  - `simctl addmedia` で入れた動画には、位置が入らない。ffmpeg で `com.apple.quicktime.location.ISO6709`（mdta）も
+    古い `©xyz`（`-metadata location=`）も書いたが、どちらも `photos_assets.txt` で -180 のまま（2026-11-16、
+    run 8・9）。付属の写真（JPEG）には位置がある。**GPS からのスキー場候補はシミュレータでは確かめられない**ので、
+    フローではその手順を optional にしてある。撮影日は正しく入る。
   - gh トークンに `workflow` 権限が無いので、`.github/workflows/` の変更は SSH で push する。
-- 示せないもの: iCloud からの実際のダウンロード、限定アクセスで範囲外を選ぶ操作、回線の切り替え、性能と触覚。
+- 示せないもの: GPS からのスキー場候補（上記）、iCloud からの実際のダウンロード、限定アクセスで範囲外を選ぶ操作、
+  回線の切り替え、性能と触覚。
   これらは実機（`docs/verification/`）で見る。
 
 ## `pr/pv`（PV）は別のテスト面
