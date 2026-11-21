@@ -51,7 +51,7 @@ A stale picker result cannot overwrite a newer selection. When staging returns a
 | Limited access + explicit missing lookup | Skip/abort item as outside selection; do not fabricate a reference |
 | Photos lookup fails for other reasons | Keep uncertainty distinct from confirmed out-of-selection; later staging may still fail |
 | Unsupported URI / copy failure | Do not attempt to persist an unstageable movie |
-| Thumbnail generation fails | Import fails and cleans any already owned files |
+| Thumbnail generation fails | Import fails; managed-copy cleanup is attempted immediately, while any partial unreferenced poster may require subsequent orphan cleanup |
 | DB insert/tag write fails | Attempt to remove inserted record, thumbnail and managed movie |
 | GPS absent or ambiguous | Allow manual resort entry and unassigned state |
 | Batch stop | Preserve completed items, stop further iterations, return summary |

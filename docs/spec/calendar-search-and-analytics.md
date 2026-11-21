@@ -34,7 +34,7 @@ The day cell can display a count/thumbnail, resort color indicators and a diary 
 | --- | --- | --- |
 | Resort | Nullable text | Chosen resort name |
 | Weather | Nullable code | Values from `WEATHER_OPTIONS` |
-| Snow conditions | Nullable text | Choice(s) represented by the modal and `SNOW_CONDITION_OPTIONS` |
+| Snow conditions | Nullable JSON array string | Multiple `SNOW_CONDITION_OPTIONS` codes can be selected; empty selection is null; legacy single-code rows remain readable |
 | Impressions | Non-null text | Free-form narrative |
 | Temperature | Nullable integer | Degrees Celsius |
 | Companions | Nullable text | Free-form names/description |

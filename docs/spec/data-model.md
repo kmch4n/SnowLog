@@ -4,7 +4,7 @@
 
 `src/database/index.ts` opens `snowlog.db` synchronously through `expo-sqlite`, enables change listeners, `PRAGMA foreign_keys = ON`, and `PRAGMA journal_mode = WAL`, and exports one Drizzle instance. `src/database/schema.ts` is the editable schema; `drizzle/0000_*.sql` through `0009_*.sql` and metadata are generated migrations. Do not modify generated SQL manually without an explicitly reviewed migration strategy.
 
-**Units:** `videos.captured_at`, `created_at`, `updated_at`, `diary_entries.created_at/updated_at` and job timestamps are Unix **seconds**. Photos `creationTime` received from Expo is in **milliseconds**, converted on import. `videos.duration` is in **seconds**. Diary temperature is **Celsius** and expenses are **JPY**. `date_key` is a local `YYYY-MM-DD` string, not a UTC date.
+**Units:** `videos.captured_at`, `created_at`, `updated_at`, `diary_entries.created_at/updated_at` and job timestamps are Unix **seconds**. Photos `creationTime` received from Expo is in **milliseconds**, converted on import. `videos.duration` is in **seconds**. Diary temperature is **Celsius** and expenses are **JPY**. `diary_entries.snow_condition` is a nullable TEXT column: the current editor stores a **JSON array string** of multiple condition codes, and reads a legacy single-code string as a one-element list. `date_key` is a local `YYYY-MM-DD` string, not a UTC date.
 
 ## `videos`: primary library entity
 
@@ -44,7 +44,7 @@ The unique index `videos_managed_video_path_unique` applies `lower()` to `manage
 
 ## Diary fields
 
-`diary_entries` stores `date_key`, nullable `ski_resort_name`, `weather`, `snow_condition`, `temperature`, `companions`, `fatigue_level`, `expenses`, `number_of_runs`, plus non-null `impressions` (default empty) and timestamps. Weather/snow choices are string codes supplied by `src/constants/diaryOptions.ts`; fatigue is a 1–5 integer in UI. `upsertDiaryEntry` uses `date_key` as its conflict target; deleting a diary does not delete videos.
+`diary_entries` stores `date_key`, nullable `ski_resort_name`, `weather`, `snow_condition`, `temperature`, `companions`, `fatigue_level`, `expenses`, `number_of_runs`, plus non-null `impressions` (default empty) and timestamps. Weather is a nullable single string code; snow conditions are saved as a **JSON-encoded array of codes** in the nullable `snow_condition` TEXT field (or null for no selections). The editor also accepts legacy single-code strings on load. Option codes are supplied by `src/constants/diaryOptions.ts`; fatigue is a 1–5 integer in UI. `upsertDiaryEntry` uses `date_key` as its conflict target; deleting a diary does not delete videos.
 
 ## Transfer-job data (infrastructure only)
 
