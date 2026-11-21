@@ -162,7 +162,8 @@ Apple の写真ライブラリ経由で通信が発生することがありま�
 | 技術選定の理由、設計判断とその経緯、苦労したこと | [設計ノート](docs/design-notes.md) |
 | 現在の実装仕様（英語・機能別・データモデル・処理フロー・責務分担） | [Implementation Specification](docs/spec/README.md) |
 | 既存の日本語仕様メモ（過去の技術資料として保持） | [SnowLog.md](SnowLog.md) |
-| 開発規約・コマンド・テスト | [`AGENTS.md`](AGENTS.md) |
+| 開発時の共通指示と詳細資料への案内 | [`AGENTS.md`](AGENTS.md) |
+| テストとリリースの詳細 | [Verification and Release](docs/spec/verification-and-release.md) |
 
 紹介映像は [Remotion](https://www.remotion.dev/) 製で、ソースは `pr/pv/` にあります。
 ランディングページは Astro 製で `pr/web/` です。

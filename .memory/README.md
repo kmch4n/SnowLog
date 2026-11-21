@@ -1,6 +1,6 @@
 # .memory — SnowLog 共有ナレッジベース
 
-最終更新: 2026-11-02
+最終更新: 2026-11-21
 
 ## このフォルダの目的
 
@@ -13,7 +13,7 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 
 ## 対象読者
 
-- コーディングエージェント（Claude Code / Codex / その他）— 作業開始時にこの README を読み、関連するファイルを参照する
+- コーディングエージェント（Claude Code / Codex / その他）— `AGENTS.md` の案内から必要な作業でのみこの目次を読み、関連ファイルを参照する
 - 人間の開発者 — 過去の判断や既知の落とし穴を思い出すため
 
 ## 目次
@@ -23,7 +23,7 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 | [wiring.md](wiring.md) | 非自明な配線とデータ契約。`_layout.tsx` の起動順序、i18n / ハプティクス / サムネイルの窓口、`app_preferences` の実キー。**該当箇所を触る前に読む** |
 | [doc-drift.md](doc-drift.md) | ドキュメントとコードの乖離。README.md / SnowLog.md / AGENTS.md / CLAUDE.md のどの記述が古いか |
 | [testing.md](testing.md) | テストの実態と実行方法。npm script が無いので気づきにくい |
-| [agent-rules.md](agent-rules.md) | エージェント共通の約束事。コミットへの AI 言及禁止など |
+| [agent-rules.md](agent-rules.md) | Git運用の判断背景、詳しいコーディング規約、エージェント共通の約束事 |
 | [backlog.md](backlog.md) | 将来やること、および完了済み項目の記録 |
 | [apple-design-rn.md](apple-design-rn.md) | Apple フルードインターフェース原則の RN 適用規約。spring 既定値・Reduced Motion・ジェスチャー・押下フィードバック |
 | [pv-narration-voice.md](pv-narration-voice.md) | `pr/pv` の PV ナレーションを全シーン同じ声に保つ方法。Irodori-TTS の話者固定と、F0 で声色を測ろうとして失敗した記録 |
@@ -39,7 +39,8 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 | 現行のアーキテクチャ・機能仕様（英語・仕様書先行の正典） | `docs/spec/README.md` |
 | 従来の日本語仕様書（参照用として保持） | `SnowLog.md` |
 | 技術選定の理由・設計判断の経緯 | `docs/design-notes.md` |
-| コーディング規約・エージェント向け指示 | `AGENTS.md` / `.claude/CLAUDE.md` |
+| 常時参照する最小限の共通指示 | `AGENTS.md`（`.claude/CLAUDE.md` はその1行import） |
+| 詳細なコーディング規約・運用判断の背景 | `.memory/agent-rules.md` |
 | **やること・バグ・改善提案** | **GitHub Issues**（`kmch4n/SnowLog`） |
 | 上記から読み取れない知識・判断の背景・既知の乖離 | **`.memory/`（ここ）** |
 
