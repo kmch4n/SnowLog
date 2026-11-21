@@ -1,5 +1,5 @@
 # The automated gates. They run in seconds and need no native build; EAS builds
-# and the iOS device walk-through stay manual (see AGENTS.md "Testing").
+# and the iOS device walk-through stay manual (see docs/spec/verification-and-release.md).
 name: CI
 
 on:

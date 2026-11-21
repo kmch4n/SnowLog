@@ -1,105 +1,21 @@
-# Repository Guidelines
+# SnowLog Agent Instructions
 
-Canonical contributor conventions for SnowLog, shared by Codex, Claude Code, and humans.
-`.claude/CLAUDE.md` imports this file and adds only Claude-specific notes.
+This file is always loaded. Keep it minimal; consult linked material **only when relevant**.
 
-**This file is loaded into every session. Keep it short.** Detail belongs in `.memory/`,
-which is read on demand. If you are tempted to explain something at length here, write it
-in `.memory/` and leave a pointer.
+## Context
+- `docs/spec/README.md`: canonical English implementation specs; read affected chapters, not the entire corpus.
+- `.memory/README.md`: shared project history and practical guidance; follow its index on demand.
+- Use current code/tests to establish implemented behavior. Issues and unwired helpers are not shipped features.
 
-## Shared Knowledge Base — Read First
+## Working rules
+- Design discussions and reviews are read-only unless implementation is requested.
+- For behavioral or contract changes: update relevant `docs/spec/` **before** code, implement with tests, then reconcile with the final diff. See `docs/spec/invariants-and-change-control.md` for critical invariants. Update specs for refactors only when documented behavior or ownership changes.
+- Protect existing user data. Generate migrations from `src/database/schema.ts`; never edit generated `drizzle/` SQL by hand. Keep affected Web shims and both locales aligned.
+- Run relevant checks (`npm run lint`, `npx tsc --noEmit`, `npm test`, and Web/iOS verification where applicable). Report what actually ran and what remains unverified; see `.memory/testing.md`.
+- Follow existing project conventions; details live in `.memory/agent-rules.md`. Record durable cross-agent knowledge in `.memory/`, not agent-private memory.
 
-`.memory/` is the cross-agent knowledge base, tracked in git. **Read `.memory/README.md` at the
-start of a task** and follow its index. It records what the code cannot show: known doc/code
-drift, how to run the tests, non-obvious wiring, agreed agent rules, and the backlog.
-
-When you learn something durable that does not belong in code, add it there — never to an
-agent-private memory — and keep the index in sync.
-
-| Topic | File |
-| --- | --- |
-| Rules both agents follow, and the reasoning | `.memory/agent-rules.md` |
-| Startup order, non-obvious wiring, data contracts | `.memory/wiring.md` |
-| How the tests actually work, and their traps | `.memory/testing.md` |
-| Where the docs disagree with the code | `.memory/doc-drift.md` |
-
-## Project Structure
-
-Expo Router app. Routes in `src/app` (tabs in `src/app/(tabs)`, features in `src/app/video` and
-`src/app/settings`). Shared UI in `src/components`, reusable logic in `src/hooks`, business logic
-in `src/services`, helpers in `src/utils`, shared types in `src/types`. Schema and repositories in
-`src/database`; **`drizzle/` is generated — never edit it by hand.** Static assets in `assets/`,
-utility scripts in `scripts/`. `pr/web` (Astro site) and `pr/pv` (Remotion video) are independent
-projects with their own `node_modules`.
-
-## Commands
-
-| Command | Purpose |
-| --- | --- |
-| `npm install` | Install deps (runs the image cache patch on postinstall) |
-| `npm run start` / `ios` / `android` / `web` | Metro / per-platform run |
-| `npm run lint` | ESLint through Expo |
-| `npm run db:generate` / `db:studio` | Regenerate Drizzle migrations / inspect the schema |
-| `npm test` / `npm run test:web` | Unit tests / Web build rendered in headless Chrome. CI runs both. |
-
-## Coding Style & Naming
-
-TypeScript `strict`, four-space indentation, double quotes. No `any` without an inline
-justification. Prefer small focused modules; keep files within ~500–700 lines. Route files stay
-composition-only — push persistence and orchestration into hooks, services, or repositories.
-
-PascalCase components (`VideoCard.tsx`), camelCase functions and vars, UPPER_SNAKE_CASE constants,
-`useXxx` hooks (`useVideos.ts`), API clients named `cl`. Use the `@/` alias for imports from `src`.
-npm with `package-lock.json`.
-
-User-facing strings go through `useTranslation()` from `@/i18n/useTranslation`, or the module-level
-`t` from `@/i18n` outside React. Keep `src/i18n/locales/ja.ts` and `en.ts` in sync — the
-`Translations = typeof ja` annotation enforces it at compile time. iOS permission descriptions live
-in `locales/ja.json` / `locales/en.json` at the repo root; the inline `infoPlist` block in
-`app.json` is the Japanese fallback only.
-
-Native-dependent modules need a `.web.ts` / `.web.tsx` companion. `tsc` cannot see a shim's
-exports; `webShimParity` and `webEmptyModules` tests enforce the pairs — see `.memory/wiring.md`.
-
-## Testing
-
-Run with `npm test`; CI (`.github/workflows/ci.yml`) also runs lint, `tsc`, and `npm run test:web`.
-Automated coverage is thin and some tests match source text with regexes, so **a green assert
-proves nothing until you break the code and watch it fail.** How to compile a target depends on
-the shape of its imports. Both points, and the rest of the mechanics, are in `.memory/testing.md`
-— read it before adding a test.
-
-Manual verification carries the load. Before finishing: run `npm run lint` and verify the affected
-flow on iOS. For database changes, regenerate migrations, start from a clean local database, and
-walk migrate → import → search. When touching `*.web.*`, also click through in a browser.
-Without a device or a Mac, `gh workflow run ios-simulator.yml` builds the real iOS app, drives it
-in a simulator with Maestro, and uploads screenshots — look at them before reporting UI changes
-(`.memory/testing.md`).
-
-## Git
-
-Agents may run `git add`, `git commit`, `git push`, and GitHub write actions at any time, without
-asking first. **This overrides the stricter "explicit instruction" policy in the global
-`~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md` — inside SnowLog, this file wins.** Do not carry
-that relaxation to other projects.
-
-- **Commit directly to `main`. Do not create a branch or a PR unless asked.** This repo is
-  single-developer with a linear history; branching breaks that convention. Many agents default to
-  branching — do not.
-- **Destructive operations still require an explicit instruction**: `reset --hard`, force push,
-  branch deletion.
-- **One logical change per commit.** Never bundle unrelated work; prefer several small commits.
-- Format: `[gitmoji] English message`, ≤72 chars, present tense (`[✨] Add seasonal dashboard tab`).
-  Review the last 10 commits before drafting.
-- **No AI attribution anywhere** — not in commits, issues, comments, or PRs. No `Co-Authored-By`.
-- Verify the active git identity is `kmch4n` (`kmchan@kmchan.jp`) before writing. If it looks like a
-  bot or service account, stop and report.
-- Treat design discussion and review as read-only: do not start editing until implementation is
-  explicitly requested.
-
-## Security & Configuration
-
-Keep secrets in ignored `.env` files. Do not commit `.expo/`, `ios/`, `android/`, debug logs, or
-build artifacts. Treat `scripts/patchImageUtilsCache.js` as build infrastructure. Verify
-permission-related changes on a real device when editing media import or file system code.
-Never deploy to production without explicit approval.
+## Git and delivery
+- Commits, pushes and GitHub writes for requested implementation need no additional approval. Default to `main` unless a branch/PR is requested or already used for the task.
+- Verify GitHub author/committer attribution to `kmch4n` (personal or GitHub noreply email); do not rely on display names alone. Inspect recent commits. Use one logical change per commit and `[gitmoji] English present-tense summary` (≤72 characters). No AI attribution in commits, code, issues or PRs.
+- Require explicit approval for destructive Git operations (force push, hard reset, branch deletion) and production releases/deployments. Do not commit secrets or generated build artifacts.
+- Communicate in Japanese; write new code/comments/specs/commits/issues/PRs in English. Retain the language of existing Japanese documentation and `.memory/`.
