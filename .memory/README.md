@@ -36,7 +36,8 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 | --- | --- |
 | バージョン・依存・npm script | `package.json` |
 | テーブル定義 | `src/database/schema.ts` |
-| アーキテクチャ・機能仕様 | `SnowLog.md` |
+| 現行のアーキテクチャ・機能仕様（英語・仕様書先行の正典） | `docs/spec/README.md` |
+| 従来の日本語仕様書（参照用として保持） | `SnowLog.md` |
 | 技術選定の理由・設計判断の経緯 | `docs/design-notes.md` |
 | コーディング規約・エージェント向け指示 | `AGENTS.md` / `.claude/CLAUDE.md` |
 | **やること・バグ・改善提案** | **GitHub Issues**（`kmch4n/SnowLog`） |
@@ -57,7 +58,7 @@ Issue 運用は活発で、2026-11-02 時点で全 86 件（open 12 / closed 74�
 
 - 1 ファイル 1 トピック。ファイル名は英小文字ケバブケース。
 - 先頭に frontmatter で `title` / `updated` / `status` を書く。`status` は `active`（有効）か `resolved`（解消済み・削除候補）。
-- 本文は日本語。`README.md` / `SnowLog.md` に合わせる。
+- この `.memory/` フォルダの本文は従来どおり日本語。新設した `docs/spec/` の正式仕様書は英語で管理する。
 - 主張には根拠となるファイルパスを添える。行番号はすぐ腐るので、ファイル名＋シンボル名を優先する。
 - **内容は点であって live state ではない**。`updated` から時間が経っていたら、断言する前に現在のコードで裏を取る。
 - 状況が変わったら**その場で更新するか削除する**。古い記述を残すのが最悪。解消したものは `status: resolved` にし、次に触ったときに消す。

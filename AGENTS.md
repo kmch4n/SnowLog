@@ -23,13 +23,36 @@ agent-private memory — and keep the index in sync.
 | How the tests actually work, and their traps | `.memory/testing.md` |
 | Where the docs disagree with the code | `.memory/doc-drift.md` |
 
+## Specification-First Development (Mandatory)
+
+`docs/spec/README.md` is the entry point to the **canonical English implementation
+specification** in `docs/spec/`. Read its index and the affected feature documents before
+changing behavior. The Japanese `SnowLog.md`, `docs/design-notes.md` and `.memory/`
+remain available as historical rationale and cross-agent context; do not delete or
+mechanically translate them.
+
+**Order is non-negotiable for behavior/contract changes:**
+
+1. **Specify first:** update the relevant `docs/spec/*.md` files before implementation.
+   State user-visible behavior, data/ownership contracts, edge cases, failure/cancellation,
+   backward compatibility, and verification. Separate current, unwired, and proposed code.
+2. **Implement second:** make code, migration, localization and Web-shim changes against
+   that stated contract. Keep targeted regression tests alongside the implementation.
+3. **Reconcile last:** compare the finished source against the specification, correct any
+   discrepancy, and run the relevant gates. A green test does not override a wrong spec.
+
+A behavior-preserving refactor or purely mechanical edit may leave the specs unchanged,
+but the change review must explain why no documented contract changed. For each PR,
+record the affected spec paths and actual test results; never claim a device check or
+implemented feature that was not performed or wired. Keep specifications in English.
+
 ## Project Structure
 
 Expo Router app. Routes in `src/app` (tabs in `src/app/(tabs)`, features in `src/app/video` and
 `src/app/settings`). Shared UI in `src/components`, reusable logic in `src/hooks`, business logic
 in `src/services`, helpers in `src/utils`, shared types in `src/types`. Schema and repositories in
 `src/database`; **`drizzle/` is generated — never edit it by hand.** Static assets in `assets/`,
-utility scripts in `scripts/`. `pr/web` (Astro site) and `pr/pv` (Remotion video) are independent
+utility scripts in `scripts/`. Current specifications live in `docs/spec/`. `pr/web` (Astro site) and `pr/pv` (Remotion video) are independent
 projects with their own `node_modules`.
 
 ## Commands

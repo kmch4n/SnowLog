@@ -23,7 +23,8 @@ startup order, i18n, haptics, thumbnails, or `app_preferences`.
 | Cross-agent knowledge base — index first | `.memory/README.md` |
 | Startup order, non-obvious wiring, data contracts | `.memory/wiring.md` |
 | Rules both agents follow, and why | `.memory/agent-rules.md` |
-| Implementation spec (data model, screens, flows) | `SnowLog.md` |
+| Canonical implementation spec (data model, screens, flows) | `docs/spec/README.md` |
+| Earlier Japanese implementation notes (retained) | `SnowLog.md` |
 | Why this stack, and the design decisions | `docs/design-notes.md` |
 | Versions, deps, scripts | `package.json` |
 | Table definitions | `src/database/schema.ts` |
