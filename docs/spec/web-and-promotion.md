@@ -39,19 +39,19 @@ Adding a new native-dependent module requires checking imports reachable through
 
 `pr/web/package.json` defines an independent Astro 6 project with `npm run dev`, `npm run build` and `npm run preview`. It produces a **static** site, configured in `pr/web/astro.config.mjs` for `https://snowlog.kmchan.jp` and a sitemap integration.
 
-The site is currently **Japanese-language content**, as implemented in `pr/web/src/content.ts` and `src/components/HomeDocument.astro` (`html lang="ja"`). Old `/ja` and `/en` URL variants redirect to the current root, and the corresponding privacy routes redirect to `/privacy/`. The site's Japanese presentation is **not** in conflict with the requirement that the new implementation specifications be English.
+The site is currently **Japanese-language content**, as implemented in `pr/web/src/content.ts` and `pr/web/src/components/HomeDocument.astro` (`html lang="ja"`). Old `/ja` and `/en` URL variants redirect to the current root, and the corresponding privacy routes redirect to `/privacy/`. The site's Japanese presentation is **not** in conflict with the requirement that the new implementation specifications be English.
 
 | Website path / module | Responsibility |
 | --- | --- |
-| `src/pages/index.astro` | Renders `HomeDocument` with `homeContent` |
-| `src/pages/privacy.astro` | Renders `PrivacyDocument` with `privacyContent` |
-| `src/content.ts` | Copy, feature cards, screenshots, FAQ and privacy content |
-| `src/i18n.ts` | Typed content interfaces, App Store/GitHub URLs, canonical paths |
-| `src/components/AppHero.astro` | Header/nav, App Store CTA and embedded PV player |
-| `src/components/FeatureGrid.astro` / `ScreenshotShowcase.astro` | Feature presentation and screenshots |
-| `src/components/OfflinePrivacySection.astro` | Local-first narrative |
-| `src/components/PrivacyDocument.astro` | Static privacy policy, contact link |
-| `src/styles/global.css` | Global visual system and responsive presentation |
+| `pr/web/src/pages/index.astro` | Renders `HomeDocument` with `homeContent` |
+| `pr/web/src/pages/privacy.astro` | Renders `PrivacyDocument` with `privacyContent` |
+| `pr/web/src/content.ts` | Copy, feature cards, screenshots, FAQ and privacy content |
+| `pr/web/src/i18n.ts` | Typed content interfaces, App Store/GitHub URLs, canonical paths |
+| `pr/web/src/components/AppHero.astro` | Header/nav, App Store CTA and embedded PV player |
+| `pr/web/src/components/FeatureGrid.astro` / `ScreenshotShowcase.astro` | Feature presentation and screenshots |
+| `pr/web/src/components/OfflinePrivacySection.astro` | Local-first narrative |
+| `pr/web/src/components/PrivacyDocument.astro` | Static privacy policy, contact link |
+| `pr/web/src/styles/global.css` | Global visual system and responsive presentation |
 
 Website metadata includes canonical URLs, social preview tags and `SoftwareApplication` JSON-LD. The privacy document and product marketing are **public claims** and must be rechecked when storage, network behavior or backup semantics change. In particular, “Photos references” is the default for most current imports but synthetic imports hold managed copies; avoid unconditional “movies are never copied” claims.
 
@@ -67,11 +67,11 @@ Website metadata includes canonical URLs, social preview tags and `SoftwareAppli
 | `npm run render` | Render `SnowLogPv` into `out/snowlog-pv.mp4` |
 | `npm test` | Validate scene, script and timeline behavior |
 
-`src/script.ts` is the **single source of truth** for scene identifiers, narration text, on-screen captions, minimum durations, tails, and chosen transitions. Changing a spoken/caption line in an individual scene without updating this registry creates drift.
+`pr/pv/src/script.ts` is the **single source of truth** for scene identifiers, narration text, on-screen captions, minimum durations, tails, and chosen transitions. Changing a spoken/caption line in an individual scene without updating this registry creates drift.
 
-`src/timeline.ts` measures actual narration using `mediabunny` and computes the duration of each scene as the maximum of its minimum and the spoken duration plus lead-in/tail. Missing narration files are an explicitly supported prerecording state. `distributeFrames` allocates integer frame budgets using cumulative rounded edges, preventing short gaps between clips due to independent rounding.
+`pr/pv/src/timeline.ts` measures actual narration using `mediabunny` and computes the duration of each scene as the maximum of its minimum and the spoken duration plus lead-in/tail. Missing narration files are an explicitly supported prerecording state. `distributeFrames` allocates integer frame budgets using cumulative rounded edges, preventing short gaps between clips due to independent rounding.
 
-`src/SnowLogPv.tsx` registers the scene components, renders `Sequence` blocks, adds narration only for the scenes whose files exist, overlays transitions over scene boundaries, and ducks the background track during speech. Layout, transition and typography components are under `src/components/` and `src/theme/`. Narration generation and asset preparation live under `scripts/` and are separate from the mobile build.
+`pr/pv/src/SnowLogPv.tsx` registers the scene components, renders `Sequence` blocks, adds narration only for the scenes whose files exist, overlays transitions over scene boundaries, and ducks the background track during speech. Layout, transition and typography components are under `pr/pv/src/components/` and `pr/pv/src/theme/`. Narration generation and asset preparation live under `scripts/` and are separate from the mobile build.
 
 The site consumes the **rendered output**, not the Remotion source directly. Changes to promotion copy and scene timing should be validated through the Remotion tests/render and then separately deployed if requested.
 
