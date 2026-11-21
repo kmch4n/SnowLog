@@ -16,6 +16,6 @@ This file is always loaded. Keep it minimal; consult linked material **only when
 
 ## Git and delivery
 - Commits, pushes and GitHub writes for requested implementation need no additional approval. Default to `main` unless a branch/PR is requested or already used for the task.
-- Confirm the author is `kmch4n`, not a bot; inspect recent commits. Use one logical change per commit and `[gitmoji] English present-tense summary` (≤72 characters). No AI attribution in commits, code, issues or PRs.
+- Verify GitHub author/committer attribution to `kmch4n` (personal or GitHub noreply email); do not rely on display names alone. Inspect recent commits. Use one logical change per commit and `[gitmoji] English present-tense summary` (≤72 characters). No AI attribution in commits, code, issues or PRs.
 - Require explicit approval for destructive Git operations (force push, hard reset, branch deletion) and production releases/deployments. Do not commit secrets or generated build artifacts.
 - Communicate in Japanese; write new code/comments/specs/commits/issues/PRs in English. Retain the language of existing Japanese documentation and `.memory/`.
