@@ -18,6 +18,7 @@ The baseline names a reviewed commit, not a permanent release. When changing an 
 | [Product and status](product-and-status.md) | What does SnowLog do? What actually works, what is restricted, and what is not shipped? |
 | [System architecture](architecture.md) | How are screens, repositories, services, native code, and standalone projects separated? |
 | [Source module catalog](module-catalog.md) | Where is each tracked application, native, website, film, and utility module located? |
+| [Engineering invariants and change control](invariants-and-change-control.md) | What must never regress, and what review evidence is required before implementation or merge? |
 | [Data model](data-model.md) | What is persisted, in which shape, with what uniqueness and ownership constraints? |
 | [Import and resorts](import-and-resorts.md) | How are videos selected, staged, deduplicated, tagged, and associated with ski resorts? |
 | [Library and playback](library-and-playback.md) | How are files referenced, copied, resolved, deleted, and protected against data loss? |
