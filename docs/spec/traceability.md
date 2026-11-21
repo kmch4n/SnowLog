@@ -1,6 +1,6 @@
 # Source Traceability and Change Impact Matrix
 
-This is the entry point for locating implementation owners and expected regression checks **without opening every source file**. Paths identify ownership, not guarantees of test coverage. The current baseline is recorded in [README](README.md).
+This is the entry point for locating implementation owners and expected regression checks **without opening every source file**. Paths identify ownership, not guarantees of test coverage. For an inventory of individual source modules, see [Source module catalog](module-catalog.md). The current baseline is recorded in [README](README.md).
 
 ## UI and user-journey map
 
