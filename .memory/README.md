@@ -1,6 +1,8 @@
 # .memory — SnowLog 共有ナレッジベース
 
-最終更新: 2026-11-02
+最終更新: 2026-11-21
+
+現行の仕様書は [`docs/spec/README.md`](../docs/spec/README.md) を起点に参照する。ここは仕様書の代替ではなく、既存の共有ナレッジと判断履歴を保管する。
 
 ## このフォルダの目的
 
@@ -36,7 +38,8 @@ SnowLog の開発は複数のコーディングエージェント（Claude Code 
 | --- | --- |
 | バージョン・依存・npm script | `package.json` |
 | テーブル定義 | `src/database/schema.ts` |
-| アーキテクチャ・機能仕様 | `SnowLog.md` |
+| 現行アーキテクチャ・機能仕様（英語、仕様変更時は先に更新） | `docs/spec/README.md` |
+| 旧来の日本語技術資料（保存） | `SnowLog.md` |
 | 技術選定の理由・設計判断の経緯 | `docs/design-notes.md` |
 | コーディング規約・エージェント向け指示 | `AGENTS.md` / `.claude/CLAUDE.md` |
 | **やること・バグ・改善提案** | **GitHub Issues**（`kmch4n/SnowLog`） |

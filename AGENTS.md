@@ -23,6 +23,26 @@ agent-private memory — and keep the index in sync.
 | How the tests actually work, and their traps | `.memory/testing.md` |
 | Where the docs disagree with the code | `.memory/doc-drift.md` |
 
+## Specification-First Development
+
+`docs/spec/README.md` is the canonical index for the current engineering specification.
+Read the relevant `docs/spec/` chapters and current GitHub Issues **before proposing
+or changing implementation**. The existing `SnowLog.md`, `docs/design-notes.md`,
+and `.memory/` documents remain available as historical or operational context;
+do not delete or replace them merely because the new specification exists.
+
+**For new features, changed behavior, schemas, interfaces, error handling, data
+ownership, or platform contracts: update the affected specification files first,
+review the intended behavior and acceptance criteria, then implement the code.**
+Complete the same change by reconciling documentation with tests and observed
+behavior. Never document proposed Issue work as shipping merely because a helper
+or migration exists. See `docs/spec/11-invariants-and-change-control.md` for the
+full workflow, invariants, and change-impact index.
+
+A documentation-only baseline change may create specifications without modifying
+application code. When opening a PR, state which specs were changed, what was
+verified, and which native/device checks were not run. Keep spec prose in English.
+
 ## Project Structure
 
 Expo Router app. Routes in `src/app` (tabs in `src/app/(tabs)`, features in `src/app/video` and

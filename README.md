@@ -158,7 +158,8 @@ App Store に問い合わせる 1 本だけで、そこに利用者のデータ�
 | 知りたいこと | 資料 |
 | --- | --- |
 | 技術選定の理由、設計判断とその経緯、苦労したこと | [設計ノート](docs/design-notes.md) |
-| 現在の実装仕様（データモデル、画面フロー、責務分担） | [技術仕様書](SnowLog.md) |
+| 現行の技術仕様（英語・開発時の基準） | [Engineering Specification](docs/spec/README.md) |
+| 従来の日本語技術資料（参考として保持） | [旧技術仕様書](SnowLog.md) |
 | 開発規約・コマンド・テスト | [`AGENTS.md`](AGENTS.md) |
 
 紹介映像は [Remotion](https://www.remotion.dev/) 製で、ソースは `pr/pv/` にあります。
