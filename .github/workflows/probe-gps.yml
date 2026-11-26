@@ -1,0 +1,37 @@
+# Temporary (#98): which way of writing a video's location makes the simulator's
+# Photos library store it. Boots a simulator, adds one clip per method and dumps
+# Photos.sqlite. Delete once the fixtures are settled.
+name: Probe simulator video GPS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode 26.2
+        run: sudo xcode-select -s /Applications/Xcode_26.2.app
+      - name: Install tools
+        run: brew install exiftool ffmpeg > /dev/null
+      - name: Build the variants
+        run: bash .github/probe-gps/build_variants.sh .maestro/media/hakuba_run.mov "$RUNNER_TEMP/v" 2>&1 | tee "$RUNNER_TEMP/build.txt"
+      - name: Boot a simulator and add them
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          phones = [(rt, d) for rt, ds in devices.items() if "iOS" in rt for d in ds if d["name"].startswith("iPhone")]
+          phones.sort(key=lambda p: (p[0], p[1]["name"]))
+          preferred = [p for p in phones if p[1]["name"] == "iPhone 17"] or phones
+          print(preferred[-1][1]["udid"])')
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          bash .github/probe-gps/probe_sim.sh "$UDID" "$RUNNER_TEMP/v" "$RUNNER_TEMP/photos.txt"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: probe-gps
+          path: ${{ runner.temp }}/*.txt
