@@ -93,6 +93,7 @@ export function VideoCardCompact({
 
     const cardContent = (
         <TouchableOpacity
+            testID="video-card"
             style={[styles.container, isSelected && styles.containerSelected]}
             onPress={onPress}
             onLongPress={onLongPress}

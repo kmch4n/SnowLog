@@ -289,6 +289,7 @@ export default function VideoDetailScreen() {
                     {/* タイトル（編集可能・未設定時はfilenameをplaceholderとして表示） */}
                     <View style={styles.titleRow}>
                         <TextInput
+                            testID="detail-title-input"
                             style={styles.titleInput}
                             value={titleInput}
                             onChangeText={handleTitleChange}
@@ -399,6 +400,7 @@ export default function VideoDetailScreen() {
                     </View>
 
                     <TextInput
+                        testID="detail-memo-input"
                         style={styles.memoInput}
                         value={memoInput}
                         onChangeText={handleMemoChange}

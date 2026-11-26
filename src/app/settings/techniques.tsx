@@ -110,6 +110,7 @@ export default function TechniquesSettingsScreen() {
                 </TouchableOpacity>
                 <Text style={styles.rowText}>{item.name}</Text>
                 <TouchableOpacity
+                    testID={`technique-delete-${item.name}`}
                     style={styles.deleteButton}
                     onPress={() => handleDelete(item)}
                     accessibilityRole="button"

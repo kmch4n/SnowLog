@@ -1,0 +1,53 @@
+# A deleted default technique stays deleted after the app restarts, and a new
+# technique is added at the end of the list.
+appId: com.kmch4n.snowlog
+name: Technique defaults stay deleted
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-import-button"
+    timeout: 60000
+- tapOn: "設定"
+- tapOn: "滑走種別"
+- extendedWaitUntil:
+    visible:
+      id: "technique-delete-ハーフパイプ"
+    timeout: 20000
+- tapOn:
+    id: "technique-delete-ハーフパイプ"
+- takeScreenshot: 40_technique_delete_confirm
+# The confirmation alert's destructive button; the row buttons share the label,
+# so pick the one in the alert (the last match).
+- tapOn:
+    text: "削除"
+    index: -1
+- extendedWaitUntil:
+    notVisible:
+      id: "technique-delete-ハーフパイプ"
+    timeout: 10000
+- tapOn: "新しい滑走種別を追加"
+- inputText: "Test run"
+- tapOn: "追加"
+- extendedWaitUntil:
+    visible: "Test run"
+    timeout: 10000
+- assertVisible:
+    text: "Test run"
+    below: "その他"
+- takeScreenshot: 41_technique_added
+
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-import-button"
+    timeout: 60000
+- tapOn: "設定"
+- tapOn: "滑走種別"
+- extendedWaitUntil:
+    visible: "Test run"
+    timeout: 20000
+- assertNotVisible:
+    id: "technique-delete-ハーフパイプ"
+- takeScreenshot: 42_technique_after_restart

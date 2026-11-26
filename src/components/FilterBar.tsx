@@ -202,6 +202,7 @@ export function FilterBar({ filter, onChange }: FilterBarProps) {
             {/* Text search input */}
             <View style={styles.searchRow}>
                 <TextInput
+                    testID="search-input"
                     style={styles.searchInput}
                     value={searchDraft}
                     onChangeText={handleSearchChange}

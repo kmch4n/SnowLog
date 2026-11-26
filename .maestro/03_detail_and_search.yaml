@@ -1,0 +1,72 @@
+# Edits on the video detail screen survive leaving it straight away (the autosave
+# flushes on unmount), and search matches text containing the LIKE wildcards "_"
+# and "%" literally. Runs after 02_import.yaml, which leaves hakuba_run.mov imported.
+appId: com.kmch4n.snowlog
+name: Detail autosave and search
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "video-card"
+    timeout: 60000
+- tapOn:
+    id: "video-card"
+- extendedWaitUntil:
+    visible:
+      id: "detail-title-input"
+    timeout: 20000
+- tapOn:
+    id: "detail-title-input"
+- inputText: "Run_100%"
+- scrollUntilVisible:
+    element:
+      id: "detail-memo-input"
+    direction: DOWN
+- tapOn:
+    id: "detail-memo-input"
+- inputText: "memo check"
+- takeScreenshot: 20_detail_typed
+- runFlow: subflows/back.yaml
+
+# Reopen: both edits were saved.
+- extendedWaitUntil:
+    visible:
+      id: "video-card"
+    timeout: 20000
+- tapOn:
+    id: "video-card"
+- extendedWaitUntil:
+    visible: "Run_100%"
+    timeout: 20000
+- scrollUntilVisible:
+    element: "memo check"
+    direction: DOWN
+- takeScreenshot: 21_detail_reopened
+- runFlow: subflows/back.yaml
+
+# Search: a non-matching term hides the video, "_" and "%" match literally.
+- tapOn:
+    text: "検索"
+    index: 0
+- tapOn:
+    id: "search-input"
+- inputText: "a_x"
+- extendedWaitUntil:
+    notVisible:
+      id: "video-card"
+    timeout: 10000
+- eraseText: 10
+- inputText: "a_r"
+- extendedWaitUntil:
+    visible:
+      id: "video-card"
+    timeout: 10000
+- takeScreenshot: 22_search_underscore
+- eraseText: 10
+- inputText: "100%"
+- extendedWaitUntil:
+    visible:
+      id: "video-card"
+    timeout: 10000
+- takeScreenshot: 23_search_percent
+- eraseText: 10

@@ -171,6 +171,7 @@ export function SkiResortSearch({
                     </View>
                 )}
                 <TextInput
+                    testID="resort-search-input"
                     style={[
                         styles.input,
                         selectedMasterResort && styles.inputSelected,

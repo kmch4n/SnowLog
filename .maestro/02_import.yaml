@@ -27,6 +27,11 @@ name: Single import
     visible:
       id: "import-save"
     timeout: 30000
+# The preview is the movie's first frame, not an empty grey box (#97).
+- extendedWaitUntil:
+    visible:
+      id: "import-preview-frame"
+    timeout: 15000
 # The GPS suggestion depends on Photos keeping the clip's location
 # (photos_assets.txt in the artifact shows what it recorded).
 - extendedWaitUntil:

@@ -1087,6 +1087,7 @@ export default function VideoImportScreen() {
                         <View style={styles.previewContainer}>
                             {previewThumbnailUri ? (
                                 <Image
+                                    testID="import-preview-frame"
                                     source={{ uri: previewThumbnailUri }}
                                     style={styles.previewImage}
                                     resizeMode="cover"
