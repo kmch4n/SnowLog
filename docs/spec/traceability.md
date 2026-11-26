@@ -7,7 +7,7 @@ This is the entry point for locating implementation owners and expected regressi
 | Feature / behavior | Screen | Hook / component | Durable or resource owner | Primary tests |
 | --- | --- | --- | --- | --- |
 | Home list, grouping, sort, favorites | `src/app/(tabs)/index/index.tsx` | `useVideos`, `useSelectionMode`, `VideoCardCompact` | `videoRepository`; `home_sort_order` | `videoListEquality`, `homeSwipeDelete`, app preference tests |
-| Single video import | `src/app/video-import.tsx` | `SkiResortSearch`, `TagSelector`, `TechniqueSelector` | `importService`, `mediaService`, thumbnails, DB | `assetId`, `assetLookup`, `managedVideoPath`, `thumbnailPath` |
+| Single video import | `src/app/video-import.tsx` | `SkiResortSearch`, `TagSelector`, `TechniqueSelector` | `importService`, `mediaService`, thumbnails, DB | `assetId`, `assetLookup`, `managedVideoPath`, `pickScratchFiles`, `thumbnailPath` |
 | Batch import and status | `src/app/video-import.tsx` | `BulkImportProgress`, `GpsConfirmationDialog` | `importService`, `bulkImportSummaryService` | `bulkImportProgressUtils`, `photosErrors` |
 | GPS resort detection | Import screen | `SkiResortSearch`, `geoUtils` | `skiResorts.json`, `videoRepository` | `geoUtils` |
 | Video details, tags, favorites | `src/app/video/[id].tsx` | `useVideoDetail`, `useAutosavedText` | `videoRepository`, `tagRepository` | `debouncedTask`, `tagRepository` |

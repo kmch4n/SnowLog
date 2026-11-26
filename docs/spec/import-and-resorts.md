@@ -13,13 +13,15 @@ The iOS import route is `src/app/video-import.tsx` (approximately 1,400+ lines i
 3. If the result has an `assetId`, call `getVideoByAssetId`. An existing row produces a cancel/edit-existing choice rather than a duplicate row.
 4. Invalidate older in-flight selections with `pickGenerationRef`. Reset the form, clear previous staging and query `lookupAssetWithDownload` for metadata. Use a genuine Photos creation time when available; extract GPS into resort candidates.
 5. Under **limited** access, an existing ID with an explicit `notFound` lookup is treated as outside the authorized selection (`isOutsideLimitedSelection`); do **not** create an unplayable reference row. Offer Settings and cancellation. A generic lookup error is not sufficient proof.
-6. Stage the selected `file://` or `content://` URI into `cacheDirectory/video-import/` using `FileSystem.copyAsync`. Unsupported/failed staging blocks Save. Generate an actual first-frame preview with `createPreviewThumbnail`, not an `Image` pointed directly at a movie URI.
+6. Stage the selected `file://` or `content://` URI into `cacheDirectory/video-import/` using `FileSystem.copyAsync`. Unsupported/failed staging blocks Save. Generate an actual first-frame preview with `createPreviewThumbnail`, not an `Image` pointed directly at a movie URI. The preview is a temporary JPEG; it shares the staged copy's lifetime (see below).
 7. The user can edit title, resort, techniques, tags and memo before Save. Capture date resolution prioritizes EXIF `DateTimeOriginal`, then Photos `creationTime`, then current time as last resort.
 8. Generate a synthetic identifier (`synthetic:` + UUID) only if the picker supplies no Photos ID. Pass source metadata into `importService.importVideo`.
 9. `importVideo` creates a video UUID, possibly retains a managed movie (for synthetic IDs), generates the permanent JPEG, inserts the video row, and attaches tags. An absent title becomes a localized capture timestamp. Failed writes attempt row/file cleanup.
 10. If the selected resort came from GPS, optionally offer to assign that resort to other **unassigned** videos shot on the same local day. Clear staging and return to the previous screen.
 
-A stale picker result cannot overwrite a newer selection. When staging returns after the user has chosen another movie, its file is deleted. The modal prevents accidental navigation away during active saving.
+A stale picker result cannot overwrite a newer selection. When staging or preview generation returns after the user has chosen another movie, its file is deleted.
+
+The staged copy and the preview JPEG of the current pick are tracked together (`createPickScratchFiles`) and deleted together when the user picks another movie, after a successful Save, and when the screen closes. A failed Save keeps both so the user can retry. The modal prevents accidental navigation away during active saving.
 
 ## Batch sequence (up to 20)
 

@@ -48,6 +48,7 @@ import {
 import { SYNTHETIC_ASSET_ID_PREFIX } from "@/utils/assetId";
 import { isOutsideLimitedSelection, type PhotosAccess } from "@/utils/playbackSource";
 import { isPhotosLibraryError } from "@/utils/photosErrors";
+import { createPickScratchFiles } from "@/utils/pickScratchFiles";
 import { useSkiResortSuggestions } from "@/hooks/useSkiResortSuggestions";
 import { randomUUID } from "expo-crypto";
 import type { BulkImportGpsGroup, BulkImportItem } from "@/types";
@@ -130,7 +131,10 @@ export default function VideoImportScreen() {
     // 選んだ動画の先頭フレーム（プレビュー用の一時ファイル）
     const [previewThumbnailUri, setPreviewThumbnailUri] = useState<string | null>(null);
     const [isLoadingMeta, setIsLoadingMeta] = useState(false);
-    const stagedFileUriRef = useRef<string | null>(null);
+    // Temporary files of the current single pick (staged copy, preview JPEG), deleted together
+    const [pickFiles] = useState(() =>
+        createPickScratchFiles((uri) => FileSystem.deleteAsync(uri, { idempotent: true }))
+    );
     // 単体インポートの選択ごとに増やす番号。読み込み中でも「変更」で選び直せるので、
     // 古い選択の取得結果が新しい選択の状態を上書きしないよう、await のたびに照合する
     const pickGenerationRef = useRef(0);
@@ -180,24 +184,15 @@ export default function VideoImportScreen() {
         setShowPreparingUI(false);
     }, []);
 
-    const cleanupStagedFile = useCallback(async () => {
-        if (stagedFileUriRef.current) {
-            try {
-                await FileSystem.deleteAsync(stagedFileUriRef.current, { idempotent: true });
-            } catch {
-                // noop
-            }
-            stagedFileUriRef.current = null;
-        }
-    }, []);
+    const cleanupPickFiles = useCallback(() => pickFiles.clear(), [pickFiles]);
 
     useEffect(() => {
         return () => {
             // 走っている選択の結果は、画面を閉じたあとに届いても捨てる
             pickGenerationRef.current += 1;
-            cleanupStagedFile();
+            cleanupPickFiles();
         };
-    }, [cleanupStagedFile]);
+    }, [cleanupPickFiles]);
 
     // Block navigation while importing
     const isImportBlocked =
@@ -287,7 +282,7 @@ export default function VideoImportScreen() {
         async (sourceUri: string | null, filename?: string | null): Promise<string | null> => {
             if (!sourceUri) return null;
             if (!isSupportedImportUri(sourceUri)) return null;
-            // stagedFileUriRef への登録は呼び出し側が行う。古い選択のファイルを
+            // pickFiles への登録は呼び出し側が行う。古い選択のファイルを
             // 新しい選択のものとして登録しないため
             return stageAssetFile(sourceUri, filename);
         },
@@ -421,7 +416,7 @@ export default function VideoImportScreen() {
             }
         }
 
-        await cleanupStagedFile();
+        await cleanupPickFiles();
         if (isStale()) return;
         setSelectedAsset(asset);
         setSkiResortName(null);
@@ -488,14 +483,9 @@ export default function VideoImportScreen() {
         } catch {
             stagedUri = null;
         }
-        if (isStale()) {
-            // 選び直された後に届いたコピー。誰も参照しないので消す
-            if (stagedUri) {
-                await FileSystem.deleteAsync(stagedUri, { idempotent: true }).catch(() => {});
-            }
-            return;
-        }
-        stagedFileUriRef.current = stagedUri;
+        // A copy that arrives after the user picked another movie is deleted by keep()
+        if (stagedUri && !(await pickFiles.keep(stagedUri, !isStale()))) return;
+        if (isStale()) return;
 
         if (!stagedUri) {
             Alert.alert(
@@ -509,8 +499,10 @@ export default function VideoImportScreen() {
 
         setResolvedAssetUri(stagedUri);
         const preview = await createPreviewThumbnail(stagedUri);
-        if (!isStale()) setPreviewThumbnailUri(preview);
-    }, [cleanupStagedFile, router, stageForImport, t]);
+        if (preview && (await pickFiles.keep(preview, !isStale())) && !isStale()) {
+            setPreviewThumbnailUri(preview);
+        }
+    }, [cleanupPickFiles, pickFiles, router, stageForImport, t]);
 
     /** 動画をインポートしてDBに保存する */
     const handleSave = useCallback(async () => {
@@ -562,7 +554,7 @@ export default function VideoImportScreen() {
                 );
             }
 
-            await cleanupStagedFile();
+            await cleanupPickFiles();
             hapticSuccess();
             router.back();
         } catch (e) {
@@ -586,7 +578,7 @@ export default function VideoImportScreen() {
         isSkiResortFromGpsSuggestion,
         promptApplySameDayResort,
         router,
-        cleanupStagedFile,
+        cleanupPickFiles,
         t,
     ]);
 

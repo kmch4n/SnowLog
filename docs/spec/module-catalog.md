@@ -162,6 +162,7 @@ The bundled resort data set is `src/constants/skiResorts.json` (378 rows at the 
 | `src/utils/mediaPolicy.ts` | Pure eligibility/intent/consent acquisition decisions. |
 | `src/utils/parseTechniques.ts` | Defensive parsing of serialized technique names. |
 | `src/utils/photosErrors.ts` | Distinguish Photos-origin errors for download retry. |
+| `src/utils/pickScratchFiles.ts` | Temporary files of the current single pick (staged copy, preview JPEG), deleted together. |
 | `src/utils/playbackSource.ts` | Pure playback resolution and availability mutation decisions. |
 | `src/utils/searchRouteParams.ts` | Validate and encode dashboard-to-search filter routes. |
 | `src/utils/techniqueSeeding.ts` | Reconcile new default choices with prior user deletions. |

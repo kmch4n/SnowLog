@@ -69,7 +69,7 @@ The route renders `VideoCardCompact` items, navigates to `/video/[id]` on tap an
 - A permanent thumbnail is a JPEG saved as `Documents/thumbnails/<video-id>.jpg` from the movie's initial frame (time 0, nominal quality 0.7).
 - `videos.thumbnail_uri` stores `thumbnails/<video-id>.jpg`, **not** a container-specific absolute URI. `resolveThumbnailUri` rebases against the current Documents path.
 - Empty string is the `THUMBNAIL_MISSING_SENTINEL`. The UI uses a placeholder; cleanup treats it as no owned poster.
-- Import preview still images are temporary first-frame files (nominal quality 0.5), not persisted video thumbnails.
+- Import preview still images are temporary first-frame files (nominal quality 0.5), not persisted video thumbnails. The importer deletes them with the staged copy (`import-and-resorts.md`).
 - Older absolute thumbnail URIs are normalized through `toRelativeThumbnailPath`; missing thumbnails are regenerated when a source resolves, otherwise the sentinel is written.
 - `deleteThumbnail` accepts only canonical, safe immediate children of `thumbnails/` (see `isSafeThumbnailPath`) and rejects other paths to prevent accidental deletion beyond its directory.
 
