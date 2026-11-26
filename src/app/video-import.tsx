@@ -393,13 +393,13 @@ export default function VideoImportScreen() {
 
         const asset = pickerResult.assets[0];
         if (!asset) return;
-        const generation = ++pickGenerationRef.current;
-        const isStale = () => generation !== pickGenerationRef.current;
-
-        // 既にインポート済みかチェック
+        // Already imported? Then the current pick (even one still loading) stays as it
+        // is, so this pick becomes the new one only after the check.
         if (asset.assetId) {
+            const generationBeforeLookup = pickGenerationRef.current;
             const existing = await getVideoByAssetId(asset.assetId);
-            if (isStale()) return;
+            // The screen closed (or another pick started) during the lookup
+            if (generationBeforeLookup !== pickGenerationRef.current) return;
             if (existing) {
                 Alert.alert(
                     t("import.alreadyImported.title"),
@@ -415,6 +415,12 @@ export default function VideoImportScreen() {
                 return;
             }
         }
+
+        const generation = ++pickGenerationRef.current;
+        const isStale = () => generation !== pickGenerationRef.current;
+        // The replaced pick may have been loading; its finally skips the reset once it
+        // is stale, which left Save disabled for a pick without a metadata lookup.
+        setIsLoadingMeta(false);
 
         await cleanupPickFiles();
         if (isStale()) return;
