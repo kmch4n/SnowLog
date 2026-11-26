@@ -1,6 +1,6 @@
 # Single import through the system photo picker (PHPicker), then the result on Home,
 # the dashboard and the calendar. The test videos are .maestro/media/*.mov; the
-# Hakuba one carries GPS, so the import screen should suggest a nearby resort.
+# Hakuba one carries a location, so the import screen must suggest nearby resorts.
 appId: com.kmch4n.snowlog
 name: Single import
 ---
@@ -32,16 +32,14 @@ name: Single import
     visible:
       id: "import-preview-frame"
     timeout: 15000
-# The GPS suggestion depends on Photos keeping the clip's location
-# (photos_assets.txt in the artifact shows what it recorded).
+# The clip's location (written by scripts/make_maestro_media.sh) gives nearby
+# resort suggestions (#98); photos_assets.txt in the artifact shows what Photos stored.
 - extendedWaitUntil:
     visible: ".*撮影地の近くのスキー場.*"
     timeout: 15000
-    optional: true
 - takeScreenshot: 12_selected
 - tapOn:
     text: ".*白馬.*"
-    optional: true
 - scrollUntilVisible:
     element:
       id: "import-save"

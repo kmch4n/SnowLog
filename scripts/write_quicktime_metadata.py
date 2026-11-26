@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Write iPhone-style QuickTime metadata (moov/meta: hdlr 'mdta' + keys + ilst) into a .mov.
 
+Used by scripts/make_maestro_media.sh for the iOS simulator test videos (#98).
 ffmpeg's `-movflags use_metadata_tags` writes the mdta keys into moov/udta/meta,
-which Apple software does not read. This tool writes them where the Camera app
-and AVFoundation put them: a QuickTime-style 'meta' atom directly under 'moov'.
+which Photos ignores, so a clip made that way enters the simulator's library with
+no location. This tool writes them where the Camera app and AVFoundation put them:
+a QuickTime-style 'meta' atom directly under 'moov'. Verified on an iOS 26
+simulator: Photos stores both the location and the capture date from it.
 
 Usage:
-    python3 -I inject_moov_meta.py IN.mov OUT.mov --iso6709 "+36.6983+137.8320+700.000/" \
+    python3 -I write_quicktime_metadata.py IN.mov OUT.mov [--iso6709 "+36.6983+137.8320+700.000/"] \
         [--creationdate 2026-11-07T10:15:00+0900] [--accuracy 5.0] \
         [--device-keys] [--drop-udta] [--xyz]
 
@@ -90,7 +93,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("src")
     ap.add_argument("dst")
-    ap.add_argument("--iso6709", required=True)
+    ap.add_argument("--iso6709")
     ap.add_argument("--creationdate")
     ap.add_argument("--accuracy")
     ap.add_argument("--device-keys", action="store_true")
@@ -104,13 +107,16 @@ def main() -> int:
     items = []
     if args.accuracy:
         items.append(("com.apple.quicktime.location.accuracy.horizontal", args.accuracy))
-    items.append(("com.apple.quicktime.location.ISO6709", args.iso6709))
+    if args.iso6709:
+        items.append(("com.apple.quicktime.location.ISO6709", args.iso6709))
     if args.device_keys:
         items += [
             ("com.apple.quicktime.make", "Apple"),
             ("com.apple.quicktime.model", "iPhone"),
             ("com.apple.quicktime.software", "26.0"),
         ]
+    if not items and not args.creationdate:
+        raise SystemExit("nothing to write: pass --iso6709 and/or --creationdate")
     if args.creationdate:
         items.append(("com.apple.quicktime.creationdate", args.creationdate))
 
@@ -126,7 +132,7 @@ def main() -> int:
         if hdr != 8:
             raise SystemExit("64-bit moov size not supported")
         children = b""
-        udta_extra = build_xyz(args.iso6709) if args.xyz else b""
+        udta_extra = build_xyz(args.iso6709) if args.xyz and args.iso6709 else b""
         has_udta = False
         for c_off, c_size, c_typ, _ in iter_boxes(data, off + 8, off + size):
             if c_typ == b"meta":
