@@ -46,7 +46,7 @@ These gates are necessary but insufficient for native media, SQLite live-driver 
 | Flow | Current scope |
 | --- | --- |
 | `.maestro/01_tabs.yaml` | Launch fresh install; open and screenshot Home, Dashboard, Calendar, Search and Settings |
-| `.maestro/02_import.yaml` | Single video through system Photos picker; asserts the first-frame preview and the GPS resort suggestion; Save, Home, Dashboard and Calendar |
+| `.maestro/02_import.yaml` | Single video through system Photos picker; asserts the GPS resort suggestion; Save, Home, Dashboard and Calendar. The first-frame preview sits inside the pick button's accessibility element, so it is checked on `12_selected.png` rather than asserted |
 | `.maestro/03_detail_and_search.yaml` | Detail title and memo typed, screen left at once, reopened: both saved. Search `a_x` (no result), `a_r` and `100%` (result) |
 | `.maestro/04_resort_input.yaml` | Detail resort field: an exact master name is saved on blur; clearing the text removes the resort |
 | `.maestro/05_techniques.yaml` | Delete a default technique, add one (appended last), restart the app: the deletion persists |
