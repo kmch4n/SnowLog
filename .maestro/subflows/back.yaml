@@ -1,16 +1,7 @@
-# Leaves a pushed screen. The native back button is labelled 「戻る」 (the tabs
-# screen's title); if it is not found, swipe from the left edge instead.
+# Leaves a pushed screen with the native back button, labelled 「戻る」 (the tabs
+# screen's title). No swipe fallback: a swipe that lands on Home after the pop
+# drags a video card.
 appId: com.kmch4n.snowlog
 ---
-- tapOn:
-    text: "戻る"
-    optional: true
-- runFlow:
-    when:
-      visible:
-        id: "detail-title-input"
-    commands:
-      - swipe:
-          start: "1%, 50%"
-          end: "90%, 50%"
+- tapOn: "戻る"
 - waitForAnimationToEnd

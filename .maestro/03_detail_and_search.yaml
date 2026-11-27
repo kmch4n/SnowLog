@@ -35,8 +35,9 @@ name: Detail autosave and search
     timeout: 20000
 - tapOn:
     id: "video-card"
+# The tap leaves the cursor inside the default title, so the text lands in it.
 - extendedWaitUntil:
-    visible: "Run_100%"
+    visible: ".*Run_100%.*"
     timeout: 20000
 - scrollUntilVisible:
     element: "memo check"

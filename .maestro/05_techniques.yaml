@@ -19,19 +19,11 @@ name: Technique defaults stay deleted
     id: "technique-delete-ハーフパイプ"
 - takeScreenshot: 40_technique_delete_confirm
 # The confirmation alert's destructive button. Every row also has a 「削除」
-# button (with a testID; the alert's has none), so take the one inside the
-# alert, whose container reads 「削除の確認」. If that missed, the alert is still
-# up: tap its right-hand button by position.
+# button and neither rightOf nor childOf picks the alert's, so tap it by position
+# (the right-hand button of the centred alert; the device is fixed by the workflow).
+- assertVisible: "削除の確認"
 - tapOn:
-    text: "削除"
-    childOf:
-      text: "削除の確認"
-- runFlow:
-    when:
-      visible: "キャンセル"
-    commands:
-      - tapOn:
-          point: "68%,58%"
+    point: "68%,58%"
 - extendedWaitUntil:
     notVisible:
       id: "technique-delete-ハーフパイプ"

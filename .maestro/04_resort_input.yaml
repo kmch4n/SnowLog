@@ -1,6 +1,7 @@
 # The resort field on the video detail screen: an exact master name typed without
 # tapping a suggestion is saved when the field loses focus, and clearing the text
-# removes the resort. Runs after 03_detail_and_search.yaml.
+# removes the resort. Runs after 03_detail_and_search.yaml; 02 already set
+# 白馬八方尾根スキー場 from the GPS suggestion, so a different resort is typed here.
 appId: com.kmch4n.snowlog
 name: Resort input commits on blur
 ---
@@ -19,7 +20,7 @@ name: Resort input commits on blur
 - tapOn:
     id: "resort-search-input"
 - eraseText: 40
-- inputText: "白馬八方尾根スキー場"
+- inputText: "エイブル白馬五竜"
 - takeScreenshot: 30_resort_typed
 # Leave the field without picking a suggestion.
 - tapOn:
@@ -32,7 +33,7 @@ name: Resort input commits on blur
     visible:
       id: "resort-search-input"
     timeout: 20000
-- assertVisible: "白馬八方尾根スキー場"
+- assertVisible: "エイブル白馬五竜"
 - takeScreenshot: 31_resort_saved
 
 # Clearing the field removes the resort.
@@ -49,6 +50,6 @@ name: Resort input commits on blur
     visible:
       id: "resort-search-input"
     timeout: 20000
-- assertNotVisible: "白馬八方尾根スキー場"
+- assertNotVisible: "エイブル白馬五竜"
 - takeScreenshot: 32_resort_cleared
 - runFlow: subflows/back.yaml
