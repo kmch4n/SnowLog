@@ -46,10 +46,13 @@ These gates are necessary but insufficient for native media, SQLite live-driver 
 | Flow | Current scope |
 | --- | --- |
 | `.maestro/01_tabs.yaml` | Launch fresh install; open and screenshot Home, Dashboard, Calendar, Search and Settings |
-| `.maestro/02_import.yaml` | Single video through system Photos picker, preview, Save, Home, Dashboard and Calendar |
+| `.maestro/02_import.yaml` | Single video through system Photos picker; asserts the first-frame preview and the GPS resort suggestion; Save, Home, Dashboard and Calendar |
+| `.maestro/03_detail_and_search.yaml` | Detail title and memo typed, screen left at once, reopened: both saved. Search `a_x` (no result), `a_r` and `100%` (result) |
+| `.maestro/04_resort_input.yaml` | Detail resort field: an exact master name is saved on blur; clearing the text removes the resort |
+| `.maestro/05_techniques.yaml` | Delete a default technique, add one (appended last), restart the app: the deletion persists |
 | Uploaded artifact | Screenshots, Maestro debug/hierarchy, app log, and observed Photos test-asset metadata |
 
-Always **inspect the uploaded screenshots**, not just the green status: visual regressions can coexist with a passing tap script. GPS suggestion assertions are optional because adding movies with `simctl addmedia` did not preserve the intended location atoms in prior simulator experiments. Simulator success does not verify iCloud downloads, limited-selection permission changes, actual mobile data or backup restore. These require a physical device.
+Always **inspect the uploaded screenshots**, not just the green status: visual regressions can coexist with a passing tap script. Flows 03–05 reuse the video imported by 02 and run in file-name order. The sample movies are rebuilt by `scripts/make_maestro_media.sh`, which writes the capture date and location as iPhone-style `moov/meta` keys (`scripts/write_quicktime_metadata.py`); Photos ignores the keys that ffmpeg's `use_metadata_tags` writes into `moov/udta/meta` (Issue #98). Simulator success does not verify iCloud downloads, limited-selection permission changes, actual mobile data or backup restore. These require a physical device.
 
 ## Native Swift media core tests
 

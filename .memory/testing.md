@@ -13,7 +13,7 @@ npm test            # node --test "scripts/tests/*.test.cjs"
 npm run test:web    # Web をビルドし、headless Chrome で全ルートを描画して確かめる
 ```
 
-`scripts/tests/` に `node:test` ベースのテストが 45 ファイル・354 ケースある（2026-11-16 時点）。Swift の `SnowLogMediaCore` には別に XCTest が 26 ケースあり、EAS の `ios-test` プロファイルで走る（下の節）。
+`scripts/tests/` に `node:test` ベースのテストが 47 ファイル・364 ケースある（2026-11-27 時点）。Swift の `SnowLogMediaCore` には別に XCTest が 26 ケースあり、EAS の `ios-test` プロファイルで走る（下の節）。
 `scripts/tests/helpers/` はテストではなく共有ハーネス（後述）。ファイル一覧はここに書かない（書くと腐る）。
 
 - `npm test` は 2026-10-26 に追加した。それまで `test` script が無く、テストの存在に気づきにくかった。
@@ -334,8 +334,17 @@ iPhone シミュレータに入れて `.maestro/*.yaml` を流す。公開リポ
   結果: `gh run download <id> -n ios-simulator` で、`screens/*.png`（各ステップのスクリーンショット）、
   `hierarchy_*.json`（各フローが終わった時点の画面を Maestro がどう見ているか）、`app.log`、`photos_assets.txt`、
   `xcodebuild.log` が取れる。**変更を入れたら、ここで画面を見てから報告する。**
-- フロー: `01_tabs`（新規インストールで全タブ）、`02_import`（写真ピッカーで動画を選び、保存し、ホーム・統計・
-  カレンダーに出ることまで）。テスト動画は `.maestro/media/*.mov`（撮影日と位置を QuickTime のメタデータに持つ）。
+- フロー（ファイル名の順に流れ、03 以降は 02 で取り込んだ動画を使う）:
+  - `01_tabs`: 新規インストールで全タブ
+  - `02_import`: 写真ピッカーで動画を選び、プレビューの先頭のコマ（#97）と GPS からのスキー場候補を確かめて保存し、
+    ホーム・統計・カレンダーに出ることまで
+  - `03_detail_and_search`: 詳細でタイトルとメモを入力してすぐ戻り、開き直して残っていること。検索で `a_x`（出ない）・
+    `a_r`・`100%`（出る）
+  - `04_resort_input`: 詳細のスキー場欄に正確な名前を入力して欄を離れると保存され、全部消すと消えること
+  - `05_techniques`: 既定の滑走種別を削除し、新しい種別が末尾に入り、アプリを再起動しても削除が残ること
+  - 画面から戻る操作は `subflows/back.yaml`（「戻る」を押し、無ければ左端からスワイプ）
+- テスト動画は `.maestro/media/*.mov`。作り直すときは `bash scripts/make_maestro_media.sh`（ffmpeg と python3）。
+  撮影日と位置は `scripts/write_quicktime_metadata.py` が iPhone のカメラと同じ `moov/meta`（mdta の keys）に書く。
 - 要素の指定は **`testID`**（`id:`）を使う。文字の正規表現は別の文言にも当たる（「インポート」が空の画面の説明文に
   当たって、ボタンではなく説明文をタップしていた）。写真ピッカーのセルは「ビデオ, 三秒, 11月07日, 1:15」のような
   ラベルを持つので、長さと日付で選べる。新しい画面のセレクタは、前の実行の `hierarchy_*.json` から拾う。
@@ -343,13 +352,13 @@ iPhone シミュレータに入れて `.maestro/*.yaml` を流す。公開リポ
   - Maestro の初回のドライバー起動は遅い（数分）。ワークフローは先に `maestro hierarchy` を流して温める。
   - `takeScreenshot` は隠しディレクトリ `.maestro/` の下に書く。`upload-artifact` は隠しファイルを既定で
     上げないので、ワークフローが PNG をコピーしている。絶対パスは受け付けない。
-  - `simctl addmedia` で入れた動画には、位置が入らない。ffmpeg で `com.apple.quicktime.location.ISO6709`（mdta）も
-    古い `©xyz`（`-metadata location=`）も書いたが、どちらも `photos_assets.txt` で -180 のまま（2026-11-16、
-    run 8・9）。付属の写真（JPEG）には位置がある。**GPS からのスキー場候補はシミュレータでは確かめられない**ので、
-    フローではその手順を optional にしてある。撮影日は正しく入る。
+  - **ffmpeg の `-movflags use_metadata_tags` で書いた位置は、写真ライブラリに入らない**（#98）。ffmpeg はその keys を
+    `moov/udta/meta` に iTunes 形式で書き、Photos はそこを読まない。2026-11-16 の run 8・9 で -180（位置なし）のままだった
+    原因はこれ。2026-11-27 の試行（macos-26・iOS 26）では、`moov/meta` の keys（Python で直接書く・exiftool の
+    `Keys:GPSCoordinates`・AVFoundation の書き出し）と、`use_metadata_tags` を付けない ffmpeg の `©xyz` のどれでも位置が入った。
+    ただし `©xyz` だけの動画は撮影日が mvhd の時刻になり、9 時間ずれた。撮影日も正しく入る `moov/meta` を使う。
   - gh トークンに `workflow` 権限が無いので、`.github/workflows/` の変更は SSH で push する。
-- 示せないもの: GPS からのスキー場候補（上記）、iCloud からの実際のダウンロード、限定アクセスで範囲外を選ぶ操作、
-  回線の切り替え、性能と触覚。
+- 示せないもの: iCloud からの実際のダウンロード、限定アクセスで範囲外を選ぶ操作、回線の切り替え、性能と触覚。
   これらは実機（`docs/verification/`）で見る。
 
 ## `pr/pv`（PV）は別のテスト面

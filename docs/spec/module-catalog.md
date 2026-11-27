@@ -268,15 +268,17 @@ The bundled resort data set is `src/constants/skiResorts.json` (378 rows at the 
 
 | Source file | Contract and responsibility |
 | --- | --- |
+| `scripts/make_maestro_media.sh` | Rebuilds the simulator sample movies in `.maestro/media/` with capture date and location metadata. |
 | `scripts/patchImageUtilsCache.js` | Expo image cache patch run after dependency installation. |
 | `scripts/release-testflight.sh` | Guarded EAS production build and TestFlight submission. |
 | `scripts/reset-project.js` | Expo starter cleanup tool; not part of normal runtime. |
 | `scripts/update_ski_resorts.py` | Resort data maintenance/update script. |
 | `scripts/webSmoke.cjs` | Browser execution and route-marker smoke verification. |
+| `scripts/write_quicktime_metadata.py` | Writes iPhone-style QuickTime `moov/meta` keys (location, creation date) into a movie. |
 
 ## Node test suite
 
-The root test runner discovers **45** top-level `scripts/tests/*.test.cjs` files. The additional helper `scripts/tests/helpers/repositoryHarness.cjs` implements reusable SQLite harness infrastructure rather than an independent test entrypoint. The suite is organized by file, not by one universal mock model.
+The root test runner discovers **47** top-level `scripts/tests/*.test.cjs` files. The additional helper `scripts/tests/helpers/repositoryHarness.cjs` implements reusable SQLite harness infrastructure rather than an independent test entrypoint. The suite is organized by file, not by one universal mock model.
 
 | Test area | Files and representative assertions |
 | --- | --- |
