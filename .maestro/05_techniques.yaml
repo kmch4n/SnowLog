@@ -32,7 +32,7 @@ name: Technique defaults stay deleted
     id: "technique-add-input"
 - inputText: "Test run"
 # Submit from the keyboard: with the keyboard up, the add row sits behind it
-# on iOS 26 and 「追加」 cannot be tapped (issue filed separately).
+# on iOS 26 and 「追加」 cannot be tapped (#99).
 - pressKey: Enter
 - waitForAnimationToEnd
 - scrollUntilVisible:
