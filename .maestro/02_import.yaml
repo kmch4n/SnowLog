@@ -23,15 +23,12 @@ name: Single import
     timeout: 20000
 - takeScreenshot: 11_picker
 - tapOn: "ビデオ, 三秒, .*"
-- extendedWaitUntil:
-    visible:
-      id: "import-save"
-    timeout: 30000
-# The preview is the movie's first frame, not an empty grey box (#97).
+# The preview is the movie's first frame, not an empty grey box (#97). (Save is
+# below the fold once the GPS suggestions show, so it is not waited for here.)
 - extendedWaitUntil:
     visible:
       id: "import-preview-frame"
-    timeout: 15000
+    timeout: 30000
 # The clip's location (written by scripts/make_maestro_media.sh) gives nearby
 # resort suggestions (#98); photos_assets.txt in the artifact shows what Photos stored.
 - extendedWaitUntil:

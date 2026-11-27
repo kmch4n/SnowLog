@@ -9,7 +9,8 @@ name: Technique defaults stay deleted
       id: "home-import-button"
     timeout: 60000
 - tapOn: "設定"
-- tapOn: "滑走種別"
+# The row reads "滑走種別, 動画の滑走種別を管理します, 詳細を表示".
+- tapOn: "滑走種別,.*"
 - extendedWaitUntil:
     visible:
       id: "technique-delete-ハーフパイプ"
@@ -17,16 +18,17 @@ name: Technique defaults stay deleted
 - tapOn:
     id: "technique-delete-ハーフパイプ"
 - takeScreenshot: 40_technique_delete_confirm
-# The confirmation alert's destructive button; the row buttons share the label,
-# so pick the one in the alert (the last match).
+# The confirmation alert's destructive button. Every row also has a 「削除」
+# button, so take the one nearest to the alert's 「キャンセル」.
 - tapOn:
     text: "削除"
-    index: -1
+    rightOf: "キャンセル"
 - extendedWaitUntil:
     notVisible:
       id: "technique-delete-ハーフパイプ"
     timeout: 10000
-- tapOn: "新しい滑走種別を追加"
+- tapOn:
+    id: "technique-add-input"
 - inputText: "Test run"
 - tapOn: "追加"
 - extendedWaitUntil:
@@ -44,7 +46,7 @@ name: Technique defaults stay deleted
       id: "home-import-button"
     timeout: 60000
 - tapOn: "設定"
-- tapOn: "滑走種別"
+- tapOn: "滑走種別,.*"
 - extendedWaitUntil:
     visible: "Test run"
     timeout: 20000

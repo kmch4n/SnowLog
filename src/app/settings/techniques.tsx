@@ -144,6 +144,7 @@ export default function TechniquesSettingsScreen() {
             {/* 追加フォーム */}
             <View style={styles.addForm}>
                 <TextInput
+                    testID="technique-add-input"
                     style={styles.addInput}
                     value={input}
                     onChangeText={setInput}
