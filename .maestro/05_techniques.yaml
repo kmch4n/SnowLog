@@ -31,10 +31,13 @@ name: Technique defaults stay deleted
 - tapOn:
     id: "technique-add-input"
 - inputText: "Test run"
-- tapOn: "追加"
-- extendedWaitUntil:
-    visible: "Test run"
-    timeout: 10000
+# Submit from the keyboard: with the keyboard up, the add row sits behind it
+# on iOS 26 and 「追加」 cannot be tapped (issue filed separately).
+- pressKey: Enter
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Test run"
+    direction: DOWN
 - assertVisible:
     text: "Test run"
     below: "その他"
@@ -49,8 +52,12 @@ name: Technique defaults stay deleted
 - tapOn: "設定"
 - tapOn: "滑走種別,.*"
 - extendedWaitUntil:
-    visible: "Test run"
+    visible:
+      id: "technique-delete-大回り"
     timeout: 20000
+- scrollUntilVisible:
+    element: "Test run"
+    direction: DOWN
 - assertNotVisible:
     id: "technique-delete-ハーフパイプ"
 - takeScreenshot: 42_technique_after_restart
